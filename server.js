@@ -32,6 +32,7 @@ app.use('/shared', express.static(path.join(__dirname, 'public', 'shared')));
 app.use('/boss', express.static(path.join(__dirname, 'public', 'boss')));
 app.use('/worker', express.static(path.join(__dirname, 'public', 'worker')));
 app.use('/admin', express.static(path.join(__dirname, 'public', 'admin')));
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 // Auth middleware
 function authMiddleware(req, res, next) {
@@ -1541,7 +1542,7 @@ app.get('/api/admin/activity', adminAuth, async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 
 app.get('/', (req, res) => {
-  res.redirect('/boss');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ═══════════════════════════════════════════════════════════════
