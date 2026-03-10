@@ -542,6 +542,7 @@ let currentCatFilter = null;
 
 // ═══ INIT ═══
 document.addEventListener('DOMContentLoaded', async () => {
+  API.init('worker');
   await I18n.init();
   const t = localStorage.getItem('taskflow_theme') || 'light';
   document.documentElement.dataset.theme = t;

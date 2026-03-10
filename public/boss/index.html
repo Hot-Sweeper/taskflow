@@ -293,7 +293,8 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
     <div class="card" style="margin-top:16px;">
       <h4 style="font-size:14px;font-weight:600;margin-bottom:8px;" data-i18n="team.invite.worker">Invite Worker</h4>
       <div style="display:flex;gap:8px;">
-        <input type="text" id="inviteNameInput" data-i18n-placeholder="auth.username" placeholder="Worker name" style="flex:1;">
+        <input type="text" id="inviteNameInput" list="workerSuggestions" data-i18n-placeholder="auth.username" placeholder="Worker name" style="flex:1;" autocomplete="off">
+        <datalist id="workerSuggestions"></datalist>
         <button class="btn btn-primary btn-sm" onclick="sendInvite()" data-i18n="team.invite">Send Invite</button>
       </div>
     </div>
@@ -492,6 +493,7 @@ let unreadCounts = {};
 
 // ═══ INIT ═══
 document.addEventListener('DOMContentLoaded', async () => {
+  API.init('boss');
   await I18n.init();
   const savedTheme = localStorage.getItem('taskflow_theme') || 'light';
   document.documentElement.dataset.theme = savedTheme;
@@ -512,6 +514,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('loginPw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
   document.getElementById('signupPw').addEventListener('keydown', e => { if (e.key === 'Enter') doSignup(); });
+  document.getElementById('inviteNameInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendInvite(); });
 
   window.addEventListener('auth:expired', () => {
     user = null;
@@ -822,6 +825,19 @@ async function loadTeam() {
   try {
     team = await API.getTeam();
     renderTeam();
+    loadWorkerSuggestions();
+  } catch {}
+}
+
+async function loadWorkerSuggestions() {
+  try {
+    const workers = await API.getWorkers();
+    const activeNames = new Set(team.filter(t => t.status === 'active' || t.status === 'pending').map(t => t.workerName));
+    const dl = document.getElementById('workerSuggestions');
+    dl.innerHTML = workers
+      .filter(w => !activeNames.has(w.name))
+      .map(w => `<option value="${esc(w.name)}">`)
+      .join('');
   } catch {}
 }
 

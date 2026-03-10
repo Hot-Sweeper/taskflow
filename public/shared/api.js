@@ -1,12 +1,18 @@
 // TaskFlow — REST + WebSocket client helpers
 
 const API = {
-  token: localStorage.getItem('taskflow_token'),
+  _storageKey: 'taskflow_token',
+  token: null,
+
+  init(portal) {
+    if (portal) this._storageKey = `taskflow_${portal}_token`;
+    this.token = localStorage.getItem(this._storageKey);
+  },
 
   setToken(token) {
     this.token = token;
-    if (token) localStorage.setItem('taskflow_token', token);
-    else localStorage.removeItem('taskflow_token');
+    if (token) localStorage.setItem(this._storageKey, token);
+    else localStorage.removeItem(this._storageKey);
   },
 
   async request(method, url, body, isFormData) {
