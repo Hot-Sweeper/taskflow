@@ -198,6 +198,72 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
 .empty-state { text-align: center; padding: 48px 16px; color: var(--text-secondary); }
 .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
 .empty-state p { font-size: 15px; }
+
+/* ═══ WORKER GRID (HOME) ═══ */
+.worker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.worker-card { background: var(--card-bg); backdrop-filter: var(--blur); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 16px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
+.worker-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+.worker-card:active { transform: scale(0.97); }
+.worker-card .wc-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; color: var(--accent); margin: 0 auto 10px; }
+.worker-card .wc-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+.worker-card .wc-meta { font-size: 12px; color: var(--text-secondary); }
+.worker-card .wc-task-count { display: inline-flex; align-items: center; gap: 4px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; margin-top: 8px; }
+.worker-card .wc-status-dot { width: 10px; height: 10px; border-radius: 50%; position: absolute; top: 12px; right: 12px; border: 2px solid var(--bg-secondary); }
+.worker-card.pending { opacity: 0.5; pointer-events: none; }
+.worker-card.pending .wc-avatar { background: var(--bg-hover); color: var(--text-tertiary); }
+
+.all-tasks-card { background: linear-gradient(135deg, var(--accent-soft), rgba(139,92,246,0.1)); border: 1px solid var(--accent); }
+.all-tasks-card .wc-avatar { background: var(--accent); color: #fff; }
+.all-tasks-card:hover { box-shadow: 0 8px 24px rgba(59,130,246,0.2); }
+
+/* Invite section */
+.invite-section { margin-top: 8px; }
+.invite-bar { display: flex; gap: 8px; }
+.invite-bar input { flex: 1; }
+
+/* ═══ WORKER DASHBOARD ═══ */
+.worker-dash-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.worker-dash-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; color: var(--accent); flex-shrink: 0; }
+.worker-dash-info { flex: 1; }
+.worker-dash-info h2 { font-size: 20px; font-weight: 700; }
+.worker-dash-status { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.back-btn { width: 36px; height: 36px; font-size: 18px; flex-shrink: 0; }
+
+/* Quick add */
+.quick-add-bar { display: flex; gap: 8px; margin-bottom: 8px; }
+.quick-add-bar input { flex: 1; font-size: 16px; padding: 14px 18px; border-radius: var(--radius-sm); }
+.quick-add-btn { border-radius: var(--radius-sm); min-height: 48px; width: 48px; padding: 0; font-size: 24px; }
+.quick-extra { padding: 12px; background: var(--bg); border-radius: var(--radius-xs); margin-bottom: 8px; }
+.quick-extra-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.quick-select, .quick-date { flex: 1; padding: 8px 12px; font-size: 13px; border-radius: var(--radius-xs); border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text); }
+.quick-desc { width: 100%; padding: 8px 12px; font-size: 13px; border-radius: var(--radius-xs); border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text); resize: none; min-height: 44px; }
+.quick-extra-toggle { background: none; border: none; color: var(--text-tertiary); font-size: 12px; cursor: pointer; padding: 4px 0; margin-bottom: 16px; font-family: var(--font); }
+.quick-extra-toggle:hover { color: var(--text-secondary); }
+
+/* Filter chips */
+.worker-task-filters { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; }
+.chip { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.15s; font-family: var(--font); }
+.chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.chip:hover:not(.active) { background: var(--bg-hover); }
+
+/* All tasks header */
+.all-tasks-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.task-filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.filter-select { padding: 8px 12px; border-radius: var(--radius-xs); border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text); font-size: 13px; font-family: var(--font); }
+
+/* Lang select */
+.lang-select { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 6px 8px; color: var(--text); font-size: 13px; font-family: var(--font); }
+
+/* Chat layout */
+.chat-page { padding: 0; padding-bottom: 64px; }
+.chat-list-header { padding: 16px; }
+.chat-msg-view { display: flex; flex-direction: column; height: 100%; }
+.chat-msg-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--card-bg); backdrop-filter: var(--blur); }
+.chat-send-btn { border-radius: 50%; min-height: 44px; width: 44px; padding: 0; font-size: 18px; }
+
+/* Remove btn for worker cards */
+.wc-remove { position: absolute; top: 6px; left: 6px; width: 24px; height: 24px; border-radius: 50%; background: var(--danger); color: #fff; border: none; font-size: 12px; cursor: pointer; display: none; align-items: center; justify-content: center; line-height: 1; }
+.worker-card:hover .wc-remove { display: flex; }
 </style>
 </head>
 <body>
@@ -244,9 +310,9 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
 <div id="app" class="app">
   <!-- Top Bar -->
   <header class="topbar">
-    <div class="topbar-title" id="topbarTitle">📋 <span data-i18n="nav.tasks">Tasks</span></div>
+    <div class="topbar-title" id="topbarTitle">🏠 <span id="topbarText">Home</span></div>
     <div class="topbar-actions">
-      <select id="langSwitcher" onchange="I18n.setLang(this.value)" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-xs);padding:6px 8px;color:var(--text);font-size:13px;">
+      <select id="langSwitcher" onchange="I18n.setLang(this.value)" class="lang-select">
         <option value="en">EN</option>
         <option value="de">DE</option>
       </select>
@@ -255,11 +321,73 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
     </div>
   </header>
 
-  <!-- TASKS PAGE -->
-  <div id="pageTasks" class="page active">
-    <h1 class="page-title" data-i18n="nav.tasks">Tasks</h1>
-    <div id="taskFilters" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-      <select id="filterStatus" onchange="renderTasks()" style="padding:8px 12px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--bg-secondary);color:var(--text);font-size:13px;">
+  <!-- HOME PAGE — Worker Cards Grid -->
+  <div id="pageHome" class="page active">
+    <h1 class="page-title">👋 <span id="greetingName"></span></h1>
+    <div id="workerGrid" class="worker-grid"></div>
+    <!-- Invite section -->
+    <div id="inviteSection" class="invite-section">
+      <div class="invite-bar">
+        <input type="text" id="inviteNameInput" list="workerSuggestions" placeholder="Invite a worker by name..." autocomplete="off">
+        <datalist id="workerSuggestions"></datalist>
+        <button class="btn btn-primary btn-sm" onclick="sendInvite()">+ Invite</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKER DASHBOARD — Shows when clicking a worker card -->
+  <div id="pageWorker" class="page">
+    <div class="worker-dash-header">
+      <button class="btn-icon back-btn" onclick="goHome()">←</button>
+      <div class="worker-dash-avatar" id="wdAvatar"></div>
+      <div class="worker-dash-info">
+        <h2 id="wdName"></h2>
+        <div id="wdStatus" class="worker-dash-status"></div>
+      </div>
+      <button class="btn-icon" onclick="openChat(currentWorkerId, currentWorkerName)" title="Chat">💬</button>
+    </div>
+    <!-- Quick add task -->
+    <div class="quick-add-bar">
+      <input type="text" id="quickTaskInput" placeholder="Add a task..." onkeydown="if(event.key==='Enter')quickAddTask()">
+      <button class="btn btn-primary quick-add-btn" onclick="quickAddTask()">+</button>
+    </div>
+    <!-- Optional fields toggle -->
+    <div id="quickTaskExtra" class="quick-extra hidden">
+      <div class="quick-extra-row">
+        <select id="quickPriority" class="quick-select" title="Priority">
+          <option value="medium">🟧 Medium</option>
+          <option value="high">🚩 High</option>
+          <option value="low">🔵 Low</option>
+        </select>
+        <input type="date" id="quickDeadline" class="quick-date" title="Deadline">
+      </div>
+      <textarea id="quickDesc" placeholder="Description (optional)" rows="2" class="quick-desc"></textarea>
+    </div>
+    <button class="quick-extra-toggle" onclick="toggleQuickExtra()">
+      <span id="quickExtraIcon">▼</span> More options
+    </button>
+    <!-- Worker's tasks -->
+    <div class="worker-task-filters">
+      <button class="chip active" data-filter="" onclick="filterWorkerTasks(this)">All</button>
+      <button class="chip" data-filter="todo" onclick="filterWorkerTasks(this)">To Do</button>
+      <button class="chip" data-filter="in-progress" onclick="filterWorkerTasks(this)">Active</button>
+      <button class="chip" data-filter="done" onclick="filterWorkerTasks(this)">Done</button>
+    </div>
+    <div id="workerTaskList"></div>
+    <div id="workerTaskEmpty" class="empty-state hidden">
+      <div class="empty-icon">📋</div>
+      <p>No tasks yet — add one above!</p>
+    </div>
+  </div>
+
+  <!-- ALL TASKS PAGE -->
+  <div id="pageAllTasks" class="page">
+    <div class="all-tasks-header">
+      <button class="btn-icon back-btn" onclick="goHome()">←</button>
+      <h1 class="page-title" style="margin-bottom:0;">📋 All Tasks</h1>
+    </div>
+    <div class="task-filters">
+      <select id="filterStatus" onchange="renderAllTasks()" class="filter-select" title="Status">
         <option value="">All Status</option>
         <option value="todo">To Do</option>
         <option value="in-progress">In Progress</option>
@@ -267,36 +395,17 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
         <option value="in-review">In Review</option>
         <option value="done">Done</option>
       </select>
-      <select id="filterPriority" onchange="renderTasks()" style="padding:8px 12px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--bg-secondary);color:var(--text);font-size:13px;">
+      <select id="filterPriority" onchange="renderAllTasks()" class="filter-select" title="Priority">
         <option value="">All Priority</option>
         <option value="high">🚩 High</option>
         <option value="medium">🟧 Medium</option>
         <option value="low">🔵 Low</option>
       </select>
     </div>
-    <div id="taskList"></div>
-    <div id="taskEmpty" class="empty-state hidden">
+    <div id="allTaskList"></div>
+    <div id="allTaskEmpty" class="empty-state hidden">
       <div class="empty-icon">📋</div>
       <p data-i18n="task.empty">No tasks yet</p>
-    </div>
-  </div>
-
-  <!-- TEAM PAGE -->
-  <div id="pageTeam" class="page">
-    <h1 class="page-title" data-i18n="nav.team">Team</h1>
-    <!-- Live status -->
-    <div id="liveStatus"></div>
-    <!-- Team members -->
-    <h3 style="font-size:16px;font-weight:600;margin:20px 0 12px;" data-i18n="team.members">Team Members</h3>
-    <div id="teamList"></div>
-    <!-- Invite -->
-    <div class="card" style="margin-top:16px;">
-      <h4 style="font-size:14px;font-weight:600;margin-bottom:8px;" data-i18n="team.invite.worker">Invite Worker</h4>
-      <div style="display:flex;gap:8px;">
-        <input type="text" id="inviteNameInput" list="workerSuggestions" data-i18n-placeholder="auth.username" placeholder="Worker name" style="flex:1;" autocomplete="off">
-        <datalist id="workerSuggestions"></datalist>
-        <button class="btn btn-primary btn-sm" onclick="sendInvite()" data-i18n="team.invite">Send Invite</button>
-      </div>
     </div>
   </div>
 
@@ -311,11 +420,10 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
   </div>
 
   <!-- CHAT PAGE -->
-  <div id="pageChat" class="page" style="padding:0;padding-bottom:64px;">
+  <div id="pageChat" class="page chat-page">
     <div class="chat-container">
-      <!-- Conversation list -->
       <div id="chatListView" class="chat-list">
-        <div style="padding:16px;">
+        <div class="chat-list-header">
           <h1 class="page-title" data-i18n="nav.chat">Chat</h1>
         </div>
         <div id="chatConvList"></div>
@@ -324,9 +432,8 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
           <p data-i18n="chat.empty">No conversations yet</p>
         </div>
       </div>
-      <!-- Chat messages view -->
-      <div id="chatMsgView" class="hidden" style="display:flex;flex-direction:column;height:100%;">
-        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);background:var(--card-bg);backdrop-filter:var(--blur);">
+      <div id="chatMsgView" class="hidden chat-msg-view">
+        <div class="chat-msg-header">
           <button class="btn-icon" onclick="closeChatView()" style="width:36px;height:36px;font-size:18px;">←</button>
           <strong id="chatPartnerName"></strong>
           <span id="chatTypingIndicator" class="hidden" style="font-size:12px;color:var(--text-secondary);" data-i18n="chat.typing">typing...</span>
@@ -334,24 +441,17 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
         <div id="chatMessages" class="chat-messages"></div>
         <div class="chat-input-bar">
           <input type="text" id="chatInput" data-i18n-placeholder="chat.placeholder" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChatMsg()">
-          <button class="btn btn-primary" style="border-radius:50%;min-height:44px;width:44px;padding:0;font-size:18px;" onclick="sendChatMsg()">↑</button>
+          <button class="btn btn-primary chat-send-btn" onclick="sendChatMsg()">↑</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- FAB -->
-  <button class="btn-fab" id="fabBtn" onclick="openCreateTask()">+</button>
-
   <!-- Bottom Nav -->
   <nav class="bottomnav">
-    <button class="nav-item active" onclick="showPage('Tasks')" data-nav="Tasks">
-      <span class="nav-icon">📋</span>
-      <span data-i18n="nav.tasks">Tasks</span>
-    </button>
-    <button class="nav-item" onclick="showPage('Team')" data-nav="Team">
-      <span class="nav-icon">👥</span>
-      <span data-i18n="nav.team">Team</span>
+    <button class="nav-item active" onclick="showPage('Home')" data-nav="Home">
+      <span class="nav-icon">🏠</span>
+      <span>Home</span>
     </button>
     <button class="nav-item" onclick="showPage('Requests')" data-nav="Requests">
       <span class="nav-icon">📩</span>
@@ -364,45 +464,6 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
       <span class="nav-badge hidden" id="chatBadge">0</span>
     </button>
   </nav>
-</div>
-
-<!-- CREATE TASK PANEL -->
-<div id="createTaskOverlay" class="modal-overlay" onclick="closeCreateTask()"></div>
-<div id="createTaskPanel" class="panel">
-  <div class="panel-handle"></div>
-  <h3 data-i18n="task.create">New Task</h3>
-  <div class="form-group">
-    <label data-i18n="task.title">Title</label>
-    <input type="text" id="newTaskTitle" data-i18n-placeholder="task.title" placeholder="Title">
-  </div>
-  <div class="form-group">
-    <label data-i18n="task.description">Description</label>
-    <textarea id="newTaskDesc" rows="3" data-i18n-placeholder="task.description" placeholder="Description"></textarea>
-  </div>
-  <div style="display:flex;gap:12px;">
-    <div class="form-group" style="flex:1">
-      <label data-i18n="task.priority">Priority</label>
-      <select id="newTaskPriority">
-        <option value="high">🚩 High</option>
-        <option value="medium" selected>🟧 Medium</option>
-        <option value="low">🔵 Low</option>
-      </select>
-    </div>
-    <div class="form-group" style="flex:1">
-      <label data-i18n="task.deadline">Deadline</label>
-      <input type="date" id="newTaskDeadline">
-    </div>
-  </div>
-  <div class="form-group">
-    <label data-i18n="task.assignee">Assign to</label>
-    <select id="newTaskAssignee">
-      <option value="">— Unassigned —</option>
-    </select>
-  </div>
-  <div class="panel-actions">
-    <button class="btn btn-ghost" onclick="closeCreateTask()" data-i18n="common.cancel">Cancel</button>
-    <button class="btn btn-primary" onclick="createTask()" data-i18n="task.create">Create</button>
-  </div>
 </div>
 
 <!-- TASK DETAIL PANEL -->
@@ -490,6 +551,9 @@ let currentReqDetail = null;
 let currentChatPartner = null;
 let chatMessages = [];
 let unreadCounts = {};
+let currentWorkerId = null;
+let currentWorkerName = null;
+let workerTaskFilter = '';
 
 // ═══ INIT ═══
 document.addEventListener('DOMContentLoaded', async () => {
@@ -503,12 +567,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (API.token) {
     try {
       user = await API.me();
-      if (user.role !== 'boss') {
-        API.setToken(null);
-        user = null;
-      } else {
-        enterApp();
-      }
+      if (user.role !== 'boss') { API.setToken(null); user = null; }
+      else enterApp();
     } catch { API.setToken(null); }
   }
 
@@ -582,14 +642,15 @@ function logout() {
 async function enterApp() {
   document.getElementById('landing').classList.add('hidden');
   document.getElementById('app').classList.add('active');
+  document.getElementById('greetingName').textContent = user.name;
 
   WS.connect(API.token);
   WS.on('sync', onSync);
-  WS.on('task:created', d => { updateLocalTask(d.payload); renderTasks(); });
-  WS.on('task:updated', d => { updateLocalTask(d.payload); renderTasks(); if (currentDetailTask?.id === d.payload.id) showDetail(d.payload.id); });
-  WS.on('task:deleted', d => { tasks = tasks.filter(t => t.id !== d.payload.id); renderTasks(); });
+  WS.on('task:created', d => { updateLocalTask(d.payload); refreshCurrentView(); });
+  WS.on('task:updated', d => { updateLocalTask(d.payload); refreshCurrentView(); if (currentDetailTask?.id === d.payload.id) showDetail(d.payload.id); });
+  WS.on('task:deleted', d => { tasks = tasks.filter(t => t.id !== d.payload.id); refreshCurrentView(); });
   WS.on('note:added', d => { const t = tasks.find(x => x.id === d.payload.taskId); if (t) { t.notes.push(d.payload.note); if (currentDetailTask?.id === t.id) showDetail(t.id); }});
-  WS.on('team:accepted', () => loadTeam());
+  WS.on('team:accepted', () => { loadTeam(); loadLiveStatus(); });
   WS.on('team:declined', () => loadTeam());
   WS.on('time:clockin', () => loadLiveStatus());
   WS.on('time:clockout', () => loadLiveStatus());
@@ -597,18 +658,28 @@ async function enterApp() {
   WS.on('request:created', d => { requests.push(d.payload); renderRequests(); updateBadges(); });
   WS.on('request:updated', d => { const i = requests.findIndex(r => r.id === d.payload.id); if (i > -1) requests[i] = d.payload; renderRequests(); });
   WS.on('chat:message', d => { if (currentChatPartner === d.message.from) { chatMessages.push(d.message); renderChatMessages(); API.markRead(d.message.from); } else { unreadCounts[d.message.from] = (unreadCounts[d.message.from] || 0) + 1; updateBadges(); } loadConversations(); });
-  WS.on('chat:typing', d => { if (currentChatPartner === d.from) { showTyping(); } });
-  WS.on('chat:read', () => {});
+  WS.on('chat:typing', d => { if (currentChatPartner === d.from) showTyping(); });
 
   await Promise.all([loadTasks(), loadTeam(), loadRequests(), loadConversations(), loadLiveStatus()]);
-  loadAssigneeOptions();
+  renderHome();
 }
 
 function onSync(data) {
-  if (data.payload.tasks) { tasks = data.payload.tasks; renderTasks(); }
-  if (data.payload.team) { team = data.payload.team; renderTeam(); }
+  if (data.payload.tasks) { tasks = data.payload.tasks; }
+  if (data.payload.team) { team = data.payload.team; }
   if (data.payload.requests) { requests = data.payload.requests; renderRequests(); }
   if (data.payload.unreadCounts) { unreadCounts = data.payload.unreadCounts; updateBadges(); }
+  refreshCurrentView();
+}
+
+function refreshCurrentView() {
+  if (!document.getElementById('pageWorker').classList.contains('hidden') && document.getElementById('pageWorker').classList.contains('active')) {
+    renderWorkerTasks();
+  }
+  if (document.getElementById('pageAllTasks').classList.contains('active')) {
+    renderAllTasks();
+  }
+  renderHome();
 }
 
 // ═══ NAVIGATION ═══
@@ -616,32 +687,187 @@ function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(`page${name}`).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.querySelector(`[data-nav="${name}"]`).classList.add('active');
-  const icons = { Tasks: '📋', Team: '👥', Requests: '📩', Chat: '💬' };
-  document.getElementById('topbarTitle').innerHTML = `${icons[name]} <span>${name}</span>`;
-  const fab = document.getElementById('fabBtn');
-  fab.classList.toggle('hidden', name !== 'Tasks');
+  const nav = document.querySelector(`[data-nav="${name}"]`);
+  if (nav) nav.classList.add('active');
+  const icons = { Home: '🏠', Requests: '📩', Chat: '💬' };
+  const labels = { Home: 'Home', Requests: 'Requests', Chat: 'Chat' };
+  document.getElementById('topbarTitle').innerHTML = `${icons[name] || '📋'} <span id="topbarText">${labels[name] || name}</span>`;
   if (name === 'Chat') closeChatView();
 }
 
-// ═══ TASKS ═══
-async function loadTasks() {
-  try {
-    tasks = await API.getTasks();
-    renderTasks();
-  } catch {}
+function goHome() {
+  currentWorkerId = null;
+  currentWorkerName = null;
+  showPage('Home');
+  renderHome();
 }
 
-function renderTasks() {
+// ═══ HOME — Worker Cards Grid ═══
+function renderHome() {
+  const grid = document.getElementById('workerGrid');
+  const active = team.filter(t => t.status === 'active');
+  const pending = team.filter(t => t.status === 'pending');
+
+  let html = '';
+
+  // All tasks card
+  const totalTasks = tasks.filter(t => t.createdBy === user?.id).length;
+  html += `
+    <div class="worker-card all-tasks-card" onclick="showAllTasks()">
+      <div class="wc-avatar">📋</div>
+      <div class="wc-name">All Tasks</div>
+      <div class="wc-meta">Overview</div>
+      <span class="wc-task-count">${totalTasks} task${totalTasks !== 1 ? 's' : ''}</span>
+    </div>`;
+
+  // Active workers
+  for (const t of active) {
+    const workerTasks = tasks.filter(tk => tk.assignedTo === t.workerId);
+    const activeTasks = workerTasks.filter(tk => tk.status !== 'done').length;
+    const status = liveStatuses.find(s => s.userId === t.workerId);
+    const statusCls = status ? status.status : 'offline';
+    const statusColor = statusCls === 'working' ? '#10B981' : statusCls === 'break' ? '#F59E0B' : '#9CA3AF';
+
+    html += `
+    <div class="worker-card" onclick="openWorkerDash('${t.workerId}', '${esc(t.workerName)}')">
+      <button class="wc-remove" onclick="event.stopPropagation();removeTeamMember('${t.id}')" title="Remove">✕</button>
+      <div class="wc-status-dot" style="background:${statusColor};"></div>
+      <div class="wc-avatar">${t.workerName ? t.workerName[0].toUpperCase() : '?'}</div>
+      <div class="wc-name">${esc(t.workerName)}</div>
+      <div class="wc-meta">${statusCls === 'working' ? '🟢 Working' : statusCls === 'break' ? '🟡 Break' : '⚫ Offline'}</div>
+      <span class="wc-task-count">${activeTasks} active</span>
+    </div>`;
+  }
+
+  // Pending invites
+  for (const t of pending) {
+    html += `
+    <div class="worker-card pending">
+      <div class="wc-avatar">⏳</div>
+      <div class="wc-name">${esc(t.workerName)}</div>
+      <div class="wc-meta">Pending invite</div>
+    </div>`;
+  }
+
+  grid.innerHTML = html;
+  loadWorkerSuggestions();
+}
+
+// ═══ WORKER DASHBOARD ═══
+function openWorkerDash(workerId, workerName) {
+  currentWorkerId = workerId;
+  currentWorkerName = workerName;
+  workerTaskFilter = '';
+
+  // Update header
+  document.getElementById('wdAvatar').textContent = workerName[0].toUpperCase();
+  document.getElementById('wdName').textContent = workerName;
+
+  const status = liveStatuses.find(s => s.userId === workerId);
+  const statusEl = document.getElementById('wdStatus');
+  if (status) {
+    const dot = status.status === 'working' ? '🟢' : status.status === 'break' ? '🟡' : '⚫';
+    statusEl.innerHTML = `${dot} ${status.status === 'working' ? 'Working' : status.status === 'break' ? 'On break' : 'Offline'}`;
+    if (status.location) statusEl.innerHTML += ` · 📍 ${status.location === 'office' ? 'Office' : 'Home'}`;
+  } else {
+    statusEl.innerHTML = '⚫ Offline';
+  }
+
+  // Reset chips
+  document.querySelectorAll('.worker-task-filters .chip').forEach(c => c.classList.remove('active'));
+  document.querySelector('.worker-task-filters .chip[data-filter=""]').classList.add('active');
+
+  // Reset quick extra
+  document.getElementById('quickTaskExtra').classList.add('hidden');
+  document.getElementById('quickExtraIcon').textContent = '▼';
+  document.getElementById('quickTaskInput').value = '';
+  document.getElementById('quickPriority').value = 'medium';
+  document.getElementById('quickDeadline').value = '';
+  document.getElementById('quickDesc').value = '';
+
+  renderWorkerTasks();
+
+  // Navigate
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('pageWorker').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('topbarTitle').innerHTML = `👤 <span id="topbarText">${esc(workerName)}</span>`;
+}
+
+function renderWorkerTasks() {
+  if (!currentWorkerId) return;
+  let workerTasks = tasks.filter(t => t.assignedTo === currentWorkerId);
+  if (workerTaskFilter) workerTasks = workerTasks.filter(t => t.status === workerTaskFilter || (workerTaskFilter === 'in-progress' && ['in-progress', 'on-hold', 'needs-info', 'in-review'].includes(t.status)));
+  workerTasks.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+  const list = document.getElementById('workerTaskList');
+  const empty = document.getElementById('workerTaskEmpty');
+
+  if (workerTasks.length === 0) {
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  list.innerHTML = workerTasks.map(t => renderTaskCard(t)).join('');
+}
+
+function filterWorkerTasks(el) {
+  workerTaskFilter = el.dataset.filter;
+  document.querySelectorAll('.worker-task-filters .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderWorkerTasks();
+}
+
+function toggleQuickExtra() {
+  const extra = document.getElementById('quickTaskExtra');
+  const icon = document.getElementById('quickExtraIcon');
+  extra.classList.toggle('hidden');
+  icon.textContent = extra.classList.contains('hidden') ? '▼' : '▲';
+}
+
+async function quickAddTask() {
+  const input = document.getElementById('quickTaskInput');
+  const title = input.value.trim();
+  if (!title) return;
+
+  const data = {
+    title,
+    assignedTo: currentWorkerId,
+    priority: document.getElementById('quickPriority').value || 'medium',
+    deadline: document.getElementById('quickDeadline').value || null,
+    description: document.getElementById('quickDesc').value.trim() || ''
+  };
+
+  try {
+    await API.createTask(data);
+    input.value = '';
+    document.getElementById('quickDesc').value = '';
+    document.getElementById('quickDeadline').value = '';
+    toast('✅ Task created', 'success');
+    loadTasks().then(() => renderWorkerTasks());
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+// ═══ ALL TASKS ═══
+function showAllTasks() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('pageAllTasks').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('topbarTitle').innerHTML = '📋 <span id="topbarText">All Tasks</span>';
+  renderAllTasks();
+}
+
+function renderAllTasks() {
   const statusFilter = document.getElementById('filterStatus').value;
   const priorityFilter = document.getElementById('filterPriority').value;
-  let filtered = tasks;
+  let filtered = tasks.filter(t => t.createdBy === user?.id);
   if (statusFilter) filtered = filtered.filter(t => t.status === statusFilter);
   if (priorityFilter) filtered = filtered.filter(t => t.priority === priorityFilter);
   filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
-  const list = document.getElementById('taskList');
-  const empty = document.getElementById('taskEmpty');
+  const list = document.getElementById('allTaskList');
+  const empty = document.getElementById('allTaskEmpty');
 
   if (filtered.length === 0) {
     list.innerHTML = '';
@@ -649,27 +875,34 @@ function renderTasks() {
     return;
   }
   empty.classList.add('hidden');
+  list.innerHTML = filtered.map(t => renderTaskCard(t)).join('');
+}
 
-  list.innerHTML = filtered.map(t => {
-    const sm = TaskModels.STATUS_META[t.status] || {};
-    const pm = TaskModels.PRIORITY_META[t.priority] || {};
-    const dl = TaskModels.deadlineDisplay(t.deadline);
-    return `
-    <div class="card" data-priority="${t.priority}" onclick="showDetail('${t.id}')">
-      <div class="card-header">
-        <div class="card-title">${esc(t.title)}</div>
-        <span class="status-badge" style="background:${sm.color}20;color:${sm.color}">${sm.icon} ${I18n.t(sm.label)}</span>
-      </div>
-      ${t.description ? `<p style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">${esc(t.description).substring(0, 100)}</p>` : ''}
-      <div class="card-meta">
-        <span class="priority-badge" style="color:${pm.color}">${pm.icon} ${I18n.t(pm.label)}</span>
-        ${t.assignedTo ? `<span>👤 ${esc(t.assignedTo)}</span>` : ''}
-        ${dl ? `<span class="deadline ${dl.cls}">${dl.urgent ? '⚠️ ' : ''}${dl.text}</span>` : ''}
-        <span>${TaskModels.relativeTime(t.updatedAt)}</span>
-      </div>
-      ${t.progress > 0 ? `<div class="progress-bar"><div class="progress-fill" style="width:${t.progress}%;background:${t.progress >= 100 ? 'var(--success)' : 'var(--accent)'}"></div></div>` : ''}
-    </div>`;
-  }).join('');
+// ═══ SHARED TASK CARD RENDERER ═══
+function renderTaskCard(t) {
+  const sm = TaskModels.STATUS_META[t.status] || {};
+  const pm = TaskModels.PRIORITY_META[t.priority] || {};
+  const dl = TaskModels.deadlineDisplay(t.deadline);
+  return `
+  <div class="card" data-priority="${t.priority}" onclick="showDetail('${t.id}')">
+    <div class="card-header">
+      <div class="card-title">${esc(t.title)}</div>
+      <span class="status-badge" style="background:${sm.color}20;color:${sm.color}">${sm.icon} ${I18n.t(sm.label)}</span>
+    </div>
+    ${t.description ? `<p style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">${esc(t.description).substring(0, 100)}</p>` : ''}
+    <div class="card-meta">
+      <span class="priority-badge" style="color:${pm.color}">${pm.icon} ${I18n.t(pm.label)}</span>
+      ${t.assignedTo ? `<span>👤 ${esc(getWorkerName(t.assignedTo))}</span>` : '<span style="color:var(--text-tertiary)">Unassigned</span>'}
+      ${dl ? `<span class="deadline ${dl.cls}">${dl.urgent ? '⚠️ ' : ''}${dl.text}</span>` : ''}
+      <span>${TaskModels.relativeTime(t.updatedAt)}</span>
+    </div>
+    ${t.progress > 0 ? `<div class="progress-bar"><div class="progress-fill" style="width:${t.progress}%;background:${t.progress >= 100 ? 'var(--success)' : 'var(--accent)'}"></div></div>` : ''}
+  </div>`;
+}
+
+function getWorkerName(workerId) {
+  const t = team.find(m => m.workerId === workerId);
+  return t ? t.workerName : workerId;
 }
 
 function updateLocalTask(task) {
@@ -678,45 +911,9 @@ function updateLocalTask(task) {
   else tasks.push(task);
 }
 
-// ═══ CREATE TASK ═══
-function openCreateTask() {
-  document.getElementById('createTaskOverlay').classList.add('open');
-  document.getElementById('createTaskPanel').classList.add('open');
-  document.getElementById('newTaskTitle').focus();
-}
-function closeCreateTask() {
-  document.getElementById('createTaskOverlay').classList.remove('open');
-  document.getElementById('createTaskPanel').classList.remove('open');
-}
-
-async function loadAssigneeOptions() {
-  try {
-    const myTeam = await API.getTeam();
-    const activeTeam = myTeam.filter(t => t.status === 'active');
-    const sel = document.getElementById('newTaskAssignee');
-    sel.innerHTML = '<option value="">— Unassigned —</option>' +
-      activeTeam.map(t => `<option value="${t.workerId}">${esc(t.workerName)}</option>`).join('');
-  } catch {}
-}
-
-async function createTask() {
-  const title = document.getElementById('newTaskTitle').value.trim();
-  if (!title) return toast('Title is required', 'error');
-  try {
-    await API.createTask({
-      title,
-      description: document.getElementById('newTaskDesc').value.trim(),
-      priority: document.getElementById('newTaskPriority').value,
-      deadline: document.getElementById('newTaskDeadline').value || null,
-      assignedTo: document.getElementById('newTaskAssignee').value || null
-    });
-    document.getElementById('newTaskTitle').value = '';
-    document.getElementById('newTaskDesc').value = '';
-    document.getElementById('newTaskDeadline').value = '';
-    closeCreateTask();
-    toast('✅ Task created', 'success');
-    loadTasks();
-  } catch (err) { toast(err.message, 'error'); }
+// ═══ TASKS ═══
+async function loadTasks() {
+  try { tasks = await API.getTasks(); } catch {}
 }
 
 // ═══ TASK DETAIL ═══
@@ -815,7 +1012,7 @@ async function deleteCurrentTask() {
   try {
     await API.deleteTask(currentDetailTask.id);
     closeDetail();
-    loadTasks();
+    loadTasks().then(() => refreshCurrentView());
     toast('Task deleted', 'success');
   } catch (err) { toast(err.message, 'error'); }
 }
@@ -824,46 +1021,20 @@ async function deleteCurrentTask() {
 async function loadTeam() {
   try {
     team = await API.getTeam();
-    renderTeam();
-    loadWorkerSuggestions();
+    renderHome();
   } catch {}
 }
 
 async function loadWorkerSuggestions() {
   try {
     const workers = await API.getWorkers();
-    const activeNames = new Set(team.filter(t => t.status === 'active' || t.status === 'pending').map(t => t.workerName));
+    const knownNames = new Set(team.map(t => t.workerName));
     const dl = document.getElementById('workerSuggestions');
     dl.innerHTML = workers
-      .filter(w => !activeNames.has(w.name))
+      .filter(w => !knownNames.has(w.name))
       .map(w => `<option value="${esc(w.name)}">`)
       .join('');
   } catch {}
-}
-
-function renderTeam() {
-  const list = document.getElementById('teamList');
-  const active = team.filter(t => t.status === 'active');
-  const pending = team.filter(t => t.status === 'pending');
-
-  list.innerHTML = active.map(t => `
-    <div class="card worker-status">
-      <div class="worker-avatar">${t.workerName ? t.workerName[0].toUpperCase() : '?'}</div>
-      <div class="worker-info">
-        <div class="worker-name">${esc(t.workerName)}</div>
-        <div class="worker-detail"><span style="color:var(--text-tertiary)">Since ${new Date(t.acceptedAt || t.createdAt).toLocaleDateString()}</span></div>
-      </div>
-      <button class="btn btn-ghost btn-sm" onclick="removeTeamMember('${t.id}')" style="color:var(--danger)">✕</button>
-    </div>
-  `).join('') + (pending.length ? '<h4 style="font-size:13px;color:var(--text-secondary);margin:12px 0 8px;">Pending</h4>' + pending.map(t => `
-    <div class="card worker-status" style="opacity:0.7;">
-      <div class="worker-avatar">${t.workerName ? t.workerName[0].toUpperCase() : '?'}</div>
-      <div class="worker-info">
-        <div class="worker-name">${esc(t.workerName)}</div>
-        <div class="worker-detail">⏳ Pending</div>
-      </div>
-    </div>
-  `).join('') : '') || '<p style="color:var(--text-tertiary);font-size:13px;padding:16px;" data-i18n="team.empty">No team members yet</p>';
 }
 
 async function sendInvite() {
@@ -872,13 +1043,13 @@ async function sendInvite() {
   try {
     await API.sendInvite(name);
     document.getElementById('inviteNameInput').value = '';
-    toast('Invite sent', 'success');
+    toast('Invite sent!', 'success');
     loadTeam();
   } catch (err) { toast(err.message, 'error'); }
 }
 
 async function removeTeamMember(id) {
-  if (!confirm(I18n.t('common.confirm'))) return;
+  if (!confirm('Remove this team member?')) return;
   try {
     await API.removeTeamMember(id);
     toast('Member removed', 'success');
@@ -890,30 +1061,8 @@ async function removeTeamMember(id) {
 async function loadLiveStatus() {
   try {
     liveStatuses = await API.getTimeStatus();
-    renderLiveStatus();
+    renderHome();
   } catch {}
-}
-
-function renderLiveStatus() {
-  const el = document.getElementById('liveStatus');
-  if (liveStatuses.length === 0) {
-    el.innerHTML = '';
-    return;
-  }
-  el.innerHTML = '<h3 style="font-size:16px;font-weight:600;margin-bottom:12px;">🟢 Live Status</h3>' +
-    liveStatuses.map(s => `
-    <div class="card worker-status">
-      <div class="worker-avatar">${s.userName ? s.userName[0].toUpperCase() : '?'}</div>
-      <div class="worker-info">
-        <div class="worker-name">${esc(s.userName)}</div>
-        <div class="worker-detail">
-          <span class="status-dot ${s.status}"></span>
-          <span>${I18n.t('time.status.' + s.status)}</span>
-          <span>📍 ${s.location === 'office' ? I18n.t('time.office') : I18n.t('time.home')}</span>
-        </div>
-      </div>
-    </div>
-  `).join('');
 }
 
 // ═══ REQUESTS ═══
@@ -928,13 +1077,8 @@ async function loadRequests() {
 function renderRequests() {
   const list = document.getElementById('requestList');
   const empty = document.getElementById('requestEmpty');
-  if (requests.length === 0) {
-    list.innerHTML = '';
-    empty.classList.remove('hidden');
-    return;
-  }
+  if (requests.length === 0) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
-  // Show pending first
   const sorted = [...requests].sort((a, b) => {
     if (a.status === 'pending' && b.status !== 'pending') return -1;
     if (b.status === 'pending' && a.status !== 'pending') return 1;
@@ -963,16 +1107,13 @@ function showReqDetail(reqId) {
   document.getElementById('reqDetailTitle').textContent = currentReqDetail.title;
   document.getElementById('reqDetailDesc').textContent = currentReqDetail.description || '';
   document.getElementById('reqDetailMeta').innerHTML = `
-    <div style="font-size:13px;color:var(--text-secondary);">From: <strong>${esc(currentReqDetail.fromUserName)}</strong> · Type: ${currentReqDetail.type} · ${TaskModels.relativeTime(currentReqDetail.createdAt)}</div>
-  `;
+    <div style="font-size:13px;color:var(--text-secondary);">From: <strong>${esc(currentReqDetail.fromUserName)}</strong> · Type: ${currentReqDetail.type} · ${TaskModels.relativeTime(currentReqDetail.createdAt)}</div>`;
   document.getElementById('reqDetailNotes').innerHTML = (currentReqDetail.notes || []).map(n => `
     <div class="note-item"><div class="note-author">${esc(n.author)}</div><div class="note-text">${esc(n.text)}</div><div class="note-time">${TaskModels.relativeTime(n.createdAt)}</div></div>
   `).join('');
-
   const isPending = currentReqDetail.status === 'pending';
   document.getElementById('reqApproveBtn').classList.toggle('hidden', !isPending);
   document.getElementById('reqDenyBtn').classList.toggle('hidden', !isPending);
-
   document.getElementById('reqDetailOverlay').classList.add('open');
   document.getElementById('reqDetailPanel').classList.add('open');
 }
@@ -1038,9 +1179,9 @@ function renderConvList() {
 async function openChat(userId, userName) {
   currentChatPartner = userId;
   document.getElementById('chatPartnerName').textContent = userName;
+  showPage('Chat');
   document.getElementById('chatListView').classList.add('hidden');
   document.getElementById('chatMsgView').classList.remove('hidden');
-
   try {
     chatMessages = await API.getMessages(userId);
     renderChatMessages();
