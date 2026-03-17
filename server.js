@@ -3917,7 +3917,24 @@ async function checkRecurringTasks() {
 // ═══════════════════════════════════════════════════════════════
 
 async function start() {
+  const dataDir = storage.getDataDir();
+  console.log(`[Startup] DATA_DIR = ${dataDir}`);
+  console.log(`[Startup] DATA_DIR env = ${process.env.DATA_DIR || '(not set, using default ./data)'}`);
+
   await storage.ensureDataDir();
+
+  // Check if data files exist (persistence verification)
+  const dataFiles = ['users.json', 'tasks.json', 'teams.json', 'sessions.json'];
+  for (const f of dataFiles) {
+    const fp = path.join(dataDir, f);
+    try {
+      const stat = fs.statSync(fp);
+      console.log(`[Startup] ${f}: ${stat.size} bytes`);
+    } catch {
+      console.log(`[Startup] ${f}: not found (will be created on first use)`);
+    }
+  }
+
   await loadSessions();
 
   // Run stale task check every 5 minutes
@@ -3933,6 +3950,7 @@ async function start() {
 
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`TaskFlow running on port ${PORT}`);
+    console.log(`  Data:   ${dataDir}`);
     console.log(`  App:    http://localhost:${PORT}/app`);
     console.log(`  Admin:  http://localhost:${PORT}/admin`);
     console.log(`  Sessions loaded: ${sessions.size}`);
