@@ -1649,7 +1649,17 @@ a { color: var(--accent); text-decoration: none; }
   cursor: pointer; transition: background 0.15s;
 }
 .conv-item:hover { background: var(--bg-card); }
+.conv-avatar-wrap { position: relative; flex-shrink: 0; }
 .conv-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background: var(--accent-dim); }
+.conv-avatar.offline { filter: grayscale(0.55) saturate(0.65) brightness(0.9); }
+.conv-status-dot {
+  position: absolute; bottom: 1px; right: 1px; width: 12px; height: 12px;
+  border-radius: 50%; border: 2px solid var(--bg);
+}
+.conv-status-dot.online { background: #22c55e; }
+.conv-status-dot.working { background: #22c55e; }
+.conv-status-dot.break { background: #f59e0b; }
+.conv-status-dot.offline { background: #888; }
 .conv-info { flex: 1; min-width: 0; }
 .conv-name { font-size: 14px; font-weight: 600; }
 .conv-preview { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1670,8 +1680,12 @@ a { color: var(--accent); text-decoration: none; }
   border-bottom: 1px solid var(--border); flex-shrink: 0;
 }
 .chat-header .back-btn { font-size: 18px; }
+.chat-header .conv-avatar-wrap { flex-shrink: 0; }
+.chat-header .conv-avatar { width: 36px; height: 36px; }
+.chat-header .conv-status-dot { width: 10px; height: 10px; }
 .chat-header .chat-name { font-size: 15px; font-weight: 600; flex: 1; }
 .chat-header .chat-role { font-size: 12px; color: var(--text-secondary); }
+.chat-header .chat-status-text { font-size: 11px; color: var(--text-secondary); }
 .chat-messages {
   flex: 1; overflow-y: auto; padding: 16px; display: flex;
   flex-direction: column; gap: 8px;
@@ -1688,8 +1702,11 @@ a { color: var(--accent); text-decoration: none; }
   align-self: flex-start; background: var(--bg-card);
   border: 1px solid var(--border); border-bottom-left-radius: 4px;
 }
-.msg-time { font-size: 10px; opacity: 0.7; margin-top: 4px; }
-.msg-bubble.mine .msg-time { text-align: right; }
+.msg-time { font-size: 10px; opacity: 0.7; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+.msg-bubble.mine .msg-time { justify-content: flex-end; }
+.msg-read-icon { display: inline-flex; align-items: center; flex-shrink: 0; }
+.msg-read-icon svg { width: 14px; height: 14px; }
+.msg-read-icon.read svg { color: #34b7f1; }
 .msg-files { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
 .msg-file-img { max-width: 240px; max-height: 180px; border-radius: 8px; cursor: pointer; display: block; }
 .msg-file-video { max-width: 260px; max-height: 180px; border-radius: 8px; display: block; }
@@ -1701,7 +1718,12 @@ a { color: var(--accent); text-decoration: none; }
 .flow-chat-pending { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 16px 0; }
 .flow-chat-pending .chat-pending-file { display: flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 12px; background: var(--bg-input); border: 1px solid var(--border); font-size: 11px; color: var(--text-secondary); }
 .flow-chat-pending .remove-file { cursor: pointer; font-size: 14px; color: var(--danger); margin-left: 2px; }
-.chat-typing { font-size: 12px; color: var(--text-secondary); padding: 4px 16px; min-height: 20px; }
+.chat-typing { font-size: 12px; color: var(--text-secondary); padding: 4px 16px; min-height: 20px; display: flex; align-items: center; gap: 4px; }
+.typing-dots { display: inline-flex; gap: 3px; align-items: center; }
+.typing-dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--text-secondary); animation: typingBounce 1.4s infinite ease-in-out; }
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-4px); opacity: 1; } }
 .chat-input-bar {
   display: flex; gap: 8px; padding: 12px 16px;
   border-top: 1px solid var(--border); flex-shrink: 0;
@@ -3025,10 +3047,13 @@ a { color: var(--accent); text-decoration: none; }
       <div class="chat-view" id="chatView">
         <div class="chat-header">
           <button class="back-btn" onclick="closeChatView()">←</button>
-          <img class="conv-avatar" id="chatAvatar" src="" alt="" onerror="this.style.display='none'">
+          <div class="conv-avatar-wrap">
+            <img class="conv-avatar" id="chatAvatar" src="" alt="" onerror="this.style.display='none'">
+            <div class="conv-status-dot offline" id="chatStatusDot"></div>
+          </div>
           <div style="flex:1;min-width:0">
             <div class="chat-name" id="chatName"></div>
-            <div class="chat-role" id="chatRole"></div>
+            <div class="chat-status-text" id="chatStatusText"></div>
           </div>
         </div>
         <div class="chat-messages" id="chatMessages"></div>
@@ -3257,6 +3282,7 @@ let currentSubFlow = 'all'; // 'all' | subFlowId
 let timerSession = null;
 let timerInterval = null;
 let typingTimeout = null;
+let typingSendTimeout = null;
 let notifications = [];
 let notificationsPollTimer = null;
 let timeSessions = [];
@@ -6298,8 +6324,19 @@ function renderConversations() {
     const preview = lm ? (lm.from === currentUser.id ? `${I18n.t('common.you')}: ${previewText}` : previewText) : '';
     const time = conv.lastMessage ? relativeTime(conv.lastMessage.createdAt) : '';
 
+    // Get presence for this user
+    const p = presenceData.find(pr => pr.userId === conv.userId) || {};
+    const isOnline = !!p.online;
+    let dotClass = 'offline';
+    if (isOnline && p.status === 'break') dotClass = 'break';
+    else if (isOnline && p.status === 'working') dotClass = 'working';
+    else if (isOnline) dotClass = 'online';
+
     item.innerHTML = `
-      <img class="conv-avatar" src="${esc(conv.userAvatarUrl || '')}" alt="" loading="lazy" onerror="this.style.display='none'">
+      <div class="conv-avatar-wrap">
+        <img class="conv-avatar${!isOnline ? ' offline' : ''}" src="${esc(conv.userAvatarUrl || '')}" alt="" loading="lazy" onerror="this.style.display='none'">
+        <div class="conv-status-dot ${dotClass}"></div>
+      </div>
       <div class="conv-info">
         <div class="conv-name">${esc(conv.userName)}</div>
         <div class="conv-preview">${esc(preview)}</div>
@@ -6334,8 +6371,22 @@ async function openChatView(conv) {
   chatView.classList.add('active');
 
   document.getElementById('chatName').textContent = conv.userName;
-  document.getElementById('chatRole').textContent = conv.userRole || '';
+
+  // Set status in header
+  const p = presenceData.find(pr => pr.userId === conv.userId) || {};
+  const isOnline = !!p.online;
+  let dotClass = 'offline';
+  let statusText = I18n.t('time.status.offline');
+  if (isOnline && p.status === 'break') { dotClass = 'break'; statusText = I18n.t('time.status.break'); }
+  else if (isOnline && p.status === 'working') { dotClass = 'working'; statusText = I18n.t('time.status.working'); }
+  else if (isOnline) { dotClass = 'online'; statusText = I18n.t('time.status.online'); }
+
+  const statusDot = document.getElementById('chatStatusDot');
+  statusDot.className = `conv-status-dot ${dotClass}`;
+  document.getElementById('chatStatusText').textContent = statusText;
+
   const avatarEl = document.getElementById('chatAvatar');
+  avatarEl.className = `conv-avatar${!isOnline ? ' offline' : ''}`;
   if (conv.userAvatarUrl) {
     avatarEl.src = conv.userAvatarUrl;
     avatarEl.style.display = '';
@@ -6365,6 +6416,23 @@ function closeChatView() {
   renderFlowChatPending();
   document.getElementById('chatView').classList.remove('active');
   document.getElementById('convList').style.display = '';
+}
+
+function updateChatHeaderStatus() {
+  if (!currentChatUserId) return;
+  const p = presenceData.find(pr => pr.userId === currentChatUserId) || {};
+  const isOnline = !!p.online;
+  let dotClass = 'offline';
+  let statusText = I18n.t('time.status.offline');
+  if (isOnline && p.status === 'break') { dotClass = 'break'; statusText = I18n.t('time.status.break'); }
+  else if (isOnline && p.status === 'working') { dotClass = 'working'; statusText = I18n.t('time.status.working'); }
+  else if (isOnline) { dotClass = 'online'; statusText = I18n.t('time.status.online'); }
+  const statusDot = document.getElementById('chatStatusDot');
+  if (statusDot) statusDot.className = `conv-status-dot ${dotClass}`;
+  const statusTextEl = document.getElementById('chatStatusText');
+  if (statusTextEl) statusTextEl.textContent = statusText;
+  const avatarEl = document.getElementById('chatAvatar');
+  if (avatarEl) avatarEl.className = `conv-avatar${!isOnline ? ' offline' : ''}`;
 }
 
 function chatFileUrl(storedName) {
@@ -6401,10 +6469,14 @@ function renderChatMessages() {
     }
 
     const textHtml = msg.text ? `<div>${esc(msg.text)}</div>` : '';
+    const readIcon = isMine ? `<span class="msg-read-icon${msg.read ? ' read' : ''}">${msg.read
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12l5 5L17 6"/><path d="M7 12l5 5L23 6"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>'
+    }</span>` : '';
     bubble.innerHTML = `
       ${filesHtml}
       ${textHtml}
-      <div class="msg-time">${new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+      <div class="msg-time">${new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}${readIcon}</div>
     `;
     container.appendChild(bubble);
   }
@@ -6456,8 +6528,9 @@ async function sendFlowChatMessage() {
 
 document.getElementById('chatInput').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFlowChatMessage(); }
-  if (currentChatUserId && currentFlow) {
+  if (currentChatUserId && currentFlow && !typingSendTimeout) {
     WS.send({ type: 'chat:typing', to: currentChatUserId, flowId: currentFlow.id });
+    typingSendTimeout = setTimeout(() => { typingSendTimeout = null; }, 2000);
   }
 });
 
@@ -8659,14 +8732,25 @@ function setupWSListeners() {
   WS.on('chat:typing', (msg) => {
     if (currentFlow && msg.flowId === currentFlow.id && currentChatUserId === msg.from) {
       const el = document.getElementById('chatTyping');
-      el.textContent = I18n.t('chat.typing');
+      el.innerHTML = `${I18n.t('chat.typing')} <span class="typing-dots"><span></span><span></span><span></span></span>`;
       clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => { el.textContent = ''; }, 3000);
+      typingTimeout = setTimeout(() => { el.innerHTML = ''; }, 3000);
     }
   });
 
   WS.on('chat:read', (msg) => {
-    // Could update read receipts UI
+    // Update read receipts — the other user read our messages
+    if (currentFlow && msg.flowId === currentFlow.id && currentChatUserId === msg.readBy) {
+      let changed = false;
+      for (const m of chatMessages) {
+        if (m.from === currentUser.id && !m.read) {
+          m.read = true;
+          m.readAt = msg.readAt;
+          changed = true;
+        }
+      }
+      if (changed) renderChatMessages();
+    }
   });
 
   WS.on('flow:memberJoined', async (msg) => {
@@ -8781,14 +8865,16 @@ function setupWSListeners() {
     }
   });
 
-  WS.on('presence:online', () => { renderPeople(); });
-  WS.on('presence:offline', () => { renderPeople(); });
+  WS.on('presence:online', async () => { await renderPeople(); renderConversations(); updateChatHeaderStatus(); });
+  WS.on('presence:offline', async () => { await renderPeople(); renderConversations(); updateChatHeaderStatus(); });
 
-  WS.on('time:status', (msg) => {
+  WS.on('time:status', async (msg) => {
     if (!currentFlow) return;
     // Ignore updates for users outside the active flow.
     if (msg.userId && !members.some(m => m.userId === msg.userId)) return;
-    renderPeople();
+    await renderPeople();
+    renderConversations();
+    updateChatHeaderStatus();
     renderTimeTab();
     // Keep local timer bar in sync too (multi-tab / remote updates).
     if (currentUser?.id && msg.userId === currentUser.id) {
