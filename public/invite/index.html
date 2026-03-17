@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFlow — Join Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --bg: #0B1120; --bg-secondary: #151D2E;
+  --text: #F1F5F9; --text-secondary: #94A3B8; --text-tertiary: #64748B;
+  --border: #1E293B;
+  --accent: #818CF8; --accent-hover: #6366F1;
+  --card-bg: rgba(21,29,46,0.6);
+  --red: #EF4444; --green: #10B981;
+  --radius: 12px; --radius-sm: 8px; --radius-xs: 6px;
+}
+[data-theme="light"] {
+  --bg: #FAFBFF; --bg-secondary: #FFFFFF;
+  --text: #0B1120; --text-secondary: #64748B; --text-tertiary: #94A3B8;
+  --border: #E4E8F0;
+  --accent: #6366F1; --accent-hover: #4F46E5;
+  --card-bg: rgba(255,255,255,0.6);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font); background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 24px; transition: background 0.3s, color 0.3s;
+}
+.container {
+  width: 100%; max-width: 380px;
+}
+.brand {
+  text-align: center; margin-bottom: 24px;
+  font-size: 20px; font-weight: 800; letter-spacing: -0.5px;
+}
+.brand span { color: var(--accent); }
+.card {
+  background: var(--card-bg); backdrop-filter: blur(20px);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 32px; text-align: center;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+}
+.flow-preview {
+  margin-bottom: 16px;
+}
+.flow-preview-default {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.flow-preview-default .flow-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: rgba(129,140,248,0.12); display: flex; align-items: center; justify-content: center;
+  color: var(--accent); margin-bottom: 4px;
+}
+.flow-preview-default .flow-name {
+  font-size: 20px; font-weight: 700;
+}
+.flow-preview-default .flow-meta {
+  color: var(--text-secondary); font-size: 13px;
+}
+/* Preset avatar layout */
+.flow-preview-preset {
+  display: flex; align-items: center; gap: 14px;
+  background: linear-gradient(135deg, rgba(129,140,248,0.08), rgba(99,102,241,0.04));
+  border: 1px solid rgba(129,140,248,0.15);
+  border-radius: var(--radius-sm);
+  padding: 14px; text-align: left;
+}
+.flow-preview-preset .preset-avatar {
+  width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid var(--accent); background: var(--bg-secondary);
+  box-shadow: 0 0 12px rgba(129,140,248,0.2);
+}
+.flow-preview-preset .preset-info { flex: 1; min-width: 0; }
+.flow-preview-preset .preset-flow {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text-secondary); margin-bottom: 2px;
+}
+.flow-preview-preset .preset-flow svg { color: var(--accent); flex-shrink: 0; }
+.flow-preview-preset .preset-label {
+  font-size: 15px; font-weight: 700; margin-bottom: 1px;
+}
+.flow-preview-preset .preset-sub {
+  font-size: 11px; color: var(--text-tertiary);
+}
+.invite-label {
+  color: var(--text-secondary); font-size: 13px; margin-bottom: 16px;
+}
+
+/* Tabs */
+.tab-row {
+  display: flex; gap: 4px; margin-bottom: 20px;
+  background: var(--bg); border-radius: var(--radius-xs); padding: 3px;
+}
+.tab-btn {
+  flex: 1; padding: 8px; border-radius: 5px;
+  background: none; color: var(--text-secondary);
+  font-size: 12px; font-weight: 600; font-family: var(--font);
+  transition: all 0.15s; border: none; cursor: pointer;
+}
+.tab-btn.active {
+  background: var(--accent); color: #fff;
+}
+
+/* Form */
+.form-group { margin-bottom: 14px; text-align: left; }
+.form-group label {
+  display: block; font-size: 11px; font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.form-group input {
+  width: 100%; padding: 10px 12px; border-radius: var(--radius-xs);
+  border: 1px solid var(--border); background: var(--bg);
+  color: var(--text); font-size: 14px; font-family: var(--font);
+  transition: border-color 0.15s; outline: none;
+}
+.form-group input:focus {
+  border-color: var(--accent);
+}
+.btn-primary {
+  width: 100%; padding: 12px; border-radius: var(--radius-sm);
+  background: var(--accent); color: #fff;
+  font-size: 14px; font-weight: 600; font-family: var(--font);
+  border: none; cursor: pointer; transition: all 0.15s;
+  margin-top: 8px;
+}
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.error-msg {
+  color: var(--red); font-size: 13px; margin-top: 12px; min-height: 20px;
+}
+.success-msg {
+  color: var(--green); font-size: 13px; margin-top: 12px;
+}
+
+/* Avatar section */
+.avatar-section {
+  margin-bottom: 16px; text-align: center;
+}
+.avatar-section label {
+  display: block; font-size: 12px; font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+  text-align: left;
+}
+.avatar-preview {
+  width: 96px; height: 96px;
+  border-radius: 50%; border: 3px solid var(--border);
+  margin: 0 auto 12px; overflow: hidden;
+  background: var(--bg); display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.2s;
+}
+.avatar-preview:hover { border-color: var(--accent); }
+.avatar-preview img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.avatar-actions {
+  display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+}
+.btn-avatar {
+  padding: 8px 14px; border-radius: 6px;
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); font-size: 12px; font-weight: 600;
+  font-family: var(--font); cursor: pointer; transition: all 0.15s;
+}
+.btn-avatar:hover { border-color: var(--accent); color: var(--accent); }
+.btn-avatar.active { border-color: var(--accent); background: rgba(99,102,241,0.1); color: var(--accent); }
+
+/* Avatar builder (simplified) */
+.avatar-builder {
+  display: none; margin-top: 16px; text-align: left;
+}
+.avatar-builder.visible { display: block; }
+.builder-row {
+  margin-bottom: 12px;
+}
+.builder-row h4 {
+  font-size: 11px; font-weight: 600; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+}
+.color-grid {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.color-swatch {
+  width: 28px; height: 28px; border-radius: 50%;
+  cursor: pointer; border: 2px solid transparent;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.color-swatch.selected { border-color: var(--accent); transform: scale(1.15); }
+.variant-scroll {
+  display: flex; gap: 6px; overflow-x: auto; padding: 4px 0;
+  scrollbar-width: thin;
+}
+.variant-card {
+  flex: 0 0 52px; height: 52px; border-radius: 8px;
+  border: 2px solid var(--border); cursor: pointer;
+  overflow: hidden; background: var(--bg);
+  transition: border-color 0.15s;
+}
+.variant-card.selected { border-color: var(--accent); }
+.variant-card img { width: 100%; height: 100%; object-fit: cover; }
+.variant-card.none-option {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: var(--text-tertiary); font-weight: 600;
+}
+.btn-randomize {
+  padding: 8px 16px; border-radius: 6px;
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--accent); font-size: 12px; font-weight: 600;
+  font-family: var(--font); cursor: pointer; margin-bottom: 12px;
+}
+
+/* Loading */
+.loading { text-align: center; padding: 60px 0; color: var(--text-secondary); }
+.loading-spinner {
+  width: 32px; height: 32px; border: 3px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.8s linear infinite; margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Invalid state */
+.invalid-code { text-align: center; padding: 40px 0; }
+.invalid-code h2 { margin-bottom: 8px; }
+.invalid-code p { color: var(--text-secondary); margin-bottom: 20px; }
+.btn-link {
+  color: var(--accent); background: none; border: none;
+  font-size: 14px; font-weight: 600; font-family: var(--font);
+  cursor: pointer; text-decoration: underline;
+}
+
+/* Theme toggle */
+.theme-toggle {
+  position: fixed; top: 16px; right: 16px;
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px; cursor: pointer;
+  color: var(--text-secondary); backdrop-filter: blur(10px);
+}
+</style>
+</head>
+<body>
+<button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+</button>
+
+<div class="container">
+  <div class="brand">Task<span>Flow</span></div>
+  <div class="card" id="mainCard">
+    <div class="loading" id="loadingState">
+      <div class="loading-spinner"></div>
+      <div>Loading flow info...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══ THEME ═══
+const saved = localStorage.getItem('taskflow_theme') || 'dark';
+document.documentElement.setAttribute('data-theme', saved);
+function toggleTheme() {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('taskflow_theme', next);
+}
+
+// ═══ STATE ═══
+const params = new URLSearchParams(window.location.search);
+const inviteCode = params.get('code') || '';
+const presetAvatarParam = params.get('avatar') || '';
+let flowInfo = null;
+let activeTab = 'register'; // 'register' or 'login'
+let avatarMode = 'none'; // 'none', 'builder', 'upload'
+let hasPresetAvatar = false;
+
+// Avatar builder config
+let avatarConfig = {
+  hair: 'short01', hairColor: '562306', eyes: 'variant01',
+  eyebrows: 'variant03', mouth: 'variant15', skinColor: 'f2d3b1',
+  earrings: null, glasses: null, features: null, backgroundColor: 'b6e3f4'
+};
+let uploadedFile = null;
+
+// DiceBear options
+const SKIN_COLORS = ['f2d3b1','ecad80','9e5622','763900'];
+const HAIR_COLORS = ['0e0e0e','562306','6a4e35','796a45','ab2a18','ac6511','cb6820','b9a05f','e5d7a3','afafaf','dba3be','592454','3eac2c','85c2c6'];
+const BG_COLORS = ['b6e3f4','c0aede','d1d4f9','ffd5dc','ffdfbf','transparent'];
+const HAIR_STYLES = [
+  ...Array.from({length:26}, (_,i) => `long${String(i+1).padStart(2,'0')}`),
+  ...Array.from({length:19}, (_,i) => `short${String(i+1).padStart(2,'0')}`)
+];
+const EYES = Array.from({length:26}, (_,i) => `variant${String(i+1).padStart(2,'0')}`);
+const EYEBROWS = Array.from({length:15}, (_,i) => `variant${String(i+1).padStart(2,'0')}`);
+const MOUTHS = Array.from({length:30}, (_,i) => `variant${String(i+1).padStart(2,'0')}`);
+const GLASSES = Array.from({length:5}, (_,i) => `variant${String(i+1).padStart(2,'0')}`);
+const EARRINGS = Array.from({length:6}, (_,i) => `variant${String(i+1).padStart(2,'0')}`);
+const FEATURES = ['birthmark','blush','freckles','mustache'];
+
+function buildUrl(config, overrides = {}) {
+  const c = { ...config, ...overrides };
+  const p = new URLSearchParams();
+  if (c.skinColor) p.set('skinColor', c.skinColor);
+  if (c.hair) { p.set('hair', c.hair); p.set('hairProbability', '100'); }
+  if (c.hairColor) p.set('hairColor', c.hairColor);
+  if (c.eyes) p.set('eyes', c.eyes);
+  if (c.eyebrows) p.set('eyebrows', c.eyebrows);
+  if (c.mouth) p.set('mouth', c.mouth);
+  if (c.earrings) { p.set('earrings', c.earrings); p.set('earringsProbability', '100'); }
+  else p.set('earringsProbability', '0');
+  if (c.glasses) { p.set('glasses', c.glasses); p.set('glassesProbability', '100'); }
+  else p.set('glassesProbability', '0');
+  if (c.features) { p.set('features', c.features); p.set('featuresProbability', '100'); }
+  else p.set('featuresProbability', '0');
+  if (c.backgroundColor && c.backgroundColor !== 'transparent') p.set('backgroundColor', c.backgroundColor);
+  p.set('randomizeIds', 'true');
+  return `https://api.dicebear.com/9.x/adventurer/svg?${p.toString()}`;
+}
+
+function buildPreviewUrl(category, value) {
+  const override = {};
+  override[category] = value;
+  return buildUrl(avatarConfig, override);
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+// ═══ FLOW ICONS ═══
+const ICON_PATHS = {
+  building:  '<path d="M3 21h18M5 21V5a1 1 0 011-1h12a1 1 0 011 1v16"/><line x1="9" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="10" y2="16"/><line x1="14" y1="16" x2="15" y2="16"/>',
+  rocket:    '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/>',
+  briefcase: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>',
+  target:    '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  wrench:    '<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>',
+  package:   '<line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>',
+  palette:   '<circle cx="13.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="17.5" cy="10.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="8.5" cy="7.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="6.5" cy="12" r="1.5" fill="currentColor" stroke="none"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.04-.23-.29-.38-.63-.38-1.01 0-.83.67-1.5 1.5-1.5H16c3.31 0 6-2.69 6-6 0-5.17-4.36-9-10-9z"/>',
+  flask:     '<path d="M10 2v7.31l-6 10.37A2 2 0 005.73 22h12.54A2 2 0 0020 19.68L14 9.31V2"/><line x1="8.5" y1="2" x2="15.5" y2="2"/><line x1="7" y1="16" x2="17" y2="16"/>',
+  home:      '<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  zap:       '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor" stroke="none"/>',
+  globe:     '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2z"/>',
+  chart:     '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  gamepad:   '<line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><circle cx="15" cy="13" r="0.5" fill="currentColor"/><circle cx="18" cy="11" r="0.5" fill="currentColor"/><rect x="2" y="6" width="20" height="12" rx="2"/>',
+  'music-note':'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  book:      '<path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>',
+  beaker:    '<path d="M4.5 3h15"/><path d="M6 3v11a6 6 0 006 6 6 6 0 006-6V3"/><line x1="6" y1="14" x2="18" y2="14"/>',
+  bulb:      '<path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z"/>',
+  flame:     '<path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.07-2.14 0-5.5 2-6.5.54 2.47 2 4.87 4 6 2.5 1.5 3 3.5 3 5.5a6 6 0 01-12 0c0-1 .5-1.5.5-1.5z"/>',
+  star:      '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  trophy:    '<path d="M6 9H3V5h3M18 9h3V5h-3M6 5h12v5a6 6 0 01-12 0z"/><path d="M9 19h6"/><path d="M12 15v4"/>',
+  user:      '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  upload:    '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+  download:  '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+};
+function flowIcon(name, size = 20) {
+  const p = ICON_PATHS[name];
+  if (!p) return esc(name);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+}
+
+// ═══ INIT ═══
+async function init() {
+  // Parse preset avatar from URL
+  if (presetAvatarParam) {
+    try {
+      const decoded = JSON.parse(atob(presetAvatarParam));
+      if (decoded && typeof decoded === 'object' && decoded.hair) {
+        avatarConfig = decoded;
+        hasPresetAvatar = true;
+        // avatarMode stays 'none' — builder won't auto-open, but avatar will be sent on register
+      }
+    } catch { /* invalid avatar param, ignore */ }
+  }
+
+  if (!inviteCode) {
+    showInvalid();
+    return;
+  }
+  try {
+    const res = await fetch(`/api/invite/${encodeURIComponent(inviteCode)}`);
+    if (!res.ok) {
+      showInvalid();
+      return;
+    }
+    flowInfo = await res.json();
+    renderMain();
+  } catch {
+    showInvalid();
+  }
+}
+
+function showInvalid() {
+  document.getElementById('mainCard').innerHTML = `
+    <div class="invalid-code">
+      <h2>Invalid Invite Link</h2>
+      <p>This invite code is expired or doesn't exist.</p>
+      <a href="/app/" class="btn-link">Go to TaskFlow</a>
+    </div>
+  `;
+}
+
+// ═══ RENDER ═══
+function renderMain() {
+  if (!hasPresetAvatar) randomizeAvatar();
+  const card = document.getElementById('mainCard');
+  card.innerHTML = `
+    ${hasPresetAvatar && activeTab === 'register' ? `
+    <div class="flow-preview flow-preview-preset">
+      <img class="preset-avatar" src="${buildUrl(avatarConfig)}" alt="Avatar">
+      <div class="preset-info">
+        <div class="preset-flow">${flowIcon(flowInfo.icon, 14)} ${esc(flowInfo.name)} · ${flowInfo.memberCount} member${flowInfo.memberCount !== 1 ? 's' : ''}</div>
+        <div class="preset-label">Your new look</div>
+        <div class="preset-sub">Prepared by the person who invited you</div>
+      </div>
+    </div>
+    <div class="invite-label">Just pick a username & password to join</div>
+    ` : `
+    <div class="flow-preview flow-preview-default">
+      <div class="flow-icon">${flowIcon(flowInfo.icon, 24)}</div>
+      <div class="flow-name">${esc(flowInfo.name)}</div>
+      <div class="flow-meta">${flowInfo.memberCount} member${flowInfo.memberCount !== 1 ? 's' : ''}</div>
+    </div>
+    <div class="invite-label">${activeTab === 'login' ? 'Log in to join this flow' : 'You\'ve been invited to join this flow'}</div>
+    `}
+    <div class="tab-row">
+      <button class="tab-btn ${activeTab === 'register' ? 'active' : ''}" onclick="switchTab('register')">Create Account</button>
+      <button class="tab-btn ${activeTab === 'login' ? 'active' : ''}" onclick="switchTab('login')">I Have an Account</button>
+    </div>
+    <div id="formArea"></div>
+  `;
+  renderForm();
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  renderMain();
+}
+
+function renderForm() {
+  const area = document.getElementById('formArea');
+  if (activeTab === 'login') {
+    area.innerHTML = `
+      <div class="form-group">
+        <label>Username</label>
+        <input id="loginName" type="text" placeholder="Your username" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input id="loginPass" type="password" placeholder="Your password" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" onclick="doLogin()" id="loginBtn">Join Flow</button>
+      <div class="error-msg" id="loginError"></div>
+    `;
+    document.getElementById('loginName').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  } else {
+    area.innerHTML = `
+      <div class="form-group">
+        <label>Username</label>
+        <input id="regName" type="text" placeholder="Choose a username" maxlength="30" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input id="regPass" type="password" placeholder="At least 4 characters" autocomplete="new-password">
+      </div>
+      <div class="avatar-section">
+        <label>${hasPresetAvatar ? 'Change Avatar' : 'Profile Picture (optional)'}</label>
+        <div class="avatar-preview" id="avatarPreview">
+          <img id="avatarImg" src="${buildUrl(avatarConfig)}" alt="Avatar">
+        </div>
+        <div class="avatar-actions">
+          <button class="btn-avatar ${avatarMode === 'builder' ? 'active' : ''}" onclick="setAvatarMode('builder')">${flowIcon('palette', 14)} ${hasPresetAvatar ? 'Customize' : 'Create Avatar'}</button>
+          <button class="btn-avatar ${avatarMode === 'upload' ? 'active' : ''}" onclick="setAvatarMode('upload')">${flowIcon('upload', 14)} Upload Photo</button>
+          <button class="btn-avatar" onclick="document.getElementById('avatarJsonFile').click()">${flowIcon('download', 14)} Import JSON</button>
+        </div>
+        <input type="file" id="avatarFile" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+        <input type="file" id="avatarJsonFile" accept=".json,application/json" style="display:none" onchange="handleJsonImport(this)">
+      </div>
+      <div class="avatar-builder ${avatarMode === 'builder' ? 'visible' : ''}" id="avatarBuilder"></div>
+      <button class="btn-primary" onclick="doRegister()" id="regBtn">Create Account & Join</button>
+      <div class="error-msg" id="regError"></div>
+    `;
+    if (avatarMode === 'builder') renderAvatarBuilder();
+    document.getElementById('regName').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+    document.getElementById('regPass').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+  }
+}
+
+// ═══ AVATAR ═══
+function handleJsonImport(input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const cfg = data.avatarConfig || data;
+      if (cfg && typeof cfg === 'object' && cfg.hair) {
+        avatarConfig = cfg;
+        avatarMode = 'builder';
+        renderForm();
+      }
+    } catch { /* invalid file */ }
+    input.value = '';
+  };
+  reader.readAsText(input.files[0]);
+}
+
+function setAvatarMode(mode) {
+  avatarMode = avatarMode === mode ? 'none' : mode;
+  if (mode === 'upload' && avatarMode === 'upload') {
+    document.getElementById('avatarFile').click();
+  }
+  renderForm();
+}
+
+function handleFileSelect(input) {
+  if (input.files && input.files[0]) {
+    uploadedFile = input.files[0];
+    avatarMode = 'upload';
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.getElementById('avatarImg');
+      if (img) img.src = e.target.result;
+    };
+    reader.readAsDataURL(uploadedFile);
+    // Update button states
+    document.querySelectorAll('.btn-avatar').forEach((b, i) => {
+      b.classList.toggle('active', i === 1);
+    });
+    document.getElementById('avatarBuilder').classList.remove('visible');
+  }
+}
+
+function randomizeAvatar() {
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  avatarConfig.hair = pick(HAIR_STYLES);
+  avatarConfig.hairColor = pick(HAIR_COLORS);
+  avatarConfig.eyes = pick(EYES);
+  avatarConfig.eyebrows = pick(EYEBROWS);
+  avatarConfig.mouth = pick(MOUTHS);
+  avatarConfig.skinColor = pick(SKIN_COLORS);
+  avatarConfig.earrings = Math.random() > 0.6 ? pick(EARRINGS) : null;
+  avatarConfig.glasses = Math.random() > 0.7 ? pick(GLASSES) : null;
+  avatarConfig.features = Math.random() > 0.5 ? pick(FEATURES) : null;
+  avatarConfig.backgroundColor = pick(BG_COLORS);
+  updateAvatarPreview();
+}
+
+function updateAvatarPreview() {
+  const img = document.getElementById('avatarImg');
+  if (img && avatarMode !== 'upload') img.src = buildUrl(avatarConfig);
+}
+
+function renderAvatarBuilder() {
+  const builder = document.getElementById('avatarBuilder');
+  if (!builder) return;
+  builder.innerHTML = `
+    <button class="btn-randomize" onclick="randomizeAvatar(); renderAvatarBuilder();">🎲 Randomize</button>
+    <div class="builder-row"><h4>Skin Color</h4><div class="color-grid" id="bSkin"></div></div>
+    <div class="builder-row"><h4>Hair Style</h4><div class="variant-scroll" id="bHair"></div></div>
+    <div class="builder-row"><h4>Hair Color</h4><div class="color-grid" id="bHairColor"></div></div>
+    <div class="builder-row"><h4>Eyes</h4><div class="variant-scroll" id="bEyes"></div></div>
+    <div class="builder-row"><h4>Mouth</h4><div class="variant-scroll" id="bMouth"></div></div>
+    <div class="builder-row"><h4>Eyebrows</h4><div class="variant-scroll" id="bEyebrows"></div></div>
+    <div class="builder-row"><h4>Glasses</h4><div class="variant-scroll" id="bGlasses"></div></div>
+    <div class="builder-row"><h4>Earrings</h4><div class="variant-scroll" id="bEarrings"></div></div>
+    <div class="builder-row"><h4>Features</h4><div class="variant-scroll" id="bFeatures"></div></div>
+    <div class="builder-row"><h4>Background</h4><div class="color-grid" id="bBg"></div></div>
+  `;
+  renderColorGrid('bSkin', SKIN_COLORS, 'skinColor');
+  renderColorGrid('bHairColor', HAIR_COLORS, 'hairColor');
+  renderColorGrid('bBg', BG_COLORS, 'backgroundColor');
+  renderVariantGrid('bHair', HAIR_STYLES, 'hair');
+  renderVariantGrid('bEyes', EYES, 'eyes');
+  renderVariantGrid('bMouth', MOUTHS, 'mouth');
+  renderVariantGrid('bEyebrows', EYEBROWS, 'eyebrows');
+  renderVariantGrid('bGlasses', GLASSES, 'glasses', true);
+  renderVariantGrid('bEarrings', EARRINGS, 'earrings', true);
+  renderVariantGrid('bFeatures', FEATURES, 'features', true);
+}
+
+function renderColorGrid(id, colors, category) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = '';
+  colors.forEach(color => {
+    const swatch = document.createElement('div');
+    swatch.className = 'color-swatch' + (color === avatarConfig[category] ? ' selected' : '');
+    if (color === 'transparent') {
+      swatch.style.background = 'repeating-conic-gradient(#808080 0% 25%, #fff 0% 50%) 50% / 14px 14px';
+    } else {
+      swatch.style.background = '#' + color;
+    }
+    swatch.onclick = () => {
+      avatarConfig[category] = color;
+      updateAvatarPreview();
+      el.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      swatch.classList.add('selected');
+    };
+    el.appendChild(swatch);
+  });
+}
+
+function renderVariantGrid(id, variants, category, allowNone = false) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = '';
+  if (allowNone) {
+    const none = document.createElement('div');
+    none.className = 'variant-card none-option' + (avatarConfig[category] === null ? ' selected' : '');
+    none.textContent = 'None';
+    none.onclick = () => {
+      avatarConfig[category] = null;
+      updateAvatarPreview();
+      el.querySelectorAll('.variant-card').forEach(c => c.classList.remove('selected'));
+      none.classList.add('selected');
+    };
+    el.appendChild(none);
+  }
+  variants.forEach(v => {
+    const card = document.createElement('div');
+    card.className = 'variant-card' + (v === avatarConfig[category] ? ' selected' : '');
+    const img = document.createElement('img');
+    img.loading = 'lazy';
+    img.alt = v;
+    img.src = buildPreviewUrl(category, v);
+    card.appendChild(img);
+    card.onclick = () => {
+      avatarConfig[category] = v;
+      updateAvatarPreview();
+      el.querySelectorAll('.variant-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    };
+    el.appendChild(card);
+  });
+}
+
+// ═══ AUTH ACTIONS ═══
+async function doRegister() {
+  const btn = document.getElementById('regBtn');
+  const errEl = document.getElementById('regError');
+  const name = document.getElementById('regName').value.trim();
+  const password = document.getElementById('regPass').value;
+
+  if (!name || !password) { errEl.textContent = 'Please fill in all fields'; return; }
+  if (name.length < 2) { errEl.textContent = 'Username must be at least 2 characters'; return; }
+  if (password.length < 4) { errEl.textContent = 'Password must be at least 4 characters'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Creating account...';
+  errEl.textContent = '';
+
+  try {
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('password', password);
+
+    if (avatarMode === 'upload' && uploadedFile) {
+      formData.append('avatar', uploadedFile);
+    } else if (avatarMode === 'builder' || (hasPresetAvatar && avatarMode !== 'upload')) {
+      formData.append('avatarConfig', JSON.stringify(avatarConfig));
+    }
+
+    const res = await fetch(`/api/invite/${encodeURIComponent(inviteCode)}/register`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Registration failed';
+      btn.disabled = false;
+      btn.textContent = 'Create Account & Join';
+      return;
+    }
+
+    // Save token and redirect
+    localStorage.setItem('taskflow_token', data.token);
+    errEl.className = 'success-msg';
+    errEl.textContent = 'Account created! Redirecting...';
+    setTimeout(() => { window.location.href = '/app/'; }, 800);
+  } catch {
+    errEl.textContent = 'Network error. Please try again.';
+    btn.disabled = false;
+    btn.textContent = 'Create Account & Join';
+  }
+}
+
+async function doLogin() {
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+  const name = document.getElementById('loginName').value.trim();
+  const password = document.getElementById('loginPass').value;
+
+  if (!name || !password) { errEl.textContent = 'Please fill in all fields'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Joining...';
+  errEl.textContent = '';
+
+  try {
+    const res = await fetch(`/api/invite/${encodeURIComponent(inviteCode)}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Login failed';
+      btn.disabled = false;
+      btn.textContent = 'Join Flow';
+      return;
+    }
+
+    localStorage.setItem('taskflow_token', data.token);
+    errEl.className = 'success-msg';
+    errEl.textContent = data.alreadyMember ? 'Already a member! Redirecting...' : 'Joined! Redirecting...';
+    setTimeout(() => { window.location.href = '/app/'; }, 800);
+  } catch {
+    errEl.textContent = 'Network error. Please try again.';
+    btn.disabled = false;
+    btn.textContent = 'Join Flow';
+  }
+}
+
+// ═══ START ═══
+init();
+</script>
+</body>
+</html>

@@ -122,7 +122,8 @@ tr:hover td { background: var(--bg-hover); }
 .hidden { display: none !important; }
 .section { display: none; }
 .section.active { display: block; }
-</style>
+  .icon { display: inline-block; vertical-align: middle; flex-shrink: 0; }
+  </style>
 </head>
 <body>
 
@@ -146,26 +147,26 @@ tr:hover td { background: var(--bg-hover); }
 <div id="appLayout" class="app-layout hidden">
   <!-- Sidebar -->
   <aside class="sidebar">
-    <div class="sidebar-brand">⚙️ <span>Admin</span></div>
+    <div class="sidebar-brand"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> <span>Admin</span></div>
     <nav class="sidebar-nav">
-      <button class="sidebar-item active" onclick="showSection('users')" data-section="users">👤 <span data-i18n="admin.users">Users</span></button>
-      <button class="sidebar-item" onclick="showSection('tasks')" data-section="tasks">📋 <span data-i18n="admin.tasks">Tasks</span></button>
+      <button class="sidebar-item active" onclick="showSection('users')" data-section="users"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> <span data-i18n="admin.users">Users</span></button>
+      <button class="sidebar-item" onclick="showSection('tasks')" data-section="tasks"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> <span data-i18n="admin.tasks">Tasks</span></button>
       <button class="sidebar-item" onclick="showSection('teams')" data-section="teams">🤝 <span data-i18n="admin.teams">Teams</span></button>
-      <button class="sidebar-item" onclick="showSection('timelog')" data-section="timelog">⏱️ <span data-i18n="admin.timelog">Time Log</span></button>
+      <button class="sidebar-item" onclick="showSection('timelog')" data-section="timelog"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> <span data-i18n="admin.timelog">Time Log</span></button>
       <button class="sidebar-item" onclick="showSection('data')" data-section="data">💾 <span data-i18n="admin.export">Data</span></button>
-      <button class="sidebar-item" onclick="showSection('settings')" data-section="settings">⚙️ <span data-i18n="admin.settings">Settings</span></button>
+      <button class="sidebar-item" onclick="showSection('settings')" data-section="settings"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> <span data-i18n="admin.settings">Settings</span></button>
       <button class="sidebar-item" onclick="showSection('health')" data-section="health">💚 <span>Health</span></button>
     </nav>
     <div class="sidebar-footer">
       <select id="themeSwitcher" onchange="toggleTheme(this.value)" class="btn-sm" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-xs);padding:4px 8px;color:var(--text);">
-        <option value="light">☀️</option>
-        <option value="dark">🌙</option>
+        <option value="light"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg></option>
+        <option value="dark"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></option>
       </select>
       <select id="langSwitcher" onchange="I18n.setLang(this.value)" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-xs);padding:4px 8px;color:var(--text);">
         <option value="en">EN</option>
         <option value="de">DE</option>
       </select>
-      <button class="btn-icon" onclick="adminLogout()" title="Logout">🚪</button>
+      <button class="btn-icon" onclick="adminLogout()" title="Logout"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></button>
     </div>
   </aside>
 
@@ -234,11 +235,11 @@ tr:hover td { background: var(--bg-hover); }
           <div class="stat-label" data-i18n="admin.backup">Full Backup</div>
         </div>
         <div class="card stat-card" style="cursor:pointer" onclick="downloadFile('users.json')">
-          <div class="stat-value">👤</div>
+          <div class="stat-value"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
           <div class="stat-label">users.json</div>
         </div>
         <div class="card stat-card" style="cursor:pointer" onclick="downloadFile('tasks.json')">
-          <div class="stat-value">📋</div>
+          <div class="stat-value"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
           <div class="stat-label">tasks.json</div>
         </div>
         <div class="card stat-card" style="cursor:pointer" onclick="downloadFile('teams.json')">
@@ -246,11 +247,11 @@ tr:hover td { background: var(--bg-hover); }
           <div class="stat-label">teams.json</div>
         </div>
         <div class="card stat-card" style="cursor:pointer" onclick="downloadFile('timelog.json')">
-          <div class="stat-value">⏱️</div>
+          <div class="stat-value"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
           <div class="stat-label">timelog.json</div>
         </div>
         <div class="card stat-card" style="cursor:pointer" onclick="downloadFile('messages.json')">
-          <div class="stat-value">💬</div>
+          <div class="stat-value"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
           <div class="stat-label">messages.json</div>
         </div>
       </div>
@@ -270,6 +271,11 @@ tr:hover td { background: var(--bg-hover); }
           <input type="file" id="importFile" accept=".json">
           <button class="btn btn-secondary btn-sm" onclick="importData()" style="margin-top:8px;">Import</button>
         </div>
+      </div>
+      <div class="card" style="border-color: var(--danger); margin-top: 24px;">
+        <h3 style="color: var(--danger);">⚠️ Danger Zone</h3>
+        <p style="color: var(--text-secondary); font-size: 13px; margin: 8px 0 16px;">This will permanently delete ALL data: users, tasks, flows, messages, files, sessions. This action cannot be undone.</p>
+        <button class="btn btn-danger" onclick="wipeAllData()">🗑️ Wipe All Data</button>
       </div>
     </div>
 
@@ -468,14 +474,14 @@ async function createUser() {
 }
 
 async function deleteUser(id, name) {
-  if (!confirm(`Delete user "${name}"?`)) return;
+  if (!await adminConfirm(`Delete user "${name}"?`, 'Delete User')) return;
   await adminFetch(`/api/admin/users/${id}`, { method: 'DELETE' });
   toast('User deleted', 'success');
   loadUsers();
 }
 
 async function resetPassword(id) {
-  const pw = prompt('Enter new password:');
+  const pw = await adminPrompt('Enter new password:', '', 'Reset Password');
   if (!pw) return;
   await adminFetch(`/api/admin/users/${id}`, {
     method: 'PUT',
@@ -503,7 +509,7 @@ async function loadTasks() {
 }
 
 async function deleteTask(id) {
-  if (!confirm('Delete this task?')) return;
+  if (!await adminConfirm('Delete this task?', 'Delete Task')) return;
   await adminFetch(`/api/admin/tasks/${id}`, { method: 'DELETE' });
   toast('Task deleted', 'success');
   loadTasks();
@@ -526,7 +532,7 @@ async function loadTeams() {
 }
 
 async function deleteTeam(id) {
-  if (!confirm('Remove this connection?')) return;
+  if (!await adminConfirm('Remove this connection?', 'Remove Connection')) return;
   await adminFetch(`/api/admin/teams/${id}`, { method: 'DELETE' });
   toast('Connection removed', 'success');
   loadTeams();
@@ -588,7 +594,7 @@ async function loadHealth() {
   const acts = await actRes.json();
   document.getElementById('activityList').innerHTML = acts.slice(0, 20).map(a =>
     `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
-      ${a.type === 'task' ? '📋' : '📝'} <strong>${esc(a.title || a.taskTitle || '')}</strong>
+      ${a.type === 'task' ? '<svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>' : '<svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>'} <strong>${esc(a.title || a.taskTitle || '')}</strong>
       <span style="color:var(--text-secondary)"> — ${a.action} ${a.author ? 'by ' + esc(a.author) : ''}</span>
       <span style="float:right;color:var(--text-tertiary)">${TaskModels.relativeTime(a.at)}</span>
     </div>`
@@ -632,6 +638,20 @@ async function importData() {
   } catch (err) { toast('Invalid JSON file', 'error'); }
 }
 
+async function wipeAllData() {
+  const confirmed = await adminConfirm('⚠️ WARNING: This will permanently delete ALL data on the platform.\n\nUsers, tasks, flows, messages, files, sessions - everything will be erased.\n\nThis action CANNOT be undone.\n\nAre you absolutely sure?', 'Danger Zone');
+  if (!confirmed) return;
+  const doubleConfirm = await adminConfirm('FINAL CONFIRMATION: Type OK to wipe everything. There is no going back.', 'Final Confirmation');
+  if (!doubleConfirm) return;
+  try {
+    await adminFetch('/api/admin/wipe', { method: 'DELETE' });
+    toast('All data has been wiped', 'success');
+    setTimeout(() => location.reload(), 1500);
+  } catch (err) {
+    toast('Wipe failed: ' + err.message, 'error');
+  }
+}
+
 // ═══ THEME ═══
 function toggleTheme(val) {
   document.documentElement.dataset.theme = val;
@@ -639,6 +659,54 @@ function toggleTheme(val) {
 }
 
 // ═══ HELPERS ═══
+function showAdminDialog({ title, message, confirmText = 'OK', cancelText = 'Cancel', withInput = false, inputValue = '' }) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px;';
+    const box = document.createElement('div');
+    box.style.cssText = 'width:100%;max-width:560px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:18px;backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);box-shadow:0 20px 48px rgba(0,0,0,0.35);';
+    const inputHtml = withInput ? `<input id="adminDialogInput" value="${esc(inputValue)}" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none;margin-top:10px;">` : '';
+    box.innerHTML = `
+      ${title ? `<div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;">${esc(title)}</div>` : ''}
+      <div style="color:var(--text-secondary);font-size:14px;line-height:1.45;white-space:pre-wrap;">${esc(message || '')}</div>
+      ${inputHtml}
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button id="adminDialogCancel" style="padding:9px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;">${esc(cancelText)}</button>
+        <button id="adminDialogOk" style="padding:9px 14px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;">${esc(confirmText)}</button>
+      </div>
+    `;
+    const close = (ok) => {
+      const value = withInput ? (box.querySelector('#adminDialogInput')?.value ?? '') : null;
+      overlay.remove();
+      resolve({ ok, value });
+    };
+    box.querySelector('#adminDialogOk').onclick = () => close(true);
+    box.querySelector('#adminDialogCancel').onclick = () => close(false);
+    overlay.onclick = (e) => { if (e.target === overlay) close(false); };
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    if (withInput) {
+      const input = box.querySelector('#adminDialogInput');
+      input?.focus();
+      input?.select();
+      input?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') close(true);
+        if (e.key === 'Escape') close(false);
+      });
+    }
+  });
+}
+
+async function adminConfirm(message, title = 'Confirm') {
+  const res = await showAdminDialog({ title, message, confirmText: 'OK', cancelText: 'Cancel' });
+  return res.ok;
+}
+
+async function adminPrompt(message, defaultValue = '', title = 'Input') {
+  const res = await showAdminDialog({ title, message, confirmText: 'Save', cancelText: 'Cancel', withInput: true, inputValue: defaultValue });
+  return res.ok ? res.value : null;
+}
+
 function esc(str) {
   if (!str) return '';
   const d = document.createElement('div');

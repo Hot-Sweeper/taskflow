@@ -9,15 +9,15 @@ const STATUS = {
   DONE: 'done'
 };
 
-const STATUS_ORDER = [STATUS.TODO, STATUS.IN_PROGRESS, STATUS.ON_HOLD, STATUS.NEEDS_INFO, STATUS.IN_REVIEW, STATUS.DONE];
+const STATUS_ORDER = [STATUS.TODO, STATUS.IN_PROGRESS, STATUS.NEEDS_INFO, STATUS.IN_REVIEW, STATUS.DONE];
 
 const STATUS_META = {
-  [STATUS.TODO]:        { label: 'task.status.todo',     color: '#9CA3AF', icon: '○' },
-  [STATUS.IN_PROGRESS]: { label: 'task.status.progress', color: '#3B82F6', icon: '◉' },
-  [STATUS.ON_HOLD]:     { label: 'task.status.hold',     color: '#F59E0B', icon: '⏸' },
-  [STATUS.NEEDS_INFO]:  { label: 'task.status.needsInfo', color: '#EF4444', icon: '❓' },
-  [STATUS.IN_REVIEW]:   { label: 'task.status.review',   color: '#8B5CF6', icon: '👁' },
-  [STATUS.DONE]:        { label: 'task.status.done',     color: '#10B981', icon: '✅' }
+  [STATUS.TODO]:        { label: 'task.status.todo',      color: '#9CA3AF', icon: 'O' },
+  [STATUS.IN_PROGRESS]: { label: 'task.status.progress',  color: '#3B82F6', icon: '>' },
+  [STATUS.ON_HOLD]:     { label: 'task.status.hold',      color: '#F59E0B', icon: '||' },
+  [STATUS.NEEDS_INFO]:  { label: 'task.status.needsInfo', color: '#EF4444', icon: '?' },
+  [STATUS.IN_REVIEW]:   { label: 'task.status.review',    color: '#8B5CF6', icon: 'R' },
+  [STATUS.DONE]:        { label: 'task.status.done',      color: '#10B981', icon: 'OK' }
 };
 
 const PRIORITY = {
@@ -27,9 +27,9 @@ const PRIORITY = {
 };
 
 const PRIORITY_META = {
-  [PRIORITY.HIGH]:   { label: 'task.priority.high',   color: '#EF4444', icon: '🚩' },
-  [PRIORITY.MEDIUM]: { label: 'task.priority.medium', color: '#F59E0B', icon: '🟧' },
-  [PRIORITY.LOW]:    { label: 'task.priority.low',    color: '#3B82F6', icon: '🔵' }
+  [PRIORITY.HIGH]:   { label: 'task.priority.high',   color: '#EF4444', icon: '!' },
+  [PRIORITY.MEDIUM]: { label: 'task.priority.medium', color: '#F59E0B', icon: '=' },
+  [PRIORITY.LOW]:    { label: 'task.priority.low',    color: '#3B82F6', icon: '-' }
 };
 
 const REQUEST_TYPES = ['approval', 'resource', 'decision', 'time-off', 'general'];

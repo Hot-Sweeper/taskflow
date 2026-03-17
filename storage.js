@@ -41,7 +41,15 @@ async function readConfig() {
       const defaults = {
         maxFileSize: parseInt(process.env.MAX_FILE_SIZE_MB || '50', 10),
         allowSignup: true,
-        maintenanceMode: false
+        maintenanceMode: false,
+        staleThresholds: {
+          todo: 4320,
+          'in-progress': 2880,
+          'on-hold': 10080,
+          'needs-info': 1440,
+          'in-review': 2880
+        },
+        reminderHours: [24, 48]
       };
       await write('config.json', defaults);
       return defaults;

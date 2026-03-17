@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFlow — Avatar Creator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══ THEME ═══ */
+:root {
+  --bg: #0F172A;
+  --bg-secondary: #1E293B;
+  --bg-card-core: rgba(30,41,59,0.72);
+  --bg-input: #334155;
+  --text: #F1F5F9;
+  --text-secondary-core: #94A3B8;
+  --text-tertiary: #64748B;
+  --border-core: #334155;
+  --border-focus-core: #818CF8;
+  --accent-core: #818CF8;
+  --accent-hover-core: #6366F1;
+  --accent-dim: rgba(129,140,248,0.15);
+
+  --bg-base: var(--bg);
+  --bg-card: var(--bg-card-core);
+  --bg-card-hover: color-mix(in srgb, var(--bg-card-core) 78%, #ffffff 22%);
+  --bg-active: var(--accent-dim);
+  --border: var(--border-core);
+  --border-active: var(--border-focus-core);
+  --text-primary: var(--text);
+  --text-muted: var(--text-tertiary);
+  --accent: var(--accent-core);
+  --accent-glow: rgba(129,140,248,0.28);
+  --accent-hover: var(--accent-hover-core);
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.3);
+  --shadow-glow: 0 0 20px var(--accent-glow);
+  --text-secondary: var(--text-secondary-core);
+}
+
+[data-theme="light"] {
+  --bg: #F8FAFC;
+  --bg-secondary: #FFFFFF;
+  --bg-card-core: rgba(255,255,255,0.72);
+  --bg-input: #F1F5F9;
+  --text: #0F172A;
+  --text-secondary-core: #64748B;
+  --text-tertiary: #94A3B8;
+  --border-core: #E2E8F0;
+  --border-focus-core: #6366F1;
+  --accent-core: #6366F1;
+  --accent-hover-core: #4F46E5;
+  --accent-dim: rgba(99,102,241,0.1);
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.08);
+  --shadow-glow: 0 0 20px rgba(99,102,241,0.1);
+}
+[data-theme="dark-emerald"] {
+  --bg: #0C1A14; --bg-secondary: #132D21; --bg-card-core: rgba(19,45,33,0.72); --bg-input: #1E3A2B;
+  --text: #E8F5EE; --text-secondary-core: #7CB899; --text-tertiary: #4A9070;
+  --border-core: #1E3A2B; --border-focus-core: #34D399; --accent-core: #34D399; --accent-hover-core: #10B981; --accent-dim: rgba(52,211,153,0.15);
+}
+[data-theme="dark-rose"] {
+  --bg: #1A0C14; --bg-secondary: #2D1322; --bg-card-core: rgba(45,19,34,0.72); --bg-input: #3A1E2C;
+  --text: #F5E8EF; --text-secondary-core: #C07A99; --text-tertiary: #925070;
+  --border-core: #3A1E2C; --border-focus-core: #F472B6; --accent-core: #F472B6; --accent-hover-core: #EC4899; --accent-dim: rgba(244,114,182,0.15);
+}
+[data-theme="dark-amber"] {
+  --bg: #1A150C; --bg-secondary: #2D2213; --bg-card-core: rgba(45,34,19,0.72); --bg-input: #3A2E1E;
+  --text: #F5F0E8; --text-secondary-core: #C0A07A; --text-tertiary: #927050;
+  --border-core: #3A2E1E; --border-focus-core: #FBBF24; --accent-core: #FBBF24; --accent-hover-core: #F59E0B; --accent-dim: rgba(251,191,36,0.15);
+}
+[data-theme="dark-cyan"] {
+  --bg: #0C1519; --bg-secondary: #13242D; --bg-card-core: rgba(19,36,45,0.72); --bg-input: #1E313A;
+  --text: #E8F3F5; --text-secondary-core: #7AAEBF; --text-tertiary: #508892;
+  --border-core: #1E313A; --border-focus-core: #22D3EE; --accent-core: #22D3EE; --accent-hover-core: #06B6D4; --accent-dim: rgba(34,211,238,0.15);
+}
+[data-theme="light-rose"] {
+  --bg: #FFF5F7; --bg-secondary: #FFFFFF; --bg-card-core: rgba(255,255,255,0.72); --bg-input: #FFF1F3;
+  --text: #1A0510; --text-secondary-core: #9F5074; --text-tertiary: #C07A99;
+  --border-core: #FECDD3; --border-focus-core: #EC4899; --accent-core: #EC4899; --accent-hover-core: #DB2777; --accent-dim: rgba(236,72,153,0.1);
+}
+[data-theme="light-emerald"] {
+  --bg: #F0FDF6; --bg-secondary: #FFFFFF; --bg-card-core: rgba(255,255,255,0.72); --bg-input: #ECFDF5;
+  --text: #052E16; --text-secondary-core: #3B7A57; --text-tertiary: #6DB08A;
+  --border-core: #BBF7D0; --border-focus-core: #10B981; --accent-core: #10B981; --accent-hover-core: #059669; --accent-dim: rgba(16,185,129,0.1);
+}
+
+/* ═══ RESET ═══ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(var(--text-muted) 1px, transparent 1px);
+  opacity: 0.15;
+  background-size: 30px 30px;
+  z-index: -1;
+  pointer-events: none;
+}
+[data-theme="light"] body::before,
+[data-theme="light-rose"] body::before,
+[data-theme="light-emerald"] body::before {
+  background-image: radial-gradient(rgba(100,100,150,0.1) 1px, transparent 1px);
+}
+
+/* ═══ HEADER ═══ */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  background: var(--bg-card);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.btn-back:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+.header-title {
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.btn-save {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: var(--shadow-glow);
+}
+.btn-save:hover { transform: translateY(-1px); box-shadow: 0 0 30px var(--accent-glow); }
+.btn-save:active { transform: translateY(0); }
+.btn-save.saving { opacity: 0.7; pointer-events: none; }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-secondary:hover { background: var(--bg-card-hover); border-color: var(--border-active); }
+
+/* ═══ MAIN LAYOUT ═══ */
+.creator-layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 0;
+  min-height: calc(100vh - 65px);
+}
+
+/* ═══ PREVIEW PANEL ═══ */
+.preview-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  border-right: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+  position: sticky;
+  top: 65px;
+  height: calc(100vh - 65px);
+}
+.preview-frame {
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  border: 3px solid var(--border-active);
+  overflow: hidden;
+  box-shadow: var(--shadow-glow), var(--shadow-card);
+  background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.06));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  position: relative;
+}
+.preview-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+.preview-frame .placeholder {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.preview-name {
+  margin-top: 20px;
+  font-size: 18px;
+  font-weight: 600;
+}
+.preview-role {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  text-transform: capitalize;
+}
+
+.btn-randomize {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-randomize:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-glow);
+}
+
+/* ═══ ANIMATION PREVIEW ═══ */
+.animation-demos {
+  margin-top: 32px;
+  display: flex;
+  gap: 12px;
+}
+.animation-demo-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 56px;
+}
+.animation-demo-btn:hover, .animation-demo-btn.active {
+  background: var(--bg-active);
+  border-color: var(--border-active);
+  color: var(--text-primary);
+}
+.animation-demo-btn .emoji { font-size: 20px; }
+
+/* ═══ OPTIONS PANEL ═══ */
+.options-panel {
+  padding: 24px 32px;
+  overflow-y: auto;
+}
+
+/* Category tabs */
+.category-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+.category-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.category-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+.category-tab.active {
+  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  color: white;
+  box-shadow: 0 2px 12px var(--accent-glow);
+}
+.category-tab .tab-icon { font-size: 16px; }
+
+/* Option section */
+.option-section {
+  display: none;
+}
+.option-section.active { display: block; }
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Variant grid — visual preview cards */
+.variant-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.variant-card {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.2s;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.variant-card:hover {
+  border-color: var(--accent);
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.variant-card.selected {
+  border-color: var(--accent);
+  background: var(--bg-active);
+  box-shadow: var(--shadow-glow);
+}
+.variant-card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+.variant-card img {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+}
+
+/* Color picker grid */
+.color-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.color-swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.color-swatch:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(255,255,255,0.2);
+}
+.color-swatch.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 16px var(--accent-glow);
+  transform: scale(1.1);
+}
+.color-swatch.selected::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+/* Toggle for optional features */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+}
+.toggle-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+.toggle-switch {
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+}
+.toggle-switch.on { background: var(--accent); }
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+}
+.toggle-switch.on::after { transform: translateX(20px); }
+
+/* No-option card */
+.variant-card.none-option {
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(239,68,68,0.3);
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.variant-card.none-option.selected {
+  border-color: var(--danger);
+  background: rgba(239,68,68,0.2);
+}
+
+/* ═══ TOAST ═══ */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  animation: toast-in 0.3s ease-out;
+  box-shadow: var(--shadow-card);
+}
+.toast.success { background: var(--success); color: white; }
+.toast.error { background: var(--danger); color: white; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══ LOADING ═══ */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.3s;
+}
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 768px) {
+  .header { flex-wrap: wrap; gap: 10px; }
+  .header-actions { width: 100%; justify-content: flex-start; }
+  .creator-layout {
+    grid-template-columns: 1fr;
+  }
+  .preview-panel {
+    position: relative;
+    top: auto;
+    height: auto;
+    padding: 24px 16px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .preview-frame { width: 160px; height: 160px; }
+  .options-panel { padding: 16px; }
+  .category-tabs { overflow-x: auto; }
+  .variant-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
+  .animation-demos { flex-wrap: wrap; justify-content: center; }
+}
+
+/* ═══ AVATAR ANIMATION SCENES ═══ */
+
+/* Wrapper for animation overlays (keeps overflow visible for emojis) */
+.preview-wrapper { position: relative; display: inline-block; }
+
+/* ── Idle: gentle float ── */
+.preview-wrapper.anim-idle .preview-frame {
+  animation: idle-float 4s ease-in-out infinite;
+}
+.preview-wrapper.anim-idle::after {
+  content: '·  ·  ·';
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 6px;
+  animation: idle-dots 2s ease-in-out infinite;
+}
+@keyframes idle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+@keyframes idle-dots {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.5; }
+}
+
+/* ── Working: typing at desk (office) ── */
+.preview-wrapper.anim-working .preview-frame {
+  animation: work-typing 0.5s ease-in-out infinite alternate;
+  box-shadow: 0 0 20px rgba(34,197,94,0.3), 0 0 40px rgba(34,197,94,0.1);
+}
+.preview-wrapper.anim-working::before {
+  content: '💻';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  font-size: 22px;
+  animation: work-monitor 0.5s ease-in-out infinite alternate;
+  z-index: 2;
+}
+.preview-wrapper.anim-working::after {
+  content: '⌨️';
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  animation: work-keys 0.25s ease-in-out infinite alternate;
+  z-index: 2;
+}
+@keyframes work-typing {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-3px) rotate(0.5deg); }
+}
+@keyframes work-monitor {
+  0% { transform: translateX(-50%) scale(1); }
+  100% { transform: translateX(-50%) scale(1.05) translateY(-2px); }
+}
+@keyframes work-keys {
+  0% { transform: translateX(-50%) translateY(0); }
+  100% { transform: translateX(-50%) translateY(-1px); }
+}
+
+/* ── Break: coffee & chill ── */
+.preview-wrapper.anim-paused .preview-frame {
+  animation: break-sway 3s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(234,179,8,0.25), 0 0 40px rgba(234,179,8,0.08);
+}
+.preview-wrapper.anim-paused::before {
+  content: '☕';
+  position: absolute;
+  bottom: 4px;
+  right: -28px;
+  font-size: 30px;
+  animation: break-cup 2.5s ease-in-out infinite;
+  z-index: 2;
+}
+.preview-wrapper.anim-paused::after {
+  content: '~';
+  position: absolute;
+  top: 10px;
+  right: -16px;
+  font-size: 22px;
+  color: rgba(255,255,255,0.3);
+  animation: break-steam 1.8s ease-out infinite;
+  z-index: 2;
+}
+@keyframes break-sway {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(-2deg) translateY(-2px); }
+  75% { transform: rotate(2deg) translateY(-2px); }
+}
+@keyframes break-cup {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-6px) rotate(5deg); }
+}
+@keyframes break-steam {
+  0% { opacity: 0.6; transform: translateY(0) scale(1); }
+  50% { opacity: 0.3; transform: translateY(-12px) scale(1.3); }
+  100% { opacity: 0; transform: translateY(-24px) scale(0.8); }
+}
+
+/* ── Home office: cozy vibes ── */
+.preview-wrapper.anim-home .preview-frame {
+  animation: home-typing 0.7s ease-in-out infinite alternate;
+  box-shadow: 0 0 20px rgba(139,92,246,0.3), 0 0 40px rgba(139,92,246,0.1);
+}
+.preview-wrapper.anim-home::before {
+  content: '🏠';
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  animation: home-house 3s ease-in-out infinite;
+  z-index: 2;
+}
+.preview-wrapper.anim-home::after {
+  content: '📶';
+  position: absolute;
+  top: -8px;
+  right: -22px;
+  font-size: 16px;
+  animation: home-wifi 2s ease-in-out infinite;
+  z-index: 2;
+}
+@keyframes home-typing {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-3px); }
+}
+@keyframes home-house {
+  0%, 100% { opacity: 0.7; transform: translateX(-50%) scale(1) translateY(0); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.1) translateY(-3px); }
+}
+@keyframes home-wifi {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* ── Offline: sleeping/disconnected ── */
+.preview-wrapper.anim-offline .preview-frame {
+  animation: offline-breathe 4s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(100,116,139,0.2);
+}
+.preview-wrapper.anim-offline .preview-frame img {
+  filter: grayscale(0.7) brightness(0.6);
+  transition: filter 0.5s;
+}
+.preview-wrapper.anim-offline::before {
+  content: '💤';
+  position: absolute;
+  top: -8px;
+  right: -14px;
+  font-size: 22px;
+  animation: offline-zzz 2.5s ease-in-out infinite;
+  z-index: 2;
+}
+.preview-wrapper.anim-offline::after {
+  content: '🌙';
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  animation: offline-moon 5s ease-in-out infinite;
+  z-index: 2;
+}
+@keyframes offline-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.97); }
+}
+@keyframes offline-zzz {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5) rotate(0deg); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translate(16px, -28px) scale(1.3) rotate(15deg); }
+}
+@keyframes offline-moon {
+  0%, 100% { opacity: 0.5; transform: translateX(-50%) rotate(-10deg); }
+  50% { opacity: 0.9; transform: translateX(-50%) rotate(10deg); }
+}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+</div>
+
+<!-- ═══ HEADER ═══ -->
+<header class="header">
+  <div class="header-left">
+    <a class="btn-back" id="btnBack" href="/app">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back
+    </a>
+    <span class="header-title">🎨 Avatar Creator</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn-secondary" onclick="exportAvatarConfig()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export JSON
+    </button>
+    <button class="btn-secondary" onclick="exportAvatarPng()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+      Export PNG
+    </button>
+    <button class="btn-secondary" onclick="triggerImportAvatar()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Load Avatar
+    </button>
+    <button class="btn-save" id="btnSave" onclick="saveAvatar()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Save Avatar
+    </button>
+  </div>
+</header>
+
+<!-- ═══ CREATOR ═══ -->
+<div class="creator-layout">
+  <!-- Preview -->
+  <div class="preview-panel">
+    <div class="preview-wrapper" id="previewWrapper">
+      <div class="preview-frame" id="previewFrame">
+        <img id="previewImg" alt="Avatar Preview">
+      </div>
+    </div>
+    <div class="preview-name" id="previewName"></div>
+    <div class="preview-role" id="previewRole"></div>
+
+    <button class="btn-randomize" onclick="randomizeAvatar()">
+      🎲 Randomize
+    </button>
+
+    <div class="animation-demos">
+      <button class="animation-demo-btn active" onclick="setAnimPreview('idle', this)">
+        <span class="emoji">🧍</span>Idle
+      </button>
+      <button class="animation-demo-btn" onclick="setAnimPreview('working', this)">
+        <span class="emoji">💻</span>Working
+      </button>
+      <button class="animation-demo-btn" onclick="setAnimPreview('paused', this)">
+        <span class="emoji">☕</span>Break
+      </button>
+      <button class="animation-demo-btn" onclick="setAnimPreview('home', this)">
+        <span class="emoji">🏠</span>Home
+      </button>
+      <button class="animation-demo-btn" onclick="setAnimPreview('offline', this)">
+        <span class="emoji">😴</span>Offline
+      </button>
+    </div>
+  </div>
+
+  <!-- Options -->
+  <div class="options-panel">
+    <div class="category-tabs" id="categoryTabs">
+      <button class="category-tab active" onclick="showCategory('skin', this)">
+        <span class="tab-icon">👤</span> Skin
+      </button>
+      <button class="category-tab" onclick="showCategory('hair', this)">
+        <span class="tab-icon">💇</span> Hair
+      </button>
+      <button class="category-tab" onclick="showCategory('eyes', this)">
+        <span class="tab-icon">👁</span> Eyes
+      </button>
+      <button class="category-tab" onclick="showCategory('mouth', this)">
+        <span class="tab-icon">👄</span> Mouth
+      </button>
+      <button class="category-tab" onclick="showCategory('eyebrows', this)">
+        <span class="tab-icon">✨</span> Brows
+      </button>
+      <button class="category-tab" onclick="showCategory('accessories', this)">
+        <span class="tab-icon">👓</span> Extras
+      </button>
+      <button class="category-tab" onclick="showCategory('background', this)">
+        <span class="tab-icon">🎨</span> BG
+      </button>
+    </div>
+
+    <!-- SKIN -->
+    <div class="option-section active" id="section-skin">
+      <div class="section-title">👤 Skin Tone</div>
+      <div class="color-grid" id="skinColorGrid"></div>
+    </div>
+
+    <!-- HAIR -->
+    <div class="option-section" id="section-hair">
+      <div class="section-title">💇 Hair Style</div>
+      <div class="variant-grid" id="hairGrid"></div>
+      <div class="section-title" style="margin-top:20px">🎨 Hair Color</div>
+      <div class="color-grid" id="hairColorGrid"></div>
+    </div>
+
+    <!-- EYES -->
+    <div class="option-section" id="section-eyes">
+      <div class="section-title">👁 Eyes</div>
+      <div class="variant-grid" id="eyesGrid"></div>
+    </div>
+
+    <!-- MOUTH -->
+    <div class="option-section" id="section-mouth">
+      <div class="section-title">👄 Mouth</div>
+      <div class="variant-grid" id="mouthGrid"></div>
+    </div>
+
+    <!-- EYEBROWS -->
+    <div class="option-section" id="section-eyebrows">
+      <div class="section-title">✨ Eyebrows</div>
+      <div class="variant-grid" id="eyebrowsGrid"></div>
+    </div>
+
+    <!-- ACCESSORIES -->
+    <div class="option-section" id="section-accessories">
+      <div class="section-title">👓 Glasses</div>
+      <div class="variant-grid" id="glassesGrid"></div>
+      <div class="section-title" style="margin-top:20px">💎 Earrings</div>
+      <div class="variant-grid" id="earringsGrid"></div>
+      <div class="section-title" style="margin-top:20px">✨ Features</div>
+      <div class="variant-grid" id="featuresGrid"></div>
+    </div>
+
+    <!-- BACKGROUND -->
+    <div class="option-section" id="section-background">
+      <div class="section-title">🎨 Background Color</div>
+      <div class="color-grid" id="bgColorGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<input type="file" id="avatarImportInput" accept="application/json,.json" style="display:none">
+
+<script src="/shared/api.js"></script>
+<script>
+// Apply theme from main app
+(function() {
+  const theme = localStorage.getItem('taskflow_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+})();
+
+// Detect which portal the user came from via ?from= param
+const _fromPortal = new URLSearchParams(window.location.search).get('from') || 'app';
+const _isSetup = new URLSearchParams(window.location.search).get('setup') === '1';
+API.init();
+
+// ═══ STATE ═══
+let currentConfig = {
+  hair: 'short01',
+  hairColor: '562306',
+  eyes: 'variant01',
+  eyebrows: 'variant03',
+  mouth: 'variant15',
+  skinColor: 'f2d3b1',
+  earrings: null,
+  glasses: null,
+  features: null,
+  backgroundColor: 'b6e3f4'
+};
+let currentUser = null;
+let currentAnim = 'idle';
+
+// DiceBear option definitions
+const SKIN_COLORS = ['f2d3b1','ecad80','9e5622','763900'];
+const HAIR_COLORS = ['0e0e0e','562306','6a4e35','796a45','ab2a18','ac6511','cb6820','b9a05f','e5d7a3','afafaf','dba3be','592454','3eac2c','85c2c6'];
+const BG_COLORS = ['b6e3f4','c0aede','d1d4f9','ffd5dc','ffdfbf','transparent','0b0c10','1a1a2e','16213e','1b2a4a','2d1b69','1a1a1a'];
+const HAIR_STYLES = [
+  ...Array.from({length:26}, (_,i) => `long${String(i+1).padStart(2,'0')}`),
+  ...Array.from({length:19}, (_,i) => `short${String(i+1).padStart(2,'0')}`)
+];
+const EYES = Array.from({length:26}, (_,i) => `variant${String(i+1).padStart(2,'0')}`);
+const EYEBROWS = Array.from({length:15}, (_,i) => `variant${String(i+1).padStart(2,'0')}`);
+const MOUTHS = Array.from({length:30}, (_,i) => `variant${String(i+1).padStart(2,'0')}`);
+const GLASSES = Array.from({length:5}, (_,i) => `variant${String(i+1).padStart(2,'0')}`);
+const EARRINGS = Array.from({length:6}, (_,i) => `variant${String(i+1).padStart(2,'0')}`);
+const FEATURES = ['birthmark','blush','freckles','mustache'];
+
+// ═══ DICEBEAR URL BUILDER ═══
+function buildUrl(config, overrides = {}) {
+  const c = { ...config, ...overrides };
+  const p = new URLSearchParams();
+  if (c.skinColor) p.set('skinColor', c.skinColor);
+  if (c.hair) { p.set('hair', c.hair); p.set('hairProbability', '100'); }
+  if (c.hairColor) p.set('hairColor', c.hairColor);
+  if (c.eyes) p.set('eyes', c.eyes);
+  if (c.eyebrows) p.set('eyebrows', c.eyebrows);
+  if (c.mouth) p.set('mouth', c.mouth);
+  if (c.earrings) { p.set('earrings', c.earrings); p.set('earringsProbability', '100'); }
+  else p.set('earringsProbability', '0');
+  if (c.glasses) { p.set('glasses', c.glasses); p.set('glassesProbability', '100'); }
+  else p.set('glassesProbability', '0');
+  if (c.features) { p.set('features', c.features); p.set('featuresProbability', '100'); }
+  else p.set('featuresProbability', '0');
+  if (c.backgroundColor && c.backgroundColor !== 'transparent') p.set('backgroundColor', c.backgroundColor);
+  p.set('randomizeIds', 'true');
+  return `https://api.dicebear.com/9.x/adventurer/svg?${p.toString()}`;
+}
+
+// Build a preview URL showing a specific variant change
+function buildPreviewUrl(category, value) {
+  const override = {};
+  if (category === 'skinColor') override.skinColor = value;
+  else if (category === 'hairColor') override.hairColor = value;
+  else if (category === 'hair') override.hair = value;
+  else if (category === 'eyes') override.eyes = value;
+  else if (category === 'eyebrows') override.eyebrows = value;
+  else if (category === 'mouth') override.mouth = value;
+  else if (category === 'glasses') override.glasses = value;
+  else if (category === 'earrings') override.earrings = value;
+  else if (category === 'features') override.features = value;
+  else if (category === 'backgroundColor') override.backgroundColor = value;
+  return buildUrl(currentConfig, override);
+}
+
+// ═══ UI UPDATES ═══
+function updatePreview() {
+  const img = document.getElementById('previewImg');
+  img.src = buildUrl(currentConfig);
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function toast(msg, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+window.toast = toast;
+
+// ═══ CATEGORY TABS ═══
+function showCategory(cat, btn) {
+  document.querySelectorAll('.option-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + cat).classList.add('active');
+  btn.classList.add('active');
+}
+window.showCategory = showCategory;
+
+// ═══ RENDER OPTION GRIDS ═══
+function renderColorGrid(containerId, colors, category, selected) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  colors.forEach(color => {
+    const swatch = document.createElement('div');
+    swatch.className = 'color-swatch' + (color === selected ? ' selected' : '');
+    if (color === 'transparent') {
+      swatch.style.background = 'repeating-conic-gradient(#808080 0% 25%, #fff 0% 50%) 50% / 14px 14px';
+    } else {
+      swatch.style.background = '#' + color;
+    }
+    swatch.onclick = () => {
+      currentConfig[category] = color;
+      updatePreview();
+      container.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      swatch.classList.add('selected');
+    };
+    container.appendChild(swatch);
+  });
+}
+
+function renderVariantGrid(containerId, variants, category, selected, allowNone = false) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+
+  if (allowNone) {
+    const noneCard = document.createElement('div');
+    noneCard.className = 'variant-card none-option' + (selected === null ? ' selected' : '');
+    noneCard.textContent = 'None';
+    noneCard.onclick = () => {
+      currentConfig[category] = null;
+      updatePreview();
+      container.querySelectorAll('.variant-card').forEach(c => c.classList.remove('selected'));
+      noneCard.classList.add('selected');
+    };
+    container.appendChild(noneCard);
+  }
+
+  variants.forEach(variant => {
+    const card = document.createElement('div');
+    card.className = 'variant-card' + (variant === selected ? ' selected' : '');
+    const img = document.createElement('img');
+    img.loading = 'lazy';
+    img.alt = variant;
+    img.src = buildPreviewUrl(category, variant);
+    card.appendChild(img);
+    card.onclick = () => {
+      currentConfig[category] = variant;
+      updatePreview();
+      container.querySelectorAll('.variant-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    };
+    container.appendChild(card);
+  });
+}
+
+function renderAllGrids() {
+  renderColorGrid('skinColorGrid', SKIN_COLORS, 'skinColor', currentConfig.skinColor);
+  renderVariantGrid('hairGrid', HAIR_STYLES, 'hair', currentConfig.hair);
+  renderColorGrid('hairColorGrid', HAIR_COLORS, 'hairColor', currentConfig.hairColor);
+  renderVariantGrid('eyesGrid', EYES, 'eyes', currentConfig.eyes);
+  renderVariantGrid('mouthGrid', MOUTHS, 'mouth', currentConfig.mouth);
+  renderVariantGrid('eyebrowsGrid', EYEBROWS, 'eyebrows', currentConfig.eyebrows);
+  renderVariantGrid('glassesGrid', GLASSES, 'glasses', currentConfig.glasses, true);
+  renderVariantGrid('earringsGrid', EARRINGS, 'earrings', currentConfig.earrings, true);
+  renderVariantGrid('featuresGrid', FEATURES, 'features', currentConfig.features, true);
+  renderColorGrid('bgColorGrid', BG_COLORS, 'backgroundColor', currentConfig.backgroundColor);
+}
+
+// ═══ RANDOMIZE ═══
+function randomizeAvatar() {
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  currentConfig.hair = pick(HAIR_STYLES);
+  currentConfig.hairColor = pick(HAIR_COLORS);
+  currentConfig.eyes = pick(EYES);
+  currentConfig.eyebrows = pick(EYEBROWS);
+  currentConfig.mouth = pick(MOUTHS);
+  currentConfig.skinColor = pick(SKIN_COLORS);
+  currentConfig.earrings = Math.random() > 0.6 ? pick(EARRINGS) : null;
+  currentConfig.glasses = Math.random() > 0.7 ? pick(GLASSES) : null;
+  currentConfig.features = Math.random() > 0.5 ? pick(FEATURES) : null;
+  currentConfig.backgroundColor = pick(BG_COLORS);
+  renderAllGrids();
+  updatePreview();
+}
+window.randomizeAvatar = randomizeAvatar;
+
+function slugName(name) {
+  return String(name || 'avatar').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'avatar';
+}
+
+function exportAvatarConfig() {
+  const payload = {
+    avatarConfig: currentConfig,
+    exportedAt: new Date().toISOString(),
+    version: 1
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  downloadBlob(blob, `${slugName(currentUser?.name)}-avatar.json`);
+  toast('Avatar config exported', 'success');
+}
+window.exportAvatarConfig = exportAvatarConfig;
+
+async function exportAvatarPng() {
+  try {
+    const svgText = await fetch(buildUrl(currentConfig)).then(r => r.text());
+    const svgBlob = new Blob([svgText], { type: 'image/svg+xml' });
+    const svgUrl = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = svgUrl;
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, 512, 512);
+    URL.revokeObjectURL(svgUrl);
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) throw new Error('Failed to render PNG');
+    downloadBlob(blob, `${slugName(currentUser?.name)}-avatar.png`);
+    toast('Avatar PNG exported', 'success');
+  } catch (err) {
+    toast(err.message || 'Export failed', 'error');
+  }
+}
+window.exportAvatarPng = exportAvatarPng;
+
+function triggerImportAvatar() {
+  const input = document.getElementById('avatarImportInput');
+  input.value = '';
+  input.click();
+}
+window.triggerImportAvatar = triggerImportAvatar;
+
+function importAvatarConfigFromText(text) {
+  const parsed = JSON.parse(text);
+  const src = parsed && typeof parsed === 'object' && parsed.avatarConfig ? parsed.avatarConfig : parsed;
+  if (!src || typeof src !== 'object') throw new Error('Invalid avatar file');
+
+  const allowed = ['hair','hairColor','eyes','eyebrows','mouth','skinColor','earrings','glasses','features','backgroundColor'];
+  for (const key of allowed) {
+    if (src[key] !== undefined) currentConfig[key] = src[key];
+  }
+  renderAllGrids();
+  updatePreview();
+}
+
+// ═══ ANIMATION PREVIEW ═══
+function setAnimPreview(anim, btn) {
+  currentAnim = anim;
+  document.querySelectorAll('.animation-demo-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const wrapper = document.getElementById('previewWrapper');
+  wrapper.className = 'preview-wrapper';
+  if (anim !== 'idle') wrapper.classList.add('anim-' + anim);
+}
+window.setAnimPreview = setAnimPreview;
+
+// ═══ SAVE ═══
+async function saveAvatar() {
+  const btn = document.getElementById('btnSave');
+  btn.classList.add('saving');
+  btn.textContent = 'Saving...';
+  try {
+    await API.saveAvatarConfig(currentConfig);
+    if (_isSetup) {
+      toast('Avatar saved! Redirecting...', 'success');
+      setTimeout(() => { window.location.href = '/' + _fromPortal; }, 800);
+      return;
+    }
+    toast('Avatar saved!', 'success');
+  } catch (err) {
+    toast(err.message || 'Failed to save', 'error');
+  } finally {
+    btn.classList.remove('saving');
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Avatar';
+  }
+}
+window.saveAvatar = saveAvatar;
+
+// ═══ INIT ═══
+async function init() {
+  if (!API.token) {
+    window.location.href = '/' + _fromPortal;
+    return;
+  }
+
+  try {
+    currentUser = await API.me();
+    document.getElementById('previewName').textContent = currentUser.name;
+    document.getElementById('previewRole').textContent = currentUser.role;
+
+    // Set back button based on portal
+    const btnBack = document.getElementById('btnBack');
+    btnBack.href = '/' + _fromPortal;
+    if (_isSetup) {
+      btnBack.style.display = 'none';
+      document.querySelector('.header-title').textContent = '🎨 Create Your Avatar';
+    }
+
+    // Load existing avatar config
+    const { avatarConfig } = await API.getAvatarConfig();
+    if (avatarConfig) {
+      currentConfig = { ...currentConfig, ...avatarConfig };
+    }
+  } catch (err) {
+    window.location.href = '/' + _fromPortal;
+    return;
+  }
+
+  renderAllGrids();
+  updatePreview();
+
+  document.getElementById('avatarImportInput').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      importAvatarConfigFromText(text);
+      toast('Avatar loaded. Save to apply account-wide.', 'success');
+    } catch (err) {
+      toast(err.message || 'Could not load avatar file', 'error');
+    }
+  });
+
+  document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+init();
+</script>
+</body>
+</html>

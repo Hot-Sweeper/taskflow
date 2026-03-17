@@ -16,7 +16,7 @@
   --accent: #3B82F6; --accent-hover: #2563EB; --accent-soft: rgba(59,130,246,0.1);
   --danger: #EF4444; --success: #10B981; --warning: #F59E0B; --purple: #8B5CF6;
   --card-bg: rgba(255,255,255,0.75); --card-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
-  --radius: 16px; --radius-sm: 10px; --radius-xs: 8px;
+  --radius: 20px; --radius-sm: 14px; --radius-xs: 12px;
   --blur: blur(20px); --saturate: saturate(180%);
   --nav-height: 64px;
 }
@@ -30,11 +30,21 @@
 
 /* ═══ RESET ═══ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; min-height: 100dvh; transition: background 0.2s, color 0.2s; overflow-x: hidden; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; min-height: 100dvh; transition: background 0.2s, color 0.2s; overflow-x: hidden; position: relative; } body::before { content: ''; position: fixed; inset: 0; background-image: radial-gradient(rgba(100,100,150,0.1) 1px, transparent 1px); background-size: 24px 24px; z-index: -1; pointer-events: none; } [data-theme="dark"] body::before { background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); }
 input, textarea, select, button { font-family: var(--font); font-size: 14px; }
 
+/* ═══ CUSTOM SCROLLBAR ═══ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); }
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent; }
+[data-theme="light"] * { scrollbar-color: rgba(0,0,0,0.15) transparent; }
+
 /* ═══ BUTTONS ═══ */
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 12px 24px; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; border: none; transition: all 0.15s ease; min-height: 48px; font-size: 15px; justify-content: center; }
+.btn { display: inline-flex; flex-shrink: 0; align-items: center; gap: 6px; padding: 12px 24px; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; border: none; transition: all 0.15s ease; min-height: 48px; font-size: 15px; justify-content: center; }
 .btn:active { transform: scale(0.97); }
 .btn-primary { background: var(--accent); color: #fff; }
 .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
@@ -44,7 +54,7 @@ input, textarea, select, button { font-family: var(--font); font-size: 14px; }
 .btn-ghost { background: transparent; color: var(--text-secondary); }
 .btn-ghost:hover { background: var(--bg-hover); }
 .btn-sm { padding: 8px 16px; min-height: 36px; font-size: 13px; }
-.btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--card-bg); backdrop-filter: var(--blur); border: 1px solid var(--border); cursor: pointer; color: var(--text-secondary); transition: all 0.15s; font-size: 18px; }
+.btn-icon { aspect-ratio: 1; flex-shrink: 0; min-height: 40px; min-width: 40px; width: 44px; height: 44px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--card-bg); backdrop-filter: var(--blur); border: 1px solid var(--border); cursor: pointer; color: var(--text-secondary); transition: all 0.15s; font-size: 18px; }
 .btn-icon:hover { background: var(--bg-hover); color: var(--text); transform: scale(1.05); }
 .btn-fab { position: fixed; bottom: 90px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: #fff; border: none; font-size: 28px; cursor: pointer; box-shadow: 0 4px 20px rgba(59,130,246,0.4); z-index: 50; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
 .btn-fab:hover { transform: scale(1.1); box-shadow: 0 6px 24px rgba(59,130,246,0.5); }
@@ -129,7 +139,7 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
 
 /* ═══ LIVE STATUS ═══ */
 .worker-status { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
-.worker-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px; color: var(--accent); }
+.worker-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px; color: var(--accent); overflow: hidden; }
 .worker-info { flex: 1; }
 .worker-name { font-weight: 600; font-size: 15px; }
 .worker-detail { font-size: 12px; color: var(--text-secondary); display: flex; gap: 8px; align-items: center; margin-top: 2px; }
@@ -156,6 +166,28 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
 .detail-body { padding: 16px; }
 .detail-section { margin-bottom: 20px; }
 .detail-section h4 { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+
+/* ═══ STATUS SLIDER ═══ */
+.status-slider { position: relative; padding: 20px 0 32px; user-select: none; -webkit-user-select: none; touch-action: pan-y; cursor: grab; }
+.status-slider.dragging { cursor: grabbing; touch-action: none; }
+.slider-rail { position: absolute; top: 30.5px; left: calc(50% / var(--stop-count, 6)); right: calc(50% / var(--stop-count, 6)); height: 3px; background: var(--border); border-radius: 2px; }
+.slider-progress { height: 100%; border-radius: 2px; width: 0%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s; }
+.slider-stops { display: flex; justify-content: space-between; position: relative; z-index: 1; }
+.slider-stop { display: flex; flex-direction: column; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; outline: none; color: var(--text-secondary); min-width: 0; flex: 1; }
+.slider-stop:active { transform: scale(0.95); }
+.dragging .slider-stop:active { transform: none; }
+.stop-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
+.stop-dot::before { content: ''; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid var(--border); background: var(--bg-secondary); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-sizing: border-box; }
+.slider-stop.passed .stop-dot::before { width: 10px; height: 10px; border: none; background: var(--dot-clr); }
+.slider-stop.active .stop-dot::before { width: 22px; height: 22px; border: none; background: var(--dot-clr); animation: statusPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.slider-stop.active .stop-dot::after { content: ''; position: absolute; inset: -3px; border-radius: 50%; border: 2px solid currentColor; opacity: 0.25; animation: statusRing 0.6s ease-out; }
+@keyframes statusPop { 0% { transform: scale(0.8); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+@keyframes statusRing { 0% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(1.4); opacity: 0; } }
+.stop-label { font-size: 9px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; color: var(--text-tertiary); transition: color 0.3s, transform 0.3s; text-align: center; line-height: 1.3; }
+.slider-stop.active .stop-label { color: var(--text-primary); transform: scale(1.05); }
+.slider-stop:hover .stop-dot::before { transform: scale(1.15); }
+.slider-stop:hover .stop-label { color: var(--text-primary); }
+
 .note-item { padding: 12px; background: var(--bg); border-radius: var(--radius-xs); margin-bottom: 8px; }
 .note-author { font-size: 12px; font-weight: 600; color: var(--accent); }
 .note-text { font-size: 14px; margin-top: 4px; }
@@ -169,8 +201,15 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
 .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
 .msg { max-width: 80%; padding: 10px 16px; border-radius: 18px; font-size: 15px; line-height: 1.4; }
 .msg.sent { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
-.msg.received { align-self: flex-start; background: var(--bg); border-bottom-left-radius: 4px; }
+.msg.received { align-self: flex-start; background: var(--bg-secondary); border: 1px solid var(--border); border-bottom-left-radius: 4px; color: var(--text-primary); }
 .msg-time { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+.chat-partner-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: var(--bg-hover); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: var(--text-secondary); flex-shrink: 0; }
+.chat-partner-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.typing-bubble { align-self: flex-start; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 18px; border-bottom-left-radius: 4px; padding: 12px 18px; display: flex; align-items: center; gap: 4px; }
+.typing-bubble span { width: 8px; height: 8px; border-radius: 50%; background: var(--text-secondary); animation: typingBounce 1.4s infinite ease-in-out; }
+.typing-bubble span:nth-child(2) { animation-delay: 0.2s; }
+.typing-bubble span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-6px); opacity: 1; } }
 .chat-input-bar { display: flex; gap: 8px; padding: 12px 16px; background: var(--card-bg); backdrop-filter: var(--blur); border-top: 1px solid var(--border); }
 .chat-input-bar input { flex: 1; border-radius: 24px; padding: 10px 20px; }
 
@@ -200,30 +239,96 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
 .empty-state p { font-size: 15px; }
 
 /* ═══ WORKER GRID (HOME) ═══ */
-.worker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.worker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
 .worker-card { background: var(--card-bg); backdrop-filter: var(--blur); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 16px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
 .worker-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
 .worker-card:active { transform: scale(0.97); }
-.worker-card .wc-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; color: var(--accent); margin: 0 auto 10px; }
+.worker-card .wc-avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; color: var(--accent); margin: 0 auto 10px; position: relative; overflow: visible; }
+.worker-card .wc-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .worker-card .wc-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
-.worker-card .wc-meta { font-size: 12px; color: var(--text-secondary); }
+.worker-card .wc-meta { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .worker-card .wc-task-count { display: inline-flex; align-items: center; gap: 4px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; margin-top: 8px; }
 .worker-card .wc-status-dot { width: 10px; height: 10px; border-radius: 50%; position: absolute; top: 12px; right: 12px; border: 2px solid var(--bg-secondary); }
 .worker-card.pending { opacity: 0.5; pointer-events: none; }
 .worker-card.pending .wc-avatar { background: var(--bg-hover); color: var(--text-tertiary); }
 
+/* ═══ AVATAR ANIMATION SCENES (Mini) ═══ */
+/* Working (office) */
+.wc-avatar.anim-working { animation: wc-typing 0.5s ease-in-out infinite alternate; box-shadow: 0 0 12px rgba(34,197,94,0.35); }
+.wc-avatar.anim-working::after { content: '💻'; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); font-size: 14px; animation: wc-monitor 0.5s ease-in-out infinite alternate; z-index: 2; }
+@keyframes wc-typing { 0% { transform: translateY(0); } 100% { transform: translateY(-2px) rotate(0.5deg); } }
+@keyframes wc-monitor { 0% { transform: translateX(-50%) scale(1); } 100% { transform: translateX(-50%) scale(1.08) translateY(-1px); } }
+
+/* Break */
+.wc-avatar.anim-paused { animation: wc-sway 3s ease-in-out infinite; box-shadow: 0 0 12px rgba(234,179,8,0.3); }
+.wc-avatar.anim-paused::after { content: '☕'; position: absolute; bottom: -2px; right: -12px; font-size: 18px; animation: wc-cup 2.5s ease-in-out infinite; z-index: 2; }
+@keyframes wc-sway { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(-2deg) translateY(-1px); } 75% { transform: rotate(2deg) translateY(-1px); } }
+@keyframes wc-cup { 0%,100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-4px) rotate(5deg); } }
+
+/* Home office */
+.wc-avatar.anim-home { animation: wc-home-typing 0.7s ease-in-out infinite alternate; box-shadow: 0 0 12px rgba(139,92,246,0.35); }
+.wc-avatar.anim-home::after { content: '🏠'; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-size: 14px; animation: wc-house 3s ease-in-out infinite; z-index: 2; }
+@keyframes wc-home-typing { 0% { transform: translateY(0); } 100% { transform: translateY(-2px); } }
+@keyframes wc-house { 0%,100% { opacity: 0.6; transform: translateX(-50%) scale(1); } 50% { opacity: 1; transform: translateX(-50%) scale(1.15) translateY(-2px); } }
+
+/* Offline */
+.wc-avatar.anim-offline img { filter: grayscale(0.7) brightness(0.6); }
+.wc-avatar.anim-offline { animation: wc-breathe 4s ease-in-out infinite; box-shadow: 0 0 8px rgba(100,116,139,0.2); }
+.wc-avatar.anim-offline::after { content: '💤'; position: absolute; top: -8px; right: -8px; font-size: 14px; animation: wc-zzz 2.5s ease-in-out infinite; z-index: 2; }
+@keyframes wc-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(0.97); } }
+@keyframes wc-zzz { 0% { opacity: 0; transform: translate(0,0) scale(0.5) rotate(0deg); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(10px,-16px) scale(1.2) rotate(15deg); } }
+
 .all-tasks-card { background: linear-gradient(135deg, var(--accent-soft), rgba(139,92,246,0.1)); border: 1px solid var(--accent); }
 .all-tasks-card .wc-avatar { background: var(--accent); color: #fff; }
 .all-tasks-card:hover { box-shadow: 0 8px 24px rgba(59,130,246,0.2); }
 
-/* Invite section */
-.invite-section { margin-top: 8px; }
-.invite-bar { display: flex; gap: 8px; }
-.invite-bar input { flex: 1; }
+/* Add Worker card */
+.add-worker-card { background: transparent; border: 2px dashed var(--border); border-radius: var(--radius); padding: 20px 16px; text-align: center; cursor: pointer; transition: all 0.25s; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 170px; }
+.add-worker-card:hover { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-2px); }
+.add-worker-card:active { transform: scale(0.97); }
+.add-worker-card .add-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 10px; transition: all 0.25s; }
+.add-worker-card:hover .add-icon { background: var(--accent); color: #fff; transform: scale(1.1); }
+.add-worker-card .add-label { font-weight: 600; font-size: 14px; color: var(--text-secondary); transition: color 0.15s; }
+.add-worker-card:hover .add-label { color: var(--accent); }
+
+/* Search modal */
+.search-modal { position: fixed; inset: 0; z-index: 200; display: none; align-items: flex-end; justify-content: center; }
+.search-modal.open { display: flex; }
+.search-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+.search-modal-content { position: relative; z-index: 1; width: 100%; max-width: 440px; background: var(--bg-secondary); border-radius: var(--radius) var(--radius) 0 0; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); max-height: 70vh; display: flex; flex-direction: column; animation: slideUp 0.3s cubic-bezier(.32,.72,0,1); }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.search-input-wrap { position: relative; margin-bottom: 12px; }
+.search-input-wrap svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; }
+.search-input-wrap input { padding-left: 42px; border-radius: 24px; font-size: 16px; }
+.search-results { flex: 1; overflow-y: auto; }
+.search-result-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--radius-xs); cursor: pointer; transition: background 0.15s; }
+.search-result-item:hover { background: var(--bg-hover); }
+.search-result-item:active { transform: scale(0.98); }
+.search-result-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; color: var(--accent); overflow: hidden; flex-shrink: 0; }
+.search-result-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.search-result-info { flex: 1; }
+.search-result-name { font-weight: 600; font-size: 15px; }
+.search-result-role { font-size: 12px; color: var(--text-secondary); }
+.search-empty { text-align: center; padding: 32px 16px; color: var(--text-tertiary); font-size: 14px; }
+.search-result-item .invite-action { margin-left: auto; padding: 6px 16px; border-radius: 999px; background: var(--accent); color: #fff; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: var(--font); }
+.search-result-item .invite-action:hover { background: var(--accent-hover); transform: scale(1.05); }
+.search-result-item .invite-action:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+@media (min-width: 768px) { .search-modal { align-items: center; } .search-modal-content { border-radius: var(--radius); max-height: 500px; animation: fadeScale 0.25s ease; } @keyframes fadeScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } } }
+
+/* File upload area */
+.file-drop-area { border: 2px dashed var(--border); border-radius: var(--radius-xs); padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
+.file-drop-area:hover { border-color: var(--accent); background: var(--accent-soft); }
+.file-drop-area input[type='file'] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.file-drop-label { font-size: 13px; color: var(--text-secondary); }
+.file-drop-label svg { margin-bottom: 4px; }
+.file-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg); border-radius: var(--radius-xs); margin-bottom: 6px; font-size: 13px; }
+.file-item a { color: var(--accent); text-decoration: none; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-item a:hover { text-decoration: underline; }
 
 /* ═══ WORKER DASHBOARD ═══ */
 .worker-dash-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-.worker-dash-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; color: var(--accent); flex-shrink: 0; }
+.worker-dash-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; color: var(--accent); flex-shrink: 0; overflow: hidden; position: relative; }
+.worker-dash-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .worker-dash-info { flex: 1; }
 .worker-dash-info h2 { font-size: 20px; font-weight: 700; }
 .worker-dash-status { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; margin-top: 2px; }
@@ -237,8 +342,9 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
 .quick-extra-row { display: flex; gap: 8px; margin-bottom: 8px; }
 .quick-select, .quick-date { flex: 1; padding: 8px 12px; font-size: 13px; border-radius: var(--radius-xs); border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text); }
 .quick-desc { width: 100%; padding: 8px 12px; font-size: 13px; border-radius: var(--radius-xs); border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text); resize: none; min-height: 44px; }
-.quick-extra-toggle { background: none; border: none; color: var(--text-tertiary); font-size: 12px; cursor: pointer; padding: 4px 0; margin-bottom: 16px; font-family: var(--font); }
+.quick-extra-toggle { background: none; border: none; color: var(--text-tertiary); font-size: 12px; cursor: pointer; padding: 4px 0; margin-bottom: 8px; font-family: var(--font); width: 100%; text-align: center; }
 .quick-extra-toggle:hover { color: var(--text-secondary); }
+.quick-add-bottom { position: sticky; bottom: 64px; background: var(--card-bg); backdrop-filter: var(--blur); border-top: 1px solid var(--border); padding: 12px 16px; margin: 0 -16px; z-index: 10; }
 
 /* Filter chips */
 .worker-task-filters { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; }
@@ -248,15 +354,29 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
 
 /* All tasks header */
 .all-tasks-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-.task-filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-.filter-select { padding: 8px 12px; border-radius: var(--radius-xs); border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text); font-size: 13px; font-family: var(--font); }
+.task-filters { display: flex; flex-direction: column; gap: 0; margin-bottom: 16px; }
+.filter-slider { position: relative; padding: 16px 0 28px; user-select: none; -webkit-user-select: none; touch-action: pan-y; cursor: grab; }
+.filter-slider.dragging { cursor: grabbing; touch-action: none; }
+.filter-slider .slider-rail { position: absolute; top: 26.5px; left: calc(50% / var(--stop-count, 7)); right: calc(50% / var(--stop-count, 7)); height: 3px; background: var(--border); border-radius: 2px; }
+.filter-slider .slider-progress { height: 100%; border-radius: 2px; width: 0%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s; }
+.filter-slider .slider-stops { display: flex; justify-content: space-between; position: relative; z-index: 1; }
+.filter-slider .slider-stop { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; outline: none; color: var(--text-secondary); min-width: 0; flex: 1; }
+.filter-slider .slider-stop:active { transform: scale(0.95); }
+.filter-slider .stop-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
+.filter-slider .stop-dot::before { content: ''; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid var(--border); background: var(--bg-secondary); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-sizing: border-box; }
+.filter-slider .slider-stop.passed .stop-dot::before { width: 10px; height: 10px; border: none; background: var(--dot-clr); }
+.filter-slider .slider-stop.active .stop-dot::before { width: 22px; height: 22px; border: none; background: var(--dot-clr); animation: statusPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.filter-slider .slider-stop.active .stop-dot::after { content: ''; position: absolute; inset: -3px; border-radius: 50%; border: 2px solid currentColor; opacity: 0.25; animation: statusRing 0.6s ease-out; }
+.filter-slider .slider-stop.active .stop-label { color: var(--text-primary); transform: scale(1.05); }
+.filter-slider .slider-stop:hover .stop-dot::before { transform: scale(1.15); }
+.filter-slider .slider-stop:hover .stop-label { color: var(--text-primary); }
 
 /* Lang select */
 .lang-select { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 6px 8px; color: var(--text); font-size: 13px; font-family: var(--font); }
 
 /* Chat layout */
-.chat-page { padding: 0; padding-bottom: 64px; }
-.chat-list-header { padding: 16px; }
+.chat-page { padding: 0 !important; padding-bottom: 64px !important; overflow: hidden; }
+.chat-list-header { padding: 0; display: none; }
 .chat-msg-view { display: flex; flex-direction: column; height: 100%; }
 .chat-msg-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--card-bg); backdrop-filter: var(--blur); }
 .chat-send-btn { border-radius: 50%; min-height: 44px; width: 44px; padding: 0; font-size: 18px; }
@@ -264,7 +384,8 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
 /* Remove btn for worker cards */
 .wc-remove { position: absolute; top: 6px; left: 6px; width: 24px; height: 24px; border-radius: 50%; background: var(--danger); color: #fff; border: none; font-size: 12px; cursor: pointer; display: none; align-items: center; justify-content: center; line-height: 1; }
 .worker-card:hover .wc-remove { display: flex; }
-</style>
+  .icon { display: inline-block; vertical-align: middle; flex-shrink: 0; }
+  </style>
 </head>
 <body>
 
@@ -275,33 +396,37 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
     <p class="tagline" data-i18n="app.tagline.boss">Manage your team, effortlessly.</p>
 
     <div class="auth-card" id="loginForm">
-      <h2 data-i18n="auth.login.title">Welcome back</h2>
-      <div class="form-group">
-        <label data-i18n="auth.username">Username</label>
-        <input type="text" id="loginName" placeholder="Your name" autocomplete="username">
-      </div>
-      <div class="form-group">
-        <label data-i18n="auth.password">Password</label>
-        <input type="password" id="loginPw" placeholder="Password" autocomplete="current-password">
-      </div>
-      <button class="btn btn-primary" onclick="doLogin()" data-i18n="auth.login">Log In</button>
-      <p class="auth-toggle"><span data-i18n="auth.no.account">Don't have an account?</span> <a onclick="showSignup()" data-i18n="auth.signup">Sign Up</a></p>
-      <p id="loginError" class="auth-error hidden"></p>
+      <form onsubmit="event.preventDefault(); doLogin();">
+        <h2 data-i18n="auth.login.title">Welcome back</h2>
+        <div class="form-group">
+          <label data-i18n="auth.username">Username</label>
+          <input type="text" id="loginName" placeholder="Dein Name" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label data-i18n="auth.password">Password</label>
+          <input type="password" id="loginPw" placeholder="Passwort" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" data-i18n="auth.login">Log In</button>
+        <p class="auth-toggle"><span data-i18n="auth.no.account">Don't have an account?</span> <a onclick="showSignup()" data-i18n="auth.signup">Sign Up</a></p>
+        <p id="loginError" class="auth-error hidden"></p>
+      </form>
     </div>
 
     <div class="auth-card hidden" id="signupForm">
-      <h2 data-i18n="auth.signup.title">Create account</h2>
-      <div class="form-group">
-        <label data-i18n="auth.username">Username</label>
-        <input type="text" id="signupName" placeholder="Choose a name" autocomplete="username">
-      </div>
-      <div class="form-group">
-        <label data-i18n="auth.password">Password</label>
-        <input type="password" id="signupPw" placeholder="Min 4 characters" autocomplete="new-password">
-      </div>
-      <button class="btn btn-primary" onclick="doSignup()" data-i18n="auth.signup">Sign Up</button>
-      <p class="auth-toggle"><span data-i18n="auth.have.account">Already have an account?</span> <a onclick="showLogin()" data-i18n="auth.login">Log In</a></p>
-      <p id="signupError" class="auth-error hidden"></p>
+      <form onsubmit="event.preventDefault(); doSignup();">
+        <h2 data-i18n="auth.signup.title">Create account</h2>
+        <div class="form-group">
+          <label data-i18n="auth.username">Username</label>
+          <input type="text" id="signupName" placeholder="Name wählen" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label data-i18n="auth.password">Password</label>
+          <input type="password" id="signupPw" placeholder="Min. 4 Zeichen" autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-primary" data-i18n="auth.signup">Sign Up</button>
+        <p class="auth-toggle"><span data-i18n="auth.have.account">Already have an account?</span> <a onclick="showLogin()" data-i18n="auth.login">Log In</a></p>
+        <p id="signupError" class="auth-error hidden"></p>
+      </form>
     </div>
   </div>
 </div>
@@ -310,29 +435,22 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
 <div id="app" class="app">
   <!-- Top Bar -->
   <header class="topbar">
-    <div class="topbar-title" id="topbarTitle">🏠 <span id="topbarText">Home</span></div>
+    <div class="topbar-title" id="topbarTitle"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg> <span id="topbarText">Startseite</span></div>
     <div class="topbar-actions">
-      <select id="langSwitcher" onchange="I18n.setLang(this.value)" class="lang-select">
+      <select id="langSwitcher" onchange="I18n.setLang(this.value)" class="lang-select" style="display:none;">
         <option value="en">EN</option>
         <option value="de">DE</option>
       </select>
-      <button class="btn-icon" onclick="toggleTheme()" id="themeBtn">🌙</button>
-      <button class="btn-icon" onclick="logout()">🚪</button>
+      <button class="btn-icon" onclick="toggleTheme()" id="themeBtn"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
+      <button class="btn-icon" onclick="window.location.href='/avatar?from=boss'" title="Avatar bearbeiten"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></button>
+      <button class="btn-icon" onclick="logout()"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></button>
     </div>
   </header>
 
   <!-- HOME PAGE — Worker Cards Grid -->
   <div id="pageHome" class="page active">
-    <h1 class="page-title">👋 <span id="greetingName"></span></h1>
+    <h1 class="page-title"><span id="bossAvatarIcon" style="display:inline-flex;align-items:center;vertical-align:middle;margin-right:2px"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span> <span id="greetingName"></span></h1>
     <div id="workerGrid" class="worker-grid"></div>
-    <!-- Invite section -->
-    <div id="inviteSection" class="invite-section">
-      <div class="invite-bar">
-        <input type="text" id="inviteNameInput" list="workerSuggestions" placeholder="Invite a worker by name..." autocomplete="off">
-        <datalist id="workerSuggestions"></datalist>
-        <button class="btn btn-primary btn-sm" onclick="sendInvite()">+ Invite</button>
-      </div>
-    </div>
   </div>
 
   <!-- WORKER DASHBOARD — Shows when clicking a worker card -->
@@ -344,39 +462,67 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
         <h2 id="wdName"></h2>
         <div id="wdStatus" class="worker-dash-status"></div>
       </div>
-      <button class="btn-icon" onclick="openChat(currentWorkerId, currentWorkerName)" title="Chat">💬</button>
+      <button class="btn-icon" onclick="openChat(currentWorkerId, currentWorkerName)" title="Chat"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></button>
     </div>
-    <!-- Quick add task -->
-    <div class="quick-add-bar">
-      <input type="text" id="quickTaskInput" placeholder="Add a task..." onkeydown="if(event.key==='Enter')quickAddTask()">
-      <button class="btn btn-primary quick-add-btn" onclick="quickAddTask()">+</button>
-    </div>
-    <!-- Optional fields toggle -->
-    <div id="quickTaskExtra" class="quick-extra hidden">
-      <div class="quick-extra-row">
-        <select id="quickPriority" class="quick-select" title="Priority">
-          <option value="medium">🟧 Medium</option>
-          <option value="high">🚩 High</option>
-          <option value="low">🔵 Low</option>
-        </select>
-        <input type="date" id="quickDeadline" class="quick-date" title="Deadline">
+    <!-- Worker's task filter slider -->
+    <div class="filter-slider" id="workerFilterSlider">
+      <div class="slider-rail"><div class="slider-progress" id="workerFilterProgress"></div></div>
+      <div class="slider-stops">
+        <button class="slider-stop active" data-value="" onclick="filterWorkerTasks('')">
+          <div class="stop-dot"></div>
+          <span class="stop-label" data-i18n="filter.all">Alle</span>
+        </button>
+        <button class="slider-stop" data-value="todo" onclick="filterWorkerTasks('todo')">
+          <div class="stop-dot"></div>
+          <span class="stop-label" data-i18n="task.status.short.todo">Offen</span>
+        </button>
+        <button class="slider-stop" data-value="in-progress" onclick="filterWorkerTasks('in-progress')">
+          <div class="stop-dot"></div>
+          <span class="stop-label" data-i18n="task.status.short.progress">Aktiv</span>
+        </button>
+        <button class="slider-stop" data-value="on-hold" onclick="filterWorkerTasks('on-hold')">
+          <div class="stop-dot"></div>
+          <span class="stop-label" data-i18n="task.status.short.hold">Pausiert</span>
+        </button>
+        <button class="slider-stop" data-value="needs-info" onclick="filterWorkerTasks('needs-info')">
+          <div class="stop-dot"></div>
+          <span class="stop-label" data-i18n="task.status.short.needsInfo">Info</span>
+        </button>
+        <button class="slider-stop" data-value="in-review" onclick="filterWorkerTasks('in-review')">
+          <div class="stop-dot"></div>
+          <span class="stop-label" data-i18n="task.status.short.review">Review</span>
+        </button>
+        <button class="slider-stop" data-value="done" onclick="filterWorkerTasks('done')">
+          <div class="stop-dot"></div>
+          <span class="stop-label" data-i18n="task.status.short.done">Fertig</span>
+        </button>
       </div>
-      <textarea id="quickDesc" placeholder="Description (optional)" rows="2" class="quick-desc"></textarea>
-    </div>
-    <button class="quick-extra-toggle" onclick="toggleQuickExtra()">
-      <span id="quickExtraIcon">▼</span> More options
-    </button>
-    <!-- Worker's tasks -->
-    <div class="worker-task-filters">
-      <button class="chip active" data-filter="" onclick="filterWorkerTasks(this)">All</button>
-      <button class="chip" data-filter="todo" onclick="filterWorkerTasks(this)">To Do</button>
-      <button class="chip" data-filter="in-progress" onclick="filterWorkerTasks(this)">Active</button>
-      <button class="chip" data-filter="done" onclick="filterWorkerTasks(this)">Done</button>
     </div>
     <div id="workerTaskList"></div>
     <div id="workerTaskEmpty" class="empty-state hidden">
-      <div class="empty-icon">📋</div>
-      <p>No tasks yet — add one above!</p>
+      <div class="empty-icon"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
+      <p>Noch keine Aufgaben — füge unten eine hinzu!</p>
+    </div>
+    <!-- Quick add task (bottom, easy thumb reach) -->
+    <div class="quick-add-bottom">
+      <button class="quick-extra-toggle" onclick="toggleQuickExtra()">
+        <span id="quickExtraIcon">▼</span> Mehr Optionen
+      </button>
+      <div id="quickTaskExtra" class="quick-extra hidden">
+        <div class="quick-extra-row">
+          <select id="quickPriority" class="quick-select" title="Priorität">
+            <option value="medium">Mittel</option>
+            <option value="high">Hoch</option>
+            <option value="low">Niedrig</option>
+          </select>
+          <input type="date" id="quickDeadline" class="quick-date" title="Fälligkeitsdatum">
+        </div>
+        <textarea id="quickDesc" placeholder="Beschreibung (optional)" rows="2" class="quick-desc"></textarea>
+      </div>
+      <div class="quick-add-bar">
+        <input type="text" id="quickTaskInput" placeholder="Aufgabe hinzufügen..." onkeydown="if(event.key==='Enter')quickAddTask()">
+        <button class="btn btn-primary quick-add-btn" onclick="quickAddTask()">+</button>
+      </div>
     </div>
   </div>
 
@@ -384,27 +530,67 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
   <div id="pageAllTasks" class="page">
     <div class="all-tasks-header">
       <button class="btn-icon back-btn" onclick="goHome()">←</button>
-      <h1 class="page-title" style="margin-bottom:0;">📋 All Tasks</h1>
+      <h1 class="page-title" style="margin-bottom:0;"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Alle Aufgaben</h1>
     </div>
     <div class="task-filters">
-      <select id="filterStatus" onchange="renderAllTasks()" class="filter-select" title="Status">
-        <option value="">All Status</option>
-        <option value="todo">To Do</option>
-        <option value="in-progress">In Progress</option>
-        <option value="needs-info">Needs Info</option>
-        <option value="in-review">In Review</option>
-        <option value="done">Done</option>
-      </select>
-      <select id="filterPriority" onchange="renderAllTasks()" class="filter-select" title="Priority">
-        <option value="">All Priority</option>
-        <option value="high">🚩 High</option>
-        <option value="medium">🟧 Medium</option>
-        <option value="low">🔵 Low</option>
-      </select>
+      <div class="filter-slider" id="filterStatusSlider">
+        <div class="slider-rail"><div class="slider-progress" id="filterStatusProgress"></div></div>
+        <div class="slider-stops">
+          <button class="slider-stop active" data-value="" onclick="toggleFilter('status','')">
+            <div class="stop-dot"></div>
+            <span class="stop-label" data-i18n="filter.all">Alle</span>
+          </button>
+          <button class="slider-stop" data-value="todo" onclick="toggleFilter('status','todo')">
+            <div class="stop-dot"></div>
+            <span class="stop-label" data-i18n="task.status.short.todo">Offen</span>
+          </button>
+          <button class="slider-stop" data-value="in-progress" onclick="toggleFilter('status','in-progress')">
+            <div class="stop-dot"></div>
+            <span class="stop-label" data-i18n="task.status.short.progress">Aktiv</span>
+          </button>
+          <button class="slider-stop" data-value="on-hold" onclick="toggleFilter('status','on-hold')">
+            <div class="stop-dot"></div>
+            <span class="stop-label" data-i18n="task.status.short.hold">Pausiert</span>
+          </button>
+          <button class="slider-stop" data-value="needs-info" onclick="toggleFilter('status','needs-info')">
+            <div class="stop-dot"></div>
+            <span class="stop-label" data-i18n="task.status.short.needsInfo">Info</span>
+          </button>
+          <button class="slider-stop" data-value="in-review" onclick="toggleFilter('status','in-review')">
+            <div class="stop-dot"></div>
+            <span class="stop-label" data-i18n="task.status.short.review">Review</span>
+          </button>
+          <button class="slider-stop" data-value="done" onclick="toggleFilter('status','done')">
+            <div class="stop-dot"></div>
+            <span class="stop-label" data-i18n="task.status.short.done">Fertig</span>
+          </button>
+        </div>
+      </div>
+      <div class="filter-slider" id="filterPrioritySlider">
+        <div class="slider-rail"><div class="slider-progress" id="filterPriorityProgress"></div></div>
+        <div class="slider-stops">
+          <button class="slider-stop active" data-value="" onclick="toggleFilter('priority','')">
+            <div class="stop-dot"></div>
+            <span class="stop-label" data-i18n="filter.all">Alle</span>
+          </button>
+          <button class="slider-stop" data-value="low" onclick="toggleFilter('priority','low')">
+            <div class="stop-dot"></div>
+            <span class="stop-label" data-i18n="task.priority.low">Niedrig</span>
+          </button>
+          <button class="slider-stop" data-value="medium" onclick="toggleFilter('priority','medium')">
+            <div class="stop-dot"></div>
+            <span class="stop-label" data-i18n="task.priority.medium">Mittel</span>
+          </button>
+          <button class="slider-stop" data-value="high" onclick="toggleFilter('priority','high')">
+            <div class="stop-dot"></div>
+            <span class="stop-label" data-i18n="task.priority.high">Hoch</span>
+          </button>
+        </div>
+      </div>
     </div>
     <div id="allTaskList"></div>
     <div id="allTaskEmpty" class="empty-state hidden">
-      <div class="empty-icon">📋</div>
+      <div class="empty-icon"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
       <p data-i18n="task.empty">No tasks yet</p>
     </div>
   </div>
@@ -414,7 +600,7 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
     <h1 class="page-title" data-i18n="nav.requests">Requests</h1>
     <div id="requestList"></div>
     <div id="requestEmpty" class="empty-state hidden">
-      <div class="empty-icon">📩</div>
+      <div class="empty-icon"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22 6 12 13 2 6"></polyline></svg></div>
       <p data-i18n="request.empty">No requests</p>
     </div>
   </div>
@@ -428,19 +614,19 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
         </div>
         <div id="chatConvList"></div>
         <div id="chatEmpty" class="empty-state hidden">
-          <div class="empty-icon">💬</div>
+          <div class="empty-icon"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
           <p data-i18n="chat.empty">No conversations yet</p>
         </div>
       </div>
       <div id="chatMsgView" class="hidden chat-msg-view">
         <div class="chat-msg-header">
           <button class="btn-icon" onclick="closeChatView()" style="width:36px;height:36px;font-size:18px;">←</button>
-          <strong id="chatPartnerName"></strong>
-          <span id="chatTypingIndicator" class="hidden" style="font-size:12px;color:var(--text-secondary);" data-i18n="chat.typing">typing...</span>
+          <div id="chatPartnerAvatar" class="chat-partner-avatar"></div>
+          <strong id="chatPartnerName" style="flex:1;"></strong>
         </div>
         <div id="chatMessages" class="chat-messages"></div>
         <div class="chat-input-bar">
-          <input type="text" id="chatInput" data-i18n-placeholder="chat.placeholder" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChatMsg()">
+          <input type="text" id="chatInput" data-i18n-placeholder="chat.placeholder" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChatMsg()" oninput="emitTyping()">
           <button class="btn btn-primary chat-send-btn" onclick="sendChatMsg()">↑</button>
         </div>
       </div>
@@ -450,16 +636,16 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
   <!-- Bottom Nav -->
   <nav class="bottomnav">
     <button class="nav-item active" onclick="showPage('Home')" data-nav="Home">
-      <span class="nav-icon">🏠</span>
-      <span>Home</span>
+      <span class="nav-icon"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></span>
+      <span>Startseite</span>
     </button>
     <button class="nav-item" onclick="showPage('Requests')" data-nav="Requests">
-      <span class="nav-icon">📩</span>
+      <span class="nav-icon"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22 6 12 13 2 6"></polyline></svg></span>
       <span data-i18n="nav.requests">Requests</span>
       <span class="nav-badge hidden" id="requestBadge">0</span>
     </button>
     <button class="nav-item" onclick="showPage('Chat')" data-nav="Chat">
-      <span class="nav-icon">💬</span>
+      <span class="nav-icon"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></span>
       <span data-i18n="nav.chat">Chat</span>
       <span class="nav-badge hidden" id="chatBadge">0</span>
     </button>
@@ -485,30 +671,51 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
     </div>
     <div class="detail-section">
       <h4>Status</h4>
-      <select id="detailStatusSelect" onchange="updateTaskStatus()" style="font-size:14px;">
-        <option value="todo">○ To Do</option>
-        <option value="in-progress">◉ In Progress</option>
-        <option value="on-hold">⏸ On Hold</option>
-        <option value="needs-info">❓ Needs Info</option>
-        <option value="in-review">👁 In Review</option>
-        <option value="done">✅ Done</option>
-      </select>
+      <div class="status-slider" id="statusSlider">
+        <div class="slider-rail"><div class="slider-progress" id="sliderProgress"></div></div>
+        <div class="slider-stops">
+          <button type="button" class="slider-stop" data-status="todo" onclick="selectStatus('todo')">
+            <span class="stop-dot"></span><span class="stop-label" data-i18n="task.status.short.todo">Offen</span>
+          </button>
+          <button type="button" class="slider-stop" data-status="in-progress" onclick="selectStatus('in-progress')">
+            <span class="stop-dot"></span><span class="stop-label" data-i18n="task.status.short.progress">Aktiv</span>
+          </button>
+          <button type="button" class="slider-stop" data-status="on-hold" onclick="selectStatus('on-hold')">
+            <span class="stop-dot"></span><span class="stop-label" data-i18n="task.status.short.hold">Pausiert</span>
+          </button>
+          <button type="button" class="slider-stop" data-status="needs-info" onclick="selectStatus('needs-info')">
+            <span class="stop-dot"></span><span class="stop-label" data-i18n="task.status.short.needsInfo">Info</span>
+          </button>
+          <button type="button" class="slider-stop" data-status="in-review" onclick="selectStatus('in-review')">
+            <span class="stop-dot"></span><span class="stop-label" data-i18n="task.status.short.review">Review</span>
+          </button>
+          <button type="button" class="slider-stop" data-status="done" onclick="selectStatus('done')">
+            <span class="stop-dot"></span><span class="stop-label" data-i18n="task.status.short.done">Fertig</span>
+          </button>
+        </div>
+      </div>
     </div>
     <div class="detail-section">
       <h4 data-i18n="task.notes">Notes</h4>
       <div id="detailNotes"></div>
       <div style="display:flex;gap:8px;margin-top:8px;">
-        <input type="text" id="noteInput" data-i18n-placeholder="task.add.note" placeholder="Add note..." style="flex:1;">
+        <input type="text" id="noteInput" data-i18n-placeholder="task.add.note" placeholder="Notiz hinzufügen..." style="flex:1;">
         <button class="btn btn-primary btn-sm" onclick="addNote()">↑</button>
       </div>
     </div>
     <div class="detail-section">
       <h4 data-i18n="task.files">Attachments</h4>
       <div id="detailFiles"></div>
-      <input type="file" id="fileUpload" multiple style="margin-top:8px;" onchange="uploadTaskFiles()">
+      <div class="file-drop-area">
+        <input type="file" id="fileUpload" multiple onchange="uploadTaskFiles()">
+        <div class="file-drop-label">
+          <svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg><br>
+          Dateien auswählen
+        </div>
+      </div>
     </div>
-    <div style="margin-top:24px;">
-      <button class="btn btn-danger btn-sm" onclick="deleteCurrentTask()" data-i18n="common.delete">Delete</button>
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);">
+      <button class="btn btn-ghost btn-sm" onclick="deleteCurrentTask()" style="color:var(--danger);" data-i18n="common.delete"><svg class="icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Löschen</button>
     </div>
   </div>
 </div>
@@ -522,13 +729,31 @@ label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display
   <div id="reqDetailMeta" style="margin-bottom:16px;"></div>
   <div id="reqDetailNotes" style="margin-bottom:16px;"></div>
   <div style="display:flex;gap:8px;margin-bottom:12px;">
-    <input type="text" id="reqNoteInput" placeholder="Add a note..." style="flex:1;">
+    <input type="text" id="reqNoteInput" placeholder="Notiz hinzufügen..." style="flex:1;">
     <button class="btn btn-primary btn-sm" onclick="addReqNote()">↑</button>
   </div>
   <div class="panel-actions">
     <button class="btn btn-ghost" onclick="closeReqDetail()" data-i18n="common.close">Close</button>
-    <button class="btn btn-danger btn-sm" id="reqDenyBtn" onclick="updateReqStatus('denied')">Deny</button>
-    <button class="btn btn-primary btn-sm" id="reqApproveBtn" onclick="updateReqStatus('approved')">Approve</button>
+    <button class="btn btn-danger btn-sm" id="reqDenyBtn" onclick="updateReqStatus('denied')">Ablehnen</button>
+    <button class="btn btn-primary btn-sm" id="reqApproveBtn" onclick="updateReqStatus('approved')">Genehmigen</button>
+  </div>
+</div>
+
+<!-- ADD WORKER SEARCH MODAL -->
+<div id="addWorkerModal" class="search-modal">
+  <div class="search-modal-backdrop" onclick="closeAddWorker()"></div>
+  <div class="search-modal-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="font-size:18px;font-weight:700;">Teammitglied hinzufügen</h3>
+      <button class="btn-icon" onclick="closeAddWorker()" style="width:32px;height:32px;min-width:32px;min-height:32px;">✕</button>
+    </div>
+    <div class="search-input-wrap">
+      <svg class="icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" id="workerSearchInput" placeholder="Name suchen..." oninput="filterWorkerSearch()" autocomplete="off">
+    </div>
+    <div class="search-results" id="workerSearchResults">
+      <div class="search-empty">Tippe einen Namen ein, um Arbeiter zu finden</div>
+    </div>
   </div>
 </div>
 
@@ -561,7 +786,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await I18n.init();
   const savedTheme = localStorage.getItem('taskflow_theme') || 'light';
   document.documentElement.dataset.theme = savedTheme;
-  document.getElementById('themeBtn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+  document.getElementById('themeBtn').innerHTML = savedTheme === 'dark' ? '<svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>' : '<svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
   document.getElementById('langSwitcher').value = I18n.lang;
 
   if (API.token) {
@@ -574,7 +799,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('loginPw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
   document.getElementById('signupPw').addEventListener('keydown', e => { if (e.key === 'Enter') doSignup(); });
-  document.getElementById('inviteNameInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendInvite(); });
 
   window.addEventListener('auth:expired', () => {
     user = null;
@@ -643,6 +867,13 @@ async function enterApp() {
   document.getElementById('landing').classList.add('hidden');
   document.getElementById('app').classList.add('active');
   document.getElementById('greetingName').textContent = user.name;
+  // Load boss's own DiceBear avatar for greeting
+  try {
+    const ac = await API.getAvatarConfig();
+    if (ac && ac.avatarUrl) {
+      document.getElementById('bossAvatarIcon').innerHTML = `<img src="${esc(ac.avatarUrl)}" alt="" onerror="this.style.display='none'" style="width:32px;height:32px;border-radius:50%;object-fit:cover;vertical-align:middle;">`;
+    }
+  } catch {}
 
   WS.connect(API.token);
   WS.on('sync', onSync);
@@ -655,9 +886,18 @@ async function enterApp() {
   WS.on('time:clockin', () => loadLiveStatus());
   WS.on('time:clockout', () => loadLiveStatus());
   WS.on('time:status', () => loadLiveStatus());
+  WS.on('avatar:updated', async () => {
+    loadTeam();
+    try {
+      const ac = await API.getAvatarConfig();
+      if (ac && ac.avatarUrl) {
+        document.getElementById('bossAvatarIcon').innerHTML = `<img src="${esc(ac.avatarUrl)}" alt="" onerror="this.style.display='none'" style="width:32px;height:32px;border-radius:50%;object-fit:cover;vertical-align:middle;">`;
+      }
+    } catch {}
+  });
   WS.on('request:created', d => { requests.push(d.payload); renderRequests(); updateBadges(); });
   WS.on('request:updated', d => { const i = requests.findIndex(r => r.id === d.payload.id); if (i > -1) requests[i] = d.payload; renderRequests(); });
-  WS.on('chat:message', d => { if (currentChatPartner === d.message.from) { chatMessages.push(d.message); renderChatMessages(); API.markRead(d.message.from); } else { unreadCounts[d.message.from] = (unreadCounts[d.message.from] || 0) + 1; updateBadges(); } loadConversations(); });
+  WS.on('chat:message', d => { if (currentChatPartner === d.message.from) { isTypingVisible = false; clearTimeout(typingTimeout); removeTypingBubble(); chatMessages.push(d.message); renderChatMessages(); API.markRead(d.message.from); } else { unreadCounts[d.message.from] = (unreadCounts[d.message.from] || 0) + 1; updateBadges(); } loadConversations(); });
   WS.on('chat:typing', d => { if (currentChatPartner === d.from) showTyping(); });
 
   await Promise.all([loadTasks(), loadTeam(), loadRequests(), loadConversations(), loadLiveStatus()]);
@@ -689,10 +929,10 @@ function showPage(name) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const nav = document.querySelector(`[data-nav="${name}"]`);
   if (nav) nav.classList.add('active');
-  const icons = { Home: '🏠', Requests: '📩', Chat: '💬' };
-  const labels = { Home: 'Home', Requests: 'Requests', Chat: 'Chat' };
-  document.getElementById('topbarTitle').innerHTML = `${icons[name] || '📋'} <span id="topbarText">${labels[name] || name}</span>`;
-  if (name === 'Chat') closeChatView();
+  const icons = { Home: '<svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>', Requests: '<svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22 6 12 13 2 6"></polyline></svg>', Chat: '<svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>' };
+  const labels = { Home: 'Startseite', Requests: 'Anfragen', Chat: 'Chat' };
+  document.getElementById('topbarTitle').innerHTML = `${icons[name] || '<svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>'} <span id="topbarText">${labels[name] || name}</span>`;
+  if (name === 'Chat' && !currentChatPartner) closeChatView();
 }
 
 function goHome() {
@@ -714,10 +954,10 @@ function renderHome() {
   const totalTasks = tasks.filter(t => t.createdBy === user?.id).length;
   html += `
     <div class="worker-card all-tasks-card" onclick="showAllTasks()">
-      <div class="wc-avatar">📋</div>
-      <div class="wc-name">All Tasks</div>
-      <div class="wc-meta">Overview</div>
-      <span class="wc-task-count">${totalTasks} task${totalTasks !== 1 ? 's' : ''}</span>
+      <div class="wc-avatar"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
+      <div class="wc-name">Alle Aufgaben</div>
+      <div class="wc-meta">Übersicht</div>
+      <span class="wc-task-count">${totalTasks} ${totalTasks === 1 ? 'Aufgabe' : 'Aufgaben'}</span>
     </div>`;
 
   // Active workers
@@ -727,15 +967,22 @@ function renderHome() {
     const status = liveStatuses.find(s => s.userId === t.workerId);
     const statusCls = status ? status.status : 'offline';
     const statusColor = statusCls === 'working' ? '#10B981' : statusCls === 'break' ? '#F59E0B' : '#9CA3AF';
+    const isHome = status && status.location === 'home';
+    const animClass = statusCls === 'working' ? (isHome ? 'anim-home' : 'anim-working') : statusCls === 'break' ? 'anim-paused' : 'anim-offline';
+    const avatarInner = t.workerAvatarUrl
+      ? `<img src="${esc(t.workerAvatarUrl)}" alt="" onerror="this.replaceWith(document.createTextNode('${(t.workerName||'?')[0].toUpperCase()}'))">`
+      : (t.workerName ? t.workerName[0].toUpperCase() : '?');
+    const statusLabel = statusCls === 'working' ? '💻 Arbeitet' : statusCls === 'break' ? '☕ Pause' : '😴 Offline';
+    const locationLabel = status && status.location ? (status.location === 'home' ? ' · 🏠' : ' · 🏢') : '';
 
     html += `
     <div class="worker-card" onclick="openWorkerDash('${t.workerId}', '${esc(t.workerName)}')">
-      <button class="wc-remove" onclick="event.stopPropagation();removeTeamMember('${t.id}')" title="Remove">✕</button>
+      <button class="wc-remove" onclick="event.stopPropagation();removeTeamMember('${t.id}')" title="Entfernen">✕</button>
       <div class="wc-status-dot" style="background:${statusColor};"></div>
-      <div class="wc-avatar">${t.workerName ? t.workerName[0].toUpperCase() : '?'}</div>
+      <div class="wc-avatar ${animClass}">${avatarInner}</div>
       <div class="wc-name">${esc(t.workerName)}</div>
-      <div class="wc-meta">${statusCls === 'working' ? '🟢 Working' : statusCls === 'break' ? '🟡 Break' : '⚫ Offline'}</div>
-      <span class="wc-task-count">${activeTasks} active</span>
+      <div class="wc-meta">${statusLabel}${locationLabel}</div>
+      <span class="wc-task-count">${activeTasks} aktiv</span>
     </div>`;
   }
 
@@ -743,14 +990,20 @@ function renderHome() {
   for (const t of pending) {
     html += `
     <div class="worker-card pending">
-      <div class="wc-avatar">⏳</div>
+      <div class="wc-avatar"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
       <div class="wc-name">${esc(t.workerName)}</div>
-      <div class="wc-meta">Pending invite</div>
+      <div class="wc-meta">Einladung ausstehend</div>
     </div>`;
   }
 
+  // Add Worker card (always last)
+  html += `
+    <div class="add-worker-card" onclick="openAddWorker()">
+      <div class="add-icon"><svg class="icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg></div>
+      <div class="add-label">Arbeiter einladen</div>
+    </div>`;
+
   grid.innerHTML = html;
-  loadWorkerSuggestions();
 }
 
 // ═══ WORKER DASHBOARD ═══
@@ -759,23 +1012,30 @@ function openWorkerDash(workerId, workerName) {
   currentWorkerName = workerName;
   workerTaskFilter = '';
 
-  // Update header
-  document.getElementById('wdAvatar').textContent = workerName[0].toUpperCase();
+  // Update header with avatar
+  const wdAvatarEl = document.getElementById('wdAvatar');
+  const teamEntry = team.find(t => t.workerId === workerId);
+  if (teamEntry && teamEntry.workerAvatarUrl) {
+    wdAvatarEl.innerHTML = `<img src="${esc(teamEntry.workerAvatarUrl)}" alt="" onerror="this.replaceWith(document.createTextNode('${(workerName||'?')[0].toUpperCase()}'))">`;
+  } else {
+    wdAvatarEl.textContent = workerName[0].toUpperCase();
+  }
   document.getElementById('wdName').textContent = workerName;
 
   const status = liveStatuses.find(s => s.userId === workerId);
   const statusEl = document.getElementById('wdStatus');
   if (status) {
-    const dot = status.status === 'working' ? '🟢' : status.status === 'break' ? '🟡' : '⚫';
-    statusEl.innerHTML = `${dot} ${status.status === 'working' ? 'Working' : status.status === 'break' ? 'On break' : 'Offline'}`;
-    if (status.location) statusEl.innerHTML += ` · 📍 ${status.location === 'office' ? 'Office' : 'Home'}`;
+    const statusEmoji = status.status === 'working' ? '💻' : status.status === 'break' ? '☕' : '😴';
+    const statusText = status.status === 'working' ? 'Arbeitet' : status.status === 'break' ? 'Pause' : 'Offline';
+    statusEl.innerHTML = `${statusEmoji} ${statusText}`;
+    if (status.location) statusEl.innerHTML += ` · ${status.location === 'office' ? '🏢 Büro' : '🏠 Zuhause'}`;
   } else {
-    statusEl.innerHTML = '⚫ Offline';
+    statusEl.innerHTML = '😴 Offline';
   }
 
-  // Reset chips
-  document.querySelectorAll('.worker-task-filters .chip').forEach(c => c.classList.remove('active'));
-  document.querySelector('.worker-task-filters .chip[data-filter=""]').classList.add('active');
+  // Reset worker filter slider
+  workerTaskFilter = '';
+  updateWorkerFilterSlider();
 
   // Reset quick extra
   document.getElementById('quickTaskExtra').classList.add('hidden');
@@ -791,13 +1051,13 @@ function openWorkerDash(workerId, workerName) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('pageWorker').classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('topbarTitle').innerHTML = `👤 <span id="topbarText">${esc(workerName)}</span>`;
+  document.getElementById('topbarTitle').innerHTML = `<svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> <span id="topbarText">${esc(workerName)}</span>`;
 }
 
 function renderWorkerTasks() {
   if (!currentWorkerId) return;
   let workerTasks = tasks.filter(t => t.assignedTo === currentWorkerId);
-  if (workerTaskFilter) workerTasks = workerTasks.filter(t => t.status === workerTaskFilter || (workerTaskFilter === 'in-progress' && ['in-progress', 'on-hold', 'needs-info', 'in-review'].includes(t.status)));
+  if (workerTaskFilter) workerTasks = workerTasks.filter(t => t.status === workerTaskFilter);
   workerTasks.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
   const list = document.getElementById('workerTaskList');
@@ -812,11 +1072,47 @@ function renderWorkerTasks() {
   list.innerHTML = workerTasks.map(t => renderTaskCard(t)).join('');
 }
 
-function filterWorkerTasks(el) {
-  workerTaskFilter = el.dataset.filter;
-  document.querySelectorAll('.worker-task-filters .chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
+const WORKER_FILTER_ORDER = ['','todo','in-progress','on-hold','needs-info','in-review','done'];
+
+function filterWorkerTasks(value) {
+  workerTaskFilter = value;
+  updateWorkerFilterSlider();
   renderWorkerTasks();
+}
+
+function updateWorkerFilterSlider() {
+  const slider = document.getElementById('workerFilterSlider');
+  const progress = document.getElementById('workerFilterProgress');
+  if (!slider) return;
+  const order = WORKER_FILTER_ORDER;
+  slider.style.setProperty('--stop-count', order.length);
+  const activeVal = workerTaskFilter;
+  const activeIdx = order.indexOf(activeVal);
+  const meta = TaskModels.STATUS_META;
+  const activeMeta = activeVal ? meta[activeVal] : null;
+  const activeColor = activeMeta ? activeMeta.color : 'var(--accent)';
+
+  const stops = slider.querySelectorAll('.slider-stop');
+  stops.forEach((stop, i) => {
+    stop.classList.remove('active', 'passed');
+    const dot = stop.querySelector('.stop-dot');
+    if (i === activeIdx) {
+      stop.classList.add('active');
+      dot.style.setProperty('--dot-clr', activeColor);
+      dot.style.color = activeColor;
+    } else if (i < activeIdx) {
+      stop.classList.add('passed');
+      dot.style.setProperty('--dot-clr', activeColor);
+      dot.style.color = activeColor;
+    } else {
+      dot.style.removeProperty('--dot-clr');
+      dot.style.color = '';
+    }
+  });
+
+  const pct = order.length > 1 ? (activeIdx / (order.length - 1)) * 100 : 0;
+  progress.style.width = pct + '%';
+  progress.style.background = activeColor;
 }
 
 function toggleQuickExtra() {
@@ -844,7 +1140,7 @@ async function quickAddTask() {
     input.value = '';
     document.getElementById('quickDesc').value = '';
     document.getElementById('quickDeadline').value = '';
-    toast('✅ Task created', 'success');
+    toast('<svg class="icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg> Aufgabe erstellt', 'success');
     loadTasks().then(() => renderWorkerTasks());
   } catch (err) { toast(err.message, 'error'); }
 }
@@ -854,13 +1150,68 @@ function showAllTasks() {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('pageAllTasks').classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('topbarTitle').innerHTML = '📋 <span id="topbarText">All Tasks</span>';
+  document.getElementById('topbarTitle').innerHTML = '<svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> <span id="topbarText">Alle Aufgaben</span>';
+  updateFilterSlider('status');
+  updateFilterSlider('priority');
+  renderAllTasks();
+}
+
+const activeFilters = { status: '', priority: '' };
+const FILTER_STATUS_ORDER = ['','todo','in-progress','on-hold','needs-info','in-review','done'];
+const FILTER_PRIORITY_ORDER = ['','low','medium','high'];
+
+function toggleFilter(type, value) {
+  activeFilters[type] = value;
+  updateFilterSlider(type);
+  renderAllTasks();
+}
+
+function updateFilterSlider(type) {
+  const isStatus = type === 'status';
+  const slider = document.getElementById(isStatus ? 'filterStatusSlider' : 'filterPrioritySlider');
+  const progress = document.getElementById(isStatus ? 'filterStatusProgress' : 'filterPriorityProgress');
+  const order = isStatus ? FILTER_STATUS_ORDER : FILTER_PRIORITY_ORDER;
+  slider.style.setProperty('--stop-count', order.length);
+  const meta = isStatus ? TaskModels.STATUS_META : TaskModels.PRIORITY_META;
+  const activeVal = activeFilters[type];
+  const activeIdx = order.indexOf(activeVal);
+  const activeMeta = activeVal ? meta[activeVal] : null;
+  const activeColor = activeMeta ? activeMeta.color : 'var(--accent)';
+
+  const stops = slider.querySelectorAll('.slider-stop');
+  stops.forEach((stop, i) => {
+    stop.classList.remove('active', 'passed');
+    const dot = stop.querySelector('.stop-dot');
+    if (i === activeIdx) {
+      stop.classList.add('active');
+      dot.style.setProperty('--dot-clr', activeColor);
+      dot.style.color = activeColor;
+    } else if (i < activeIdx) {
+      stop.classList.add('passed');
+      dot.style.setProperty('--dot-clr', activeColor);
+      dot.style.color = activeColor;
+    } else {
+      dot.style.removeProperty('--dot-clr');
+      dot.style.color = '';
+    }
+  });
+
+  const pct = order.length > 1 ? (activeIdx / (order.length - 1)) * 100 : 0;
+  progress.style.width = pct + '%';
+  progress.style.background = activeColor;
+}
+
+function setFilter(type, value, btn) {
+  activeFilters[type] = value;
+  const row = btn.parentElement;
+  row.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
   renderAllTasks();
 }
 
 function renderAllTasks() {
-  const statusFilter = document.getElementById('filterStatus').value;
-  const priorityFilter = document.getElementById('filterPriority').value;
+  const statusFilter = activeFilters.status || '';
+  const priorityFilter = activeFilters.priority || '';
   let filtered = tasks.filter(t => t.createdBy === user?.id);
   if (statusFilter) filtered = filtered.filter(t => t.status === statusFilter);
   if (priorityFilter) filtered = filtered.filter(t => t.priority === priorityFilter);
@@ -892,8 +1243,8 @@ function renderTaskCard(t) {
     ${t.description ? `<p style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">${esc(t.description).substring(0, 100)}</p>` : ''}
     <div class="card-meta">
       <span class="priority-badge" style="color:${pm.color}">${pm.icon} ${I18n.t(pm.label)}</span>
-      ${t.assignedTo ? `<span>👤 ${esc(getWorkerName(t.assignedTo))}</span>` : '<span style="color:var(--text-tertiary)">Unassigned</span>'}
-      ${dl ? `<span class="deadline ${dl.cls}">${dl.urgent ? '⚠️ ' : ''}${dl.text}</span>` : ''}
+      ${t.assignedTo ? `<span><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> ${esc(getWorkerName(t.assignedTo))}</span>` : '<span style="color:var(--text-tertiary)">Nicht zugewiesen</span>'}
+      ${dl ? `<span class="deadline ${dl.cls}">${dl.urgent ? '<span style="display:inline-block;width:12px;height:12px;border-radius:4px;background:var(--danger);margin-right:6px;"></span> ' : ''}${dl.text}</span>` : ''}
       <span>${TaskModels.relativeTime(t.updatedAt)}</span>
     </div>
     ${t.progress > 0 ? `<div class="progress-bar"><div class="progress-fill" style="width:${t.progress}%;background:${t.progress >= 100 ? 'var(--success)' : 'var(--accent)'}"></div></div>` : ''}
@@ -924,7 +1275,7 @@ function showDetail(taskId) {
 
   document.getElementById('detailTitle').textContent = task.title;
   document.getElementById('detailDesc').textContent = task.description || '';
-  document.getElementById('detailStatusSelect').value = task.status;
+  setSliderStatus(task.status, false);
 
   const sm = TaskModels.STATUS_META[task.status] || {};
   document.getElementById('detailStatus').innerHTML = `${sm.icon} ${I18n.t(sm.label)}`;
@@ -949,15 +1300,15 @@ function showDetail(taskId) {
       <div class="note-text">${esc(n.text)}</div>
       <div class="note-time">${TaskModels.relativeTime(n.createdAt)}</div>
     </div>
-  `).join('') || '<p style="color:var(--text-tertiary);font-size:13px;">No notes yet</p>';
+  `).join('') || '<p style="color:var(--text-tertiary);font-size:13px;">Noch keine Notizen</p>';
 
   document.getElementById('detailFiles').innerHTML = (task.files || []).map(f => `
-    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;">
-      <span>📎</span>
-      <a href="/api/files/${task.id}/${f.storedName}" target="_blank" style="flex:1;font-size:13px;">${esc(f.name)}</a>
-      <span style="font-size:12px;color:var(--text-tertiary)">${TaskModels.formatFileSize(f.size)}</span>
+    <div class="file-item">
+      <svg class="icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+      <a href="/api/files/${task.id}/${f.storedName}" target="_blank">${esc(f.name)}</a>
+      <span style="color:var(--text-tertiary)">${TaskModels.formatFileSize(f.size)}</span>
     </div>
-  `).join('') || '<p style="color:var(--text-tertiary);font-size:13px;">No files</p>';
+  `).join('') || '<p style="color:var(--text-tertiary);font-size:13px;">Keine Dateien</p>';
 
   document.getElementById('detailOverlay').classList.add('open');
   document.getElementById('detailPanel').classList.add('open');
@@ -969,9 +1320,45 @@ function closeDetail() {
   currentDetailTask = null;
 }
 
-async function updateTaskStatus() {
+function setSliderStatus(status, animate = true) {
+  const order = TaskModels.STATUS_ORDER;
+  const idx = order.indexOf(status);
+  if (idx === -1) return;
+  const meta = TaskModels.STATUS_META[status];
+  const slider = document.getElementById('statusSlider');
+  slider.style.setProperty('--stop-count', order.length);
+  const stops = slider.querySelectorAll('.slider-stop');
+  stops.forEach((stop, i) => {
+    stop.classList.remove('active', 'passed');
+    const dot = stop.querySelector('.stop-dot');
+    if (i === idx) {
+      stop.classList.add('active');
+      dot.style.setProperty('--dot-clr', meta.color);
+      dot.style.color = meta.color;
+    } else if (i < idx) {
+      stop.classList.add('passed');
+      dot.style.setProperty('--dot-clr', meta.color);
+      dot.style.color = meta.color;
+    } else {
+      dot.style.removeProperty('--dot-clr');
+      dot.style.color = '';
+    }
+  });
+  const progress = document.getElementById('sliderProgress');
+  const pct = order.length > 1 ? (idx / (order.length - 1)) * 100 : 0;
+  if (!animate) progress.style.transition = 'none';
+  progress.style.width = pct + '%';
+  progress.style.background = meta.color;
+  if (!animate) requestAnimationFrame(() => progress.style.transition = '');
+}
+
+function selectStatus(status) {
+  setSliderStatus(status);
+  updateTaskStatusTo(status);
+}
+
+async function updateTaskStatusTo(status) {
   if (!currentDetailTask) return;
-  const status = document.getElementById('detailStatusSelect').value;
   try {
     await API.updateTask(currentDetailTask.id, { status });
     loadTasks();
@@ -1001,19 +1388,19 @@ async function uploadTaskFiles() {
   try {
     await API.uploadFiles(currentDetailTask.id, fd);
     document.getElementById('fileUpload').value = '';
-    toast('Files uploaded', 'success');
+    toast('Dateien hochgeladen', 'success');
     loadTasks();
     setTimeout(() => showDetail(currentDetailTask.id), 300);
   } catch (err) { toast(err.message, 'error'); }
 }
 
 async function deleteCurrentTask() {
-  if (!currentDetailTask || !confirm(I18n.t('common.confirm'))) return;
+  if (!currentDetailTask || !await bossConfirm(I18n.t('common.confirm'), I18n.t('common.confirm') || 'Confirm')) return;
   try {
     await API.deleteTask(currentDetailTask.id);
     closeDetail();
     loadTasks().then(() => refreshCurrentView());
-    toast('Task deleted', 'success');
+    toast('Aufgabe gelöscht', 'success');
   } catch (err) { toast(err.message, 'error'); }
 }
 
@@ -1025,34 +1412,88 @@ async function loadTeam() {
   } catch {}
 }
 
-async function loadWorkerSuggestions() {
+let availableWorkers = [];
+
+async function openAddWorker() {
+  const modal = document.getElementById('addWorkerModal');
+  modal.classList.add('open');
+  document.getElementById('workerSearchInput').value = '';
+  document.getElementById('workerSearchInput').focus();
   try {
     const workers = await API.getWorkers();
-    const knownNames = new Set(team.map(t => t.workerName));
-    const dl = document.getElementById('workerSuggestions');
-    dl.innerHTML = workers
-      .filter(w => !knownNames.has(w.name))
-      .map(w => `<option value="${esc(w.name)}">`)
-      .join('');
-  } catch {}
+    const knownIds = new Set(team.map(t => t.workerName));
+    availableWorkers = workers.filter(w => !knownIds.has(w.name));
+    filterWorkerSearch();
+  } catch { availableWorkers = []; filterWorkerSearch(); }
 }
 
-async function sendInvite() {
-  const name = document.getElementById('inviteNameInput').value.trim();
+function closeAddWorker() {
+  document.getElementById('addWorkerModal').classList.remove('open');
+}
+
+function filterWorkerSearch() {
+  const q = document.getElementById('workerSearchInput').value.trim().toLowerCase();
+  const container = document.getElementById('workerSearchResults');
+  const filtered = q ? availableWorkers.filter(w => w.name.toLowerCase().includes(q)) : availableWorkers;
+
+  if (!q && availableWorkers.length === 0) {
+    container.innerHTML = '<div class="search-empty">Keine verfügbaren Arbeiter gefunden</div>';
+    return;
+  }
+  if (!q) {
+    container.innerHTML = availableWorkers.map(w => workerResultHTML(w)).join('') || '<div class="search-empty">Keine verfügbaren Arbeiter</div>';
+    return;
+  }
+  if (filtered.length === 0) {
+    // Allow inviting by typed name even if not in list
+    container.innerHTML = `
+      <div class="search-result-item" onclick="inviteByName('${esc(q)}')">
+        <div class="search-result-avatar"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg></div>
+        <div class="search-result-info">
+          <div class="search-result-name">"${esc(q)}" einladen</div>
+          <div class="search-result-role">Einladung senden</div>
+        </div>
+        <button class="invite-action">Einladen</button>
+      </div>`;
+    return;
+  }
+  container.innerHTML = filtered.map(w => workerResultHTML(w)).join('');
+}
+
+function workerResultHTML(w) {
+  const avatar = w.avatarUrl
+    ? `<img src="${esc(w.avatarUrl)}" alt="" onerror="this.replaceWith(document.createTextNode('${w.name[0].toUpperCase()}'))">`
+    : w.name[0].toUpperCase();
+  return `
+    <div class="search-result-item">
+      <div class="search-result-avatar">${avatar}</div>
+      <div class="search-result-info">
+        <div class="search-result-name">${esc(w.name)}</div>
+        <div class="search-result-role">Arbeiter</div>
+      </div>
+      <button class="invite-action" onclick="event.stopPropagation();inviteByName('${esc(w.name)}', this)">Einladen</button>
+    </div>`;
+}
+
+async function inviteByName(name, btn) {
   if (!name) return;
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
   try {
     await API.sendInvite(name);
-    document.getElementById('inviteNameInput').value = '';
-    toast('Invite sent!', 'success');
+    toast('Einladung gesendet!', 'success');
+    closeAddWorker();
     loadTeam();
-  } catch (err) { toast(err.message, 'error'); }
+  } catch (err) {
+    toast(err.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Einladen'; }
+  }
 }
 
 async function removeTeamMember(id) {
-  if (!confirm('Remove this team member?')) return;
+  if (!await bossConfirm('Dieses Teammitglied entfernen?', I18n.t('common.confirm') || 'Confirm')) return;
   try {
     await API.removeTeamMember(id);
-    toast('Member removed', 'success');
+    toast('Mitglied entfernt', 'success');
     loadTeam();
   } catch (err) { toast(err.message, 'error'); }
 }
@@ -1093,7 +1534,7 @@ function renderRequests() {
         </span>
       </div>
       <div class="card-meta">
-        <span>From: ${esc(r.fromUserName)}</span>
+        <span>Von: ${esc(r.fromUserName)}</span>
         <span>${r.type}</span>
         <span>${TaskModels.relativeTime(r.createdAt)}</span>
       </div>
@@ -1107,7 +1548,7 @@ function showReqDetail(reqId) {
   document.getElementById('reqDetailTitle').textContent = currentReqDetail.title;
   document.getElementById('reqDetailDesc').textContent = currentReqDetail.description || '';
   document.getElementById('reqDetailMeta').innerHTML = `
-    <div style="font-size:13px;color:var(--text-secondary);">From: <strong>${esc(currentReqDetail.fromUserName)}</strong> · Type: ${currentReqDetail.type} · ${TaskModels.relativeTime(currentReqDetail.createdAt)}</div>`;
+    <div style="font-size:13px;color:var(--text-secondary);">Von: <strong>${esc(currentReqDetail.fromUserName)}</strong> · Typ: ${currentReqDetail.type} · ${TaskModels.relativeTime(currentReqDetail.createdAt)}</div>`;
   document.getElementById('reqDetailNotes').innerHTML = (currentReqDetail.notes || []).map(n => `
     <div class="note-item"><div class="note-author">${esc(n.author)}</div><div class="note-text">${esc(n.text)}</div><div class="note-time">${TaskModels.relativeTime(n.createdAt)}</div></div>
   `).join('');
@@ -1128,7 +1569,7 @@ async function updateReqStatus(status) {
   try {
     await API.updateRequest(currentReqDetail.id, { status });
     closeReqDetail();
-    toast(status === 'approved' ? '✅ Approved' : '❌ Denied', 'success');
+    toast(status === 'approved' ? '<svg class="icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg> Genehmigt' : '❌ Abgelehnt', 'success');
     loadRequests();
   } catch (err) { toast(err.message, 'error'); }
 }
@@ -1165,10 +1606,10 @@ function renderConvList() {
   empty.classList.add('hidden');
   list.innerHTML = chatConversations.map(c => `
     <div class="chat-conv-item" onclick="openChat('${c.userId}','${esc(c.userName)}')">
-      <div class="worker-avatar">${c.userName ? c.userName[0].toUpperCase() : '?'}</div>
+      <div class="worker-avatar">${c.userAvatarUrl ? `<img src="${esc(c.userAvatarUrl)}" alt="" onerror="this.replaceWith(document.createTextNode('${(c.userName||'?')[0].toUpperCase()}'))" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : (c.userName ? c.userName[0].toUpperCase() : '?')}</div>
       <div style="flex:1;">
         <div style="font-weight:600;font-size:15px;">${esc(c.userName)}</div>
-        <div style="font-size:13px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;">${esc(c.lastMessage?.text || '📎 File')}</div>
+        <div style="font-size:13px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;">${c.lastMessage ? esc(c.lastMessage.text || '📎') : ''}</div>
       </div>
       ${c.unread > 0 ? `<span style="background:var(--accent);color:#fff;font-size:12px;font-weight:700;min-width:22px;height:22px;border-radius:11px;display:flex;align-items:center;justify-content:center;">${c.unread}</span>` : ''}
       <span style="font-size:11px;color:var(--text-tertiary)">${c.lastMessage ? TaskModels.relativeTime(c.lastMessage.createdAt) : ''}</span>
@@ -1179,6 +1620,14 @@ function renderConvList() {
 async function openChat(userId, userName) {
   currentChatPartner = userId;
   document.getElementById('chatPartnerName').textContent = userName;
+  // Set partner avatar
+  const conv = chatConversations.find(c => c.userId === userId);
+  const avatarEl = document.getElementById('chatPartnerAvatar');
+  if (conv && conv.userAvatarUrl) {
+    avatarEl.innerHTML = `<img src="${esc(conv.userAvatarUrl)}" alt="" onerror="this.parentElement.textContent='${(userName||'?')[0].toUpperCase()}'">`;
+  } else {
+    avatarEl.textContent = (userName || '?')[0].toUpperCase();
+  }
   showPage('Chat');
   document.getElementById('chatListView').classList.add('hidden');
   document.getElementById('chatMsgView').classList.remove('hidden');
@@ -1203,11 +1652,12 @@ function renderChatMessages() {
   el.innerHTML = chatMessages.map(m => `
     <div class="msg ${m.from === user.id ? 'sent' : 'received'}">
       ${m.text ? esc(m.text) : ''}
-      ${(m.files || []).map(f => `<div style="margin-top:4px;"><a href="/api/chat/files/${f.storedName}" target="_blank" style="color:inherit;text-decoration:underline;">📎 ${esc(f.name)}</a></div>`).join('')}
+      ${(m.files || []).map(f => `<div style="margin-top:4px;"><a href="/api/chat/files/${f.storedName}" target="_blank" style="color:inherit;text-decoration:underline;"><svg class="icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg> ${esc(f.name)}</a></div>`).join('')}
       <div class="msg-time">${new Date(m.createdAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
     </div>
   `).join('');
   el.scrollTop = el.scrollHeight;
+  if (isTypingVisible) appendTypingBubble();
 }
 
 async function sendChatMsg() {
@@ -1226,12 +1676,39 @@ async function sendChatMsg() {
 }
 
 let typingTimeout;
+let isTypingVisible = false;
 function showTyping() {
-  document.getElementById('chatTypingIndicator').classList.remove('hidden');
+  isTypingVisible = true;
+  appendTypingBubble();
   clearTimeout(typingTimeout);
   typingTimeout = setTimeout(() => {
-    document.getElementById('chatTypingIndicator').classList.add('hidden');
+    isTypingVisible = false;
+    removeTypingBubble();
   }, 2000);
+}
+function appendTypingBubble() {
+  const el = document.getElementById('chatMessages');
+  removeTypingBubble();
+  const bubble = document.createElement('div');
+  bubble.className = 'typing-bubble';
+  bubble.id = 'typingBubble';
+  bubble.innerHTML = '<span></span><span></span><span></span>';
+  el.appendChild(bubble);
+  el.scrollTop = el.scrollHeight;
+}
+function removeTypingBubble() {
+  const b = document.getElementById('typingBubble');
+  if (b) b.remove();
+}
+
+let lastTypingEmit = 0;
+function emitTyping() {
+  if (!currentChatPartner) return;
+  const now = Date.now();
+  if (now - lastTypingEmit > 1000) {
+    WS.send({ type: 'chat:typing', to: currentChatPartner });
+    lastTypingEmit = now;
+  }
 }
 
 // ═══ BADGES ═══
@@ -1253,10 +1730,37 @@ function toggleTheme() {
   const next = current === 'dark' ? 'light' : 'dark';
   document.documentElement.dataset.theme = next;
   localStorage.setItem('taskflow_theme', next);
-  document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+  document.getElementById('themeBtn').innerHTML = next === 'dark' ? '<svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>' : '<svg class="icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
 }
 
 // ═══ HELPERS ═══
+function showBossDialog({ title, message, confirmText = 'OK', cancelText = 'Abbrechen' }) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px;';
+    const box = document.createElement('div');
+    box.style.cssText = 'width:100%;max-width:460px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:18px;backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);box-shadow:0 20px 48px rgba(0,0,0,0.35);';
+    box.innerHTML = `
+      ${title ? `<div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;">${esc(title)}</div>` : ''}
+      <div style="color:var(--text-secondary);font-size:14px;line-height:1.4;">${esc(message || '')}</div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button id="bossDialogCancel" style="padding:9px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;">${esc(cancelText)}</button>
+        <button id="bossDialogOk" style="padding:9px 14px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;">${esc(confirmText)}</button>
+      </div>
+    `;
+    const close = (ok) => { overlay.remove(); resolve(ok); };
+    box.querySelector('#bossDialogOk').onclick = () => close(true);
+    box.querySelector('#bossDialogCancel').onclick = () => close(false);
+    overlay.onclick = (e) => { if (e.target === overlay) close(false); };
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  });
+}
+
+async function bossConfirm(message, title = '') {
+  return showBossDialog({ title, message, confirmText: I18n.t('common.confirm') || 'OK', cancelText: I18n.t('common.cancel') || 'Cancel' });
+}
+
 function esc(str) {
   if (!str) return '';
   const d = document.createElement('div');
@@ -1272,6 +1776,67 @@ function toast(msg, type = 'success') {
   c.appendChild(el);
   setTimeout(() => el.remove(), 3000);
 }
+
+/* ═══ UNIVERSAL SLIDER DRAG ═══ */
+(function() {
+  const SLIDER_SEL = '.filter-slider, .status-slider';
+  let dragSlider = null, lastSnapIdx = -1, startX = 0, isDragging = false;
+
+  document.addEventListener('pointerdown', (e) => {
+    const slider = e.target.closest(SLIDER_SEL);
+    if (!slider) return;
+    const hit = e.target.closest('.stop-dot, .slider-rail, .slider-progress, .slider-stop');
+    if (!hit) return;
+    dragSlider = slider;
+    startX = e.clientX;
+    isDragging = false;
+    lastSnapIdx = -1;
+  });
+
+  document.addEventListener('pointermove', (e) => {
+    if (!dragSlider) return;
+    // Re-acquire slider if async render replaced the DOM
+    if (!dragSlider.isConnected) {
+      if (dragSlider.id) dragSlider = document.getElementById(dragSlider.id);
+      if (!dragSlider || !dragSlider.isConnected) { dragSlider = null; return; }
+    }
+    if (!isDragging && Math.abs(e.clientX - startX) > 5) {
+      isDragging = true;
+      dragSlider.classList.add('dragging');
+    }
+    if (isDragging) {
+      e.preventDefault();
+      const stops = dragSlider.querySelectorAll('.slider-stop');
+      if (!stops.length) return;
+      let minDist = Infinity, nearIdx = 0;
+      stops.forEach((s, i) => {
+        const r = s.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const d = Math.abs(e.clientX - cx);
+        if (d < minDist) { minDist = d; nearIdx = i; }
+      });
+      if (nearIdx !== lastSnapIdx) {
+        lastSnapIdx = nearIdx;
+        stops[nearIdx].click();
+      }
+    }
+  });
+
+  document.addEventListener('pointerup', () => {
+    if (!dragSlider) return;
+    if (isDragging) {
+      const capture = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+      document.addEventListener('click', capture, true);
+      setTimeout(() => document.removeEventListener('click', capture, true), 60);
+    }
+    dragSlider.classList.remove('dragging');
+    dragSlider = null;
+    isDragging = false;
+    lastSnapIdx = -1;
+  });
+})();
 </script>
 </body>
 </html>
+
+

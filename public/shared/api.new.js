@@ -38,7 +38,6 @@ const API = {
   get(url) { return this.request('GET', url); },
   post(url, body) { return this.request('POST', url, body); },
   put(url, body) { return this.request('PUT', url, body); },
-  patch(url, body) { return this.request('PATCH', url, body); },
   del(url) { return this.request('DELETE', url); },
   upload(url, formData) { return this.request('POST', url, formData, true); },
 
@@ -65,15 +64,8 @@ const API = {
 
   // ── Flow Members ──
   getMembers(flowId) { return this.get(`/api/flows/${flowId}/members`); },
-  getPresence(flowId) { return this.get(`/api/flows/${flowId}/presence`); },
   updateMember(flowId, userId, data) { return this.put(`/api/flows/${flowId}/members/${userId}`, data); },
   kickMember(flowId, userId) { return this.del(`/api/flows/${flowId}/members/${userId}`); },
-
-  // ── Sub-Flows (Sections) ──
-  getSubFlows(flowId) { return this.get(`/api/flows/${flowId}/subflows`); },
-  createSubFlow(flowId, name, icon) { return this.post(`/api/flows/${flowId}/subflows`, { name, icon }); },
-  updateSubFlow(flowId, subFlowId, data) { return this.patch(`/api/flows/${flowId}/subflows/${subFlowId}`, data); },
-  deleteSubFlow(flowId, subFlowId) { return this.del(`/api/flows/${flowId}/subflows/${subFlowId}`); },
 
   // ── Tasks (flow-scoped) ──
   getTasks(flowId, params) {
@@ -85,18 +77,10 @@ const API = {
   deleteTask(flowId, id) { return this.del(`/api/flows/${flowId}/tasks/${id}`); },
   addNote(flowId, taskId, formData) { return this.upload(`/api/flows/${flowId}/tasks/${taskId}/notes`, formData); },
   uploadFiles(flowId, taskId, formData) { return this.upload(`/api/flows/${flowId}/tasks/${taskId}/files`, formData); },
-  deleteFile(flowId, taskId, storedName) { return this.del(`/api/flows/${flowId}/tasks/${taskId}/files/${storedName}`); },
 
   // ── Categories (flow-scoped) ──
   getCategories(flowId) { return this.get(`/api/flows/${flowId}/categories`); },
   createCategory(flowId, name, color) { return this.post(`/api/flows/${flowId}/categories`, { name, color }); },
-
-  // ── Templates (flow-scoped) ──
-  getTemplates(flowId) { return this.get(`/api/flows/${flowId}/templates`); },
-  createTemplate(flowId, data) { return this.post(`/api/flows/${flowId}/templates`, data); },
-  updateTemplate(flowId, id, data) { return this.put(`/api/flows/${flowId}/templates/${id}`, data); },
-  deleteTemplate(flowId, id) { return this.del(`/api/flows/${flowId}/templates/${id}`); },
-  useTemplate(flowId, id, data) { return this.post(`/api/flows/${flowId}/templates/${id}/use`, data || {}); },
 
   // ── Chat (flow-scoped) ──
   getConversations(flowId) { return this.get(`/api/flows/${flowId}/chat/conversations`); },
