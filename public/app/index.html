@@ -2270,7 +2270,9 @@ a { color: var(--accent); text-decoration: none; }
 .experimental-divider span {
   font-size: 10px; font-weight: 700; color: var(--text-tertiary);
   text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+  display: flex; align-items: center; gap: 4px;
 }
+.experimental-divider span svg { flex-shrink: 0; }
 
 /* ═══ ADD TASK BAR ═══ */
 .add-task-bar {
@@ -3072,7 +3074,7 @@ a { color: var(--accent); text-decoration: none; }
         </div>
         <div class="theme-picker" id="themePicker"></div>
         <div class="more-item" onclick="toggleExperimentalThemes()">
-          <span class="more-icon">⚡</span>
+          <span class="more-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31l-6 10.37A2 2 0 005.73 22h12.54A2 2 0 0020 19.68L14 9.31V2"/><line x1="8.5" y1="2" x2="15.5" y2="2"/><line x1="7" y1="16" x2="17" y2="16"/></svg></span>
           <span class="more-label" data-i18n="settings.experimentalThemes">Experimental Themes</span>
           <div class="more-toggle" id="experimentalToggle"></div>
         </div>
@@ -8005,7 +8007,7 @@ function renderThemePicker() {
   let html = renderFamilyCards(THEME_FAMILIES, current);
 
   if (showExp) {
-    html += `<div class="experimental-divider"><span>⚡ ${I18n.t('settings.experimentalLabel')}</span></div>`;
+    html += `<div class="experimental-divider"><span>${icon('flask', 12)} ${I18n.t('settings.experimentalLabel')}</span></div>`;
     html += renderFamilyCards(TRON_FAMILIES, current);
   }
   container.innerHTML = html;
@@ -8054,6 +8056,10 @@ function applyTheme(themeId) {
   document.documentElement.setAttribute('data-theme', themeId);
   localStorage.setItem('taskflow_theme', themeId);
   updateThemeIcons();
+  // Update theme label in more menu
+  const themeObj = THEMES.find(t => t.id === themeId) || THEMES[0];
+  const label = document.getElementById('themeLabel');
+  if (label) label.textContent = I18n.t(themeObj.labelKey);
   renderThemePicker();
 }
 
