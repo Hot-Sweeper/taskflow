@@ -2236,24 +2236,41 @@ a { color: var(--accent); text-decoration: none; }
 
 /* Theme picker */
 .theme-picker {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
   gap: 8px; padding: 8px 16px 16px;
 }
 .theme-swatch {
   display: flex; flex-direction: column; align-items: center; gap: 6px;
-  padding: 10px 6px; border-radius: var(--radius-xs); cursor: pointer;
+  padding: 10px 6px; border-radius: var(--radius-xs);
   border: 2px solid transparent; transition: border-color 0.2s, background 0.15s;
   background: var(--bg-card);
 }
-.theme-swatch:hover { background: var(--bg-input); }
 .theme-swatch.active { border-color: var(--accent); }
-.theme-swatch-preview {
-  width: 36px; height: 36px; border-radius: 50%; position: relative;
-  overflow: hidden; border: 2px solid rgba(128,128,128,0.2);
+.theme-swatch:hover { background: var(--bg-input); }
+.theme-swatch-circles {
+  display: flex; gap: 6px; align-items: center;
 }
-.theme-swatch-preview .half-bg { position: absolute; inset: 0; width: 50%; }
-.theme-swatch-preview .half-accent { position: absolute; right: 0; top: 0; bottom: 0; width: 50%; }
+.theme-circle {
+  width: 32px; height: 32px; border-radius: 50%; position: relative;
+  overflow: hidden; border: 2px solid rgba(128,128,128,0.25); cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.theme-circle:hover { transform: scale(1.15); }
+.theme-circle.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
+.theme-circle .half-bg { position: absolute; inset: 0; width: 50%; }
+.theme-circle .half-accent { position: absolute; right: 0; top: 0; bottom: 0; width: 50%; }
 .theme-swatch-label { font-size: 10px; font-weight: 600; color: var(--text-secondary); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.experimental-divider {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 8px;
+  padding: 6px 0 2px; margin-top: 4px;
+}
+.experimental-divider::before, .experimental-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.experimental-divider span {
+  font-size: 10px; font-weight: 700; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+}
 
 /* ═══ ADD TASK BAR ═══ */
 .add-task-bar {
@@ -3054,6 +3071,11 @@ a { color: var(--accent); text-decoration: none; }
           <span class="more-value" id="themeLabel">Dark</span>
         </div>
         <div class="theme-picker" id="themePicker"></div>
+        <div class="more-item" onclick="toggleExperimentalThemes()">
+          <span class="more-icon">⚡</span>
+          <span class="more-label" data-i18n="settings.experimentalThemes">Experimental Themes</span>
+          <div class="more-toggle" id="experimentalToggle"></div>
+        </div>
         <div class="more-item" onclick="cycleLang()">
           <span class="more-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2z"/></svg></span>
           <span class="more-label" data-i18n="common.language">Language</span>
@@ -7922,58 +7944,94 @@ function renderMore() {
   document.getElementById('langValue').textContent = (I18n.lang || 'en').toUpperCase();
 }
 
+// Theme families: each has a name, dark variant, light variant, and optional experimental flag
+const THEME_FAMILIES = [
+  { name: 'Indigo', labelKey: 'theme.indigo', dark: { id: 'dark', accent: '#818CF8', bg: '#0F172A' }, light: { id: 'light', accent: '#6366F1', bg: '#F8FAFC' } },
+  { name: 'Emerald', labelKey: 'theme.emerald', dark: { id: 'dark-emerald', accent: '#34D399', bg: '#0C1A14' }, light: { id: 'light-emerald', accent: '#10B981', bg: '#F0FDF6' } },
+  { name: 'Rose', labelKey: 'theme.rose', dark: { id: 'dark-rose', accent: '#F472B6', bg: '#1A0C14' }, light: { id: 'light-rose', accent: '#EC4899', bg: '#FFF5F7' } },
+  { name: 'Amber', labelKey: 'theme.amber', dark: { id: 'dark-amber', accent: '#FBBF24', bg: '#1A150C' }, light: { id: 'light-amber', accent: '#F59E0B', bg: '#FFFBEB' } },
+  { name: 'Cyan', labelKey: 'theme.cyan', dark: { id: 'dark-cyan', accent: '#22D3EE', bg: '#0C1519' }, light: { id: 'light-cyan', accent: '#06B6D4', bg: '#ECFEFF' } },
+  { name: 'Purple', labelKey: 'theme.purple', dark: { id: 'dark-purple', accent: '#A78BFA', bg: '#13091F' }, light: { id: 'light-purple', accent: '#8B5CF6', bg: '#FAF5FF' } },
+  { name: 'Red', labelKey: 'theme.red', dark: { id: 'dark-red', accent: '#F87171', bg: '#1A0A0A' }, light: { id: 'light-red', accent: '#EF4444', bg: '#FEF2F2' } },
+  { name: 'Blue', labelKey: 'theme.blue', dark: { id: 'dark-blue', accent: '#60A5FA', bg: '#0A1628' }, light: { id: 'light-blue', accent: '#3B82F6', bg: '#EFF6FF' } },
+  { name: 'Orange', labelKey: 'theme.orange', dark: { id: 'dark-orange', accent: '#FB923C', bg: '#1A110A' }, light: { id: 'light-orange', accent: '#F97316', bg: '#FFF7ED' } },
+  { name: 'Teal', labelKey: 'theme.teal', dark: { id: 'dark-teal', accent: '#2DD4BF', bg: '#0A1A1A' }, light: { id: 'light-teal', accent: '#14B8A6', bg: '#F0FDFA' } },
+  { name: 'Lavender', labelKey: 'theme.lavender', dark: { id: 'dark-lavender', accent: '#C4B5FD', bg: '#150F1F' }, light: { id: 'light-lavender', accent: '#A78BFA', bg: '#F5F3FF' } },
+  { name: 'Slate', labelKey: 'theme.slate', dark: { id: 'dark-slate', accent: '#94A3B8', bg: '#111318' }, light: { id: 'light-slate', accent: '#64748B', bg: '#F8FAFC' } },
+];
+
+const TRON_FAMILIES = [
+  { name: 'Flynn', labelKey: 'theme.tron.flynn', dark: { id: 'dark-tron-flynn', accent: '#7DF9FF', bg: '#040A14' }, light: { id: 'light-tron-flynn', accent: '#0EA5C9', bg: '#F0FDFF' } },
+  { name: 'Tron', labelKey: 'theme.tron', dark: { id: 'dark-tron', accent: '#18CAE6', bg: '#050D16' }, light: { id: 'light-tron', accent: '#0891B2', bg: '#ECFEFF' } },
+  { name: 'Rinzler', labelKey: 'theme.tron.rinzler', dark: { id: 'dark-tron-rinzler', accent: '#FF6D2E', bg: '#100704' }, light: { id: 'light-tron-rinzler', accent: '#EA580C', bg: '#FFF4ED' } },
+  { name: 'Clu', labelKey: 'theme.tron.clu', dark: { id: 'dark-tron-clu', accent: '#FFB800', bg: '#100D04' }, light: { id: 'light-tron-clu', accent: '#D97706', bg: '#FFFBEB' } },
+  { name: 'Ares', labelKey: 'theme.tron.ares', dark: { id: 'dark-tron-ares', accent: '#FF1744', bg: '#100406' }, light: { id: 'light-tron-ares', accent: '#E11D48', bg: '#FFF1F2' } },
+];
+
+// Flat THEMES array for toggleTheme/applyTheme compatibility
+const THEMES = [
+  ...THEME_FAMILIES.flatMap(f => [
+    { id: f.dark.id, labelKey: f.labelKey + '.dark', accent: f.dark.accent, bg: f.dark.bg, isLight: false },
+    { id: f.light.id, labelKey: f.labelKey + '.light', accent: f.light.accent, bg: f.light.bg, isLight: true },
+  ]),
+  ...TRON_FAMILIES.flatMap(f => [
+    { id: f.dark.id, labelKey: f.labelKey + '.dark', accent: f.dark.accent, bg: f.dark.bg, isLight: false },
+    { id: f.light.id, labelKey: f.labelKey + '.light', accent: f.light.accent, bg: f.light.bg, isLight: true },
+  ]),
+];
+
+function isExperimentalEnabled() {
+  return localStorage.getItem('taskflow_experimental_themes') === '1';
+}
+
+function toggleExperimentalThemes() {
+  const on = !isExperimentalEnabled();
+  localStorage.setItem('taskflow_experimental_themes', on ? '1' : '0');
+  const toggle = document.getElementById('experimentalToggle');
+  if (toggle) toggle.classList.toggle('on', on);
+  renderThemePicker();
+}
+
 function renderThemePicker() {
   const container = document.getElementById('themePicker');
   if (!container) return;
   const current = document.documentElement.getAttribute('data-theme') || 'dark';
-  container.innerHTML = THEMES.map(t => `
-    <div class="theme-swatch ${t.id === current ? 'active' : ''}" onclick="applyTheme('${t.id}')">
-      <div class="theme-swatch-preview">
-        <div class="half-bg" style="background:${t.bg}"></div>
-        <div class="half-accent" style="background:${t.accent}"></div>
-      </div>
-      <div class="theme-swatch-label">${I18n.t(t.labelKey)}</div>
-    </div>
-  `).join('');
+  const showExp = isExperimentalEnabled();
+
+  // Update toggle UI
+  const toggle = document.getElementById('experimentalToggle');
+  if (toggle) toggle.classList.toggle('on', showExp);
+
+  let html = renderFamilyCards(THEME_FAMILIES, current);
+
+  if (showExp) {
+    html += `<div class="experimental-divider"><span>⚡ ${I18n.t('settings.experimentalLabel')}</span></div>`;
+    html += renderFamilyCards(TRON_FAMILIES, current);
+  }
+  container.innerHTML = html;
 }
 
-const THEMES = [
-  { id: 'dark', labelKey: 'theme.indigo.dark', accent: '#818CF8', bg: '#0F172A', isLight: false },
-  { id: 'dark-emerald', labelKey: 'theme.emerald.dark', accent: '#34D399', bg: '#0C1A14', isLight: false },
-  { id: 'dark-rose', labelKey: 'theme.rose.dark', accent: '#F472B6', bg: '#1A0C14', isLight: false },
-  { id: 'dark-amber', labelKey: 'theme.amber.dark', accent: '#FBBF24', bg: '#1A150C', isLight: false },
-  { id: 'dark-cyan', labelKey: 'theme.cyan.dark', accent: '#22D3EE', bg: '#0C1519', isLight: false },
-  { id: 'dark-purple', labelKey: 'theme.purple.dark', accent: '#A78BFA', bg: '#13091F', isLight: false },
-  { id: 'dark-red', labelKey: 'theme.red.dark', accent: '#F87171', bg: '#1A0A0A', isLight: false },
-  { id: 'dark-blue', labelKey: 'theme.blue.dark', accent: '#60A5FA', bg: '#0A1628', isLight: false },
-  { id: 'dark-orange', labelKey: 'theme.orange.dark', accent: '#FB923C', bg: '#1A110A', isLight: false },
-  { id: 'dark-teal', labelKey: 'theme.teal.dark', accent: '#2DD4BF', bg: '#0A1A1A', isLight: false },
-  { id: 'dark-lavender', labelKey: 'theme.lavender.dark', accent: '#C4B5FD', bg: '#150F1F', isLight: false },
-  { id: 'dark-slate', labelKey: 'theme.slate.dark', accent: '#94A3B8', bg: '#111318', isLight: false },
-  { id: 'light', labelKey: 'theme.indigo.light', accent: '#6366F1', bg: '#F8FAFC', isLight: true },
-  { id: 'light-rose', labelKey: 'theme.rose.light', accent: '#EC4899', bg: '#FFF5F7', isLight: true },
-  { id: 'light-emerald', labelKey: 'theme.emerald.light', accent: '#10B981', bg: '#F0FDF6', isLight: true },
-  { id: 'light-amber', labelKey: 'theme.amber.light', accent: '#F59E0B', bg: '#FFFBEB', isLight: true },
-  { id: 'light-cyan', labelKey: 'theme.cyan.light', accent: '#06B6D4', bg: '#ECFEFF', isLight: true },
-  { id: 'light-purple', labelKey: 'theme.purple.light', accent: '#8B5CF6', bg: '#FAF5FF', isLight: true },
-  { id: 'light-red', labelKey: 'theme.red.light', accent: '#EF4444', bg: '#FEF2F2', isLight: true },
-  { id: 'light-blue', labelKey: 'theme.blue.light', accent: '#3B82F6', bg: '#EFF6FF', isLight: true },
-  { id: 'light-orange', labelKey: 'theme.orange.light', accent: '#F97316', bg: '#FFF7ED', isLight: true },
-  { id: 'light-teal', labelKey: 'theme.teal.light', accent: '#14B8A6', bg: '#F0FDFA', isLight: true },
-  { id: 'light-lavender', labelKey: 'theme.lavender.light', accent: '#A78BFA', bg: '#F5F3FF', isLight: true },
-  { id: 'light-slate', labelKey: 'theme.slate.light', accent: '#64748B', bg: '#F8FAFC', isLight: true },
-  // ── Tron Experimental ──
-  { id: 'dark-tron-flynn', labelKey: 'theme.tron.flynn.dark', accent: '#7DF9FF', bg: '#040A14', isLight: false },
-  { id: 'dark-tron', labelKey: 'theme.tron.dark', accent: '#18CAE6', bg: '#050D16', isLight: false },
-  { id: 'dark-tron-rinzler', labelKey: 'theme.tron.rinzler.dark', accent: '#FF6D2E', bg: '#100704', isLight: false },
-  { id: 'dark-tron-clu', labelKey: 'theme.tron.clu.dark', accent: '#FFB800', bg: '#100D04', isLight: false },
-  { id: 'dark-tron-ares', labelKey: 'theme.tron.ares.dark', accent: '#FF1744', bg: '#100406', isLight: false },
-  { id: 'light-tron-flynn', labelKey: 'theme.tron.flynn.light', accent: '#0EA5C9', bg: '#F0FDFF', isLight: true },
-  { id: 'light-tron', labelKey: 'theme.tron.light', accent: '#0891B2', bg: '#ECFEFF', isLight: true },
-  { id: 'light-tron-rinzler', labelKey: 'theme.tron.rinzler.light', accent: '#EA580C', bg: '#FFF4ED', isLight: true },
-  { id: 'light-tron-clu', labelKey: 'theme.tron.clu.light', accent: '#D97706', bg: '#FFFBEB', isLight: true },
-  { id: 'light-tron-ares', labelKey: 'theme.tron.ares.light', accent: '#E11D48', bg: '#FFF1F2', isLight: true },
-];
+function renderFamilyCards(families, current) {
+  return families.map(f => {
+    const isActive = current === f.dark.id || current === f.light.id;
+    const darkSel = current === f.dark.id ? 'selected' : '';
+    const lightSel = current === f.light.id ? 'selected' : '';
+    return `
+    <div class="theme-swatch ${isActive ? 'active' : ''}">
+      <div class="theme-swatch-circles">
+        <div class="theme-circle ${darkSel}" onclick="applyTheme('${f.dark.id}')" title="${I18n.t(f.labelKey + '.dark')}">
+          <div class="half-bg" style="background:${f.dark.bg}"></div>
+          <div class="half-accent" style="background:${f.dark.accent}"></div>
+        </div>
+        <div class="theme-circle ${lightSel}" onclick="applyTheme('${f.light.id}')" title="${I18n.t(f.labelKey + '.light')}">
+          <div class="half-bg" style="background:${f.light.bg}"></div>
+          <div class="half-accent" style="background:${f.light.accent}"></div>
+        </div>
+      </div>
+      <div class="theme-swatch-label">${I18n.t(f.labelKey)}</div>
+    </div>`;
+  }).join('');
+}
 
 function toggleTheme() {
   const current = document.documentElement.getAttribute('data-theme') || 'dark';
