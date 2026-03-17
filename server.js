@@ -244,6 +244,7 @@ function avatarUrlFromUser(user) {
 // ═══════════════════════════════════════════════════════════════
 
 const wsClients = new Map(); // ws → { userId, name }
+const lastSeenMap = new Map(); // userId → ISO timestamp
 
 wss.on('connection', (ws, req) => {
   ws.isAlive = true;
@@ -293,7 +294,8 @@ wss.on('connection', (ws, req) => {
     wsClients.delete(ws);
     // Broadcast offline if no other connections for this user
     if (leaving && !getOnlineUserIds().has(leaving.userId)) {
-      broadcast({ type: 'presence:offline', userId: leaving.userId });
+      lastSeenMap.set(leaving.userId, new Date().toISOString());
+      broadcast({ type: 'presence:offline', userId: leaving.userId, lastSeen: lastSeenMap.get(leaving.userId) });
     }
   });
 });
@@ -1467,7 +1469,8 @@ app.get('/api/flows/:flowId/presence', authMiddleware, flowMemberMiddleware, asy
         status: session ? session.status : 'offline',
         location: session ? session.location : null,
         workDuration,
-        currentTask: session?.currentTask || null
+        currentTask: session?.currentTask || null,
+        lastSeen: !online ? (lastSeenMap.get(userId) || null) : null
       };
     });
     res.json(presence);
