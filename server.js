@@ -244,7 +244,35 @@ function avatarUrlFromUser(user) {
 // ═══════════════════════════════════════════════════════════════
 
 const wsClients = new Map(); // ws → { userId, name }
-const lastSeenMap = new Map(); // userId → ISO timestamp
+
+// lastSeen: persisted to disk so it survives restarts
+let lastSeenMap = new Map(); // userId → ISO timestamp
+let lastSeenDirty = false;
+let lastSeenSaveTimer = null;
+
+// Load lastSeen from disk
+(async () => {
+  try {
+    const data = await storage.read('lastSeen.json');
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      for (const [k, v] of Object.entries(data)) lastSeenMap.set(k, v);
+    }
+  } catch { /* start fresh */ }
+})();
+
+function saveLastSeen() {
+  if (!lastSeenDirty) return;
+  lastSeenDirty = false;
+  const obj = Object.fromEntries(lastSeenMap);
+  storage.write('lastSeen.json', obj).catch(() => {});
+}
+
+function markLastSeenDirty() {
+  lastSeenDirty = true;
+  if (!lastSeenSaveTimer) {
+    lastSeenSaveTimer = setTimeout(() => { lastSeenSaveTimer = null; saveLastSeen(); }, 5000);
+  }
+}
 
 wss.on('connection', (ws, req) => {
   ws.isAlive = true;
@@ -295,6 +323,7 @@ wss.on('connection', (ws, req) => {
     // Broadcast offline if no other connections for this user
     if (leaving && !getOnlineUserIds().has(leaving.userId)) {
       lastSeenMap.set(leaving.userId, new Date().toISOString());
+      markLastSeenDirty();
       broadcast({ type: 'presence:offline', userId: leaving.userId, lastSeen: lastSeenMap.get(leaving.userId) });
     }
   });
