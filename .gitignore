@@ -3,3 +3,9 @@ data/
 *.log
 *.tmp
 copilot_only/
+*.pdf
+*.backup.js
+*.new.js
+fix-boss*.js
+test-*.js
+start.bat

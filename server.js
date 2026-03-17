@@ -19,6 +19,11 @@ const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE_MB || '50', 10) * 1024 * 1024;
 
+// Health check endpoint for Railway
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', uptime: process.uptime() });
+});
+
 // Persistent session store: token → { userId, name }
 let sessions = new Map();
 // Admin sessions: token → true
@@ -3926,12 +3931,34 @@ async function start() {
   setTimeout(checkDeadlineReminders, 35000);
   setTimeout(checkRecurringTasks, 40000);
 
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`TaskFlow running on port ${PORT}`);
     console.log(`  App:    http://localhost:${PORT}/app`);
     console.log(`  Admin:  http://localhost:${PORT}/admin`);
     console.log(`  Sessions loaded: ${sessions.size}`);
   });
 }
+
+// Graceful shutdown for Railway deployments
+function gracefulShutdown(signal) {
+  console.log(`\n${signal} received. Shutting down gracefully...`);
+  server.close(async () => {
+    console.log('HTTP server closed.');
+    // Close all WebSocket connections
+    wss.clients.forEach(client => client.close());
+    // Save sessions to disk before exit
+    try { await saveSessions(); } catch (e) { /* best effort */ }
+    console.log('Cleanup complete. Exiting.');
+    process.exit(0);
+  });
+  // Force exit after 10s if graceful shutdown stalls
+  setTimeout(() => {
+    console.error('Forced shutdown after timeout.');
+    process.exit(1);
+  }, 10000);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 start();
