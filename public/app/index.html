@@ -2737,10 +2737,10 @@ a { color: var(--accent); text-decoration: none; }
           </div>
         </div>
         <div class="cal-mode-bar" id="calModeBar">
-          <button class="cal-mode-btn" onclick="setCalMode('year')" data-i18n="calendar.mode.year">Year</button>
-          <button class="cal-mode-btn active" onclick="setCalMode('month')" data-i18n="calendar.mode.month">Month</button>
-          <button class="cal-mode-btn" onclick="setCalMode('week')" data-i18n="calendar.mode.week">Week</button>
           <button class="cal-mode-btn" onclick="setCalMode('day')" data-i18n="calendar.mode.day">Day</button>
+          <button class="cal-mode-btn" onclick="setCalMode('week')" data-i18n="calendar.mode.week">Week</button>
+          <button class="cal-mode-btn active" onclick="setCalMode('month')" data-i18n="calendar.mode.month">Month</button>
+          <button class="cal-mode-btn" onclick="setCalMode('year')" data-i18n="calendar.mode.year">Year</button>
         </div>
         <div class="cal-filter-bar" id="calFilterBar">
           <select id="calFilterAssignee" onchange="applyCalFilters()" class="cal-filter-select">

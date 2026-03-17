@@ -1,4 +1,5 @@
 const express = require('express');
+const https = require('https');
 const http = require('http');
 const { WebSocketServer } = require('ws');
 const crypto = require('crypto');
@@ -2860,10 +2861,24 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
     const year = Math.max(2000, Math.min(2100, parseInt(req.query.year || String(now.getFullYear()), 10)));
     const prefix = `${year}-${String(month).padStart(2, '0')}`;
 
-    const timelog = await storage.read('timelog.json');
+    // ── Load all data ──
+    const [timelog, allTasks, allUsers, teams] = await Promise.all([
+      storage.read('timelog.json'),
+      storage.read('tasks.json'),
+      storage.read('users.json'),
+      storage.read('teams.json'),
+    ]);
+
+    const userId = req.user.userId;
+    const user = allUsers.find(u => u.id === userId);
+
     const sessions = timelog
-      .filter(t => t.userId === req.user.userId && typeof t.date === 'string' && t.date.startsWith(prefix))
+      .filter(t => t.userId === userId && typeof t.date === 'string' && t.date.startsWith(prefix))
       .sort((a, b) => a.date.localeCompare(b.date));
+
+    // All sessions for the month (all users) for contribution %
+    const allMonthSessions = timelog
+      .filter(t => typeof t.date === 'string' && t.date.startsWith(prefix));
 
     const locationLabel = (loc) => {
       if (loc === 'home') return 'Home Office';
@@ -2884,9 +2899,7 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
     };
 
     const calcWorkedMinutes = (session) => {
-      if (typeof session.totalWorked === 'number' && session.totalWorked >= 0) {
-        return Math.round(session.totalWorked);
-      }
+      if (typeof session.totalWorked === 'number' && session.totalWorked >= 0) return Math.round(session.totalWorked);
       if (!session.clockIn) return 0;
       const inMs = new Date(session.clockIn).getTime();
       const outMs = session.clockOut ? new Date(session.clockOut).getTime() : Date.now();
@@ -2894,56 +2907,488 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
       return Math.max(0, Math.round((outMs - inMs) / 60000) - calcBreakMinutes(session));
     };
 
+    // ── Compute statistics ──
     const totalWorkedMinutes = sessions.reduce((sum, s) => sum + calcWorkedMinutes(s), 0);
     const totalBreakMinutes = sessions.reduce((sum, s) => sum + calcBreakMinutes(s), 0);
+    const totalHours = (totalWorkedMinutes / 60).toFixed(1);
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthName = monthNames[month - 1];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    const uniqueDays = new Set(sessions.map(s => s.date)).size;
+    const avgPerDay = uniqueDays > 0 ? Math.round(totalWorkedMinutes / uniqueDays) : 0;
+
+    // Team contribution %
+    const totalTeamMinutes = allMonthSessions.reduce((sum, s) => sum + calcWorkedMinutes(s), 0);
+    const contributionPct = totalTeamMinutes > 0 ? Math.round((totalWorkedMinutes / totalTeamMinutes) * 100) : 0;
+
+    // Task statistics
+    const myTasks = allTasks.filter(t =>
+      t.assignedTo === userId || (Array.isArray(t.assignedToList) && t.assignedToList.includes(userId))
+    );
+    const completedTasks = myTasks.filter(t => t.status === 'done').length;
+    const inProgressTasks = myTasks.filter(t => t.status === 'in-progress').length;
+    const inReviewTasks = myTasks.filter(t => t.status === 'in-review').length;
+    const totalTasks = myTasks.length;
+    const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    // Location breakdown
+    const locCounts = { office: 0, home: 0, field: 0 };
+    const locMinutes = { office: 0, home: 0, field: 0 };
+    for (const s of sessions) {
+      const loc = s.location || 'office';
+      locCounts[loc] = (locCounts[loc] || 0) + 1;
+      locMinutes[loc] = (locMinutes[loc] || 0) + calcWorkedMinutes(s);
+    }
+
+    // Earliest clock-in & latest clock-out
+    let earliestIn = null, latestOut = null;
+    for (const s of sessions) {
+      if (s.clockIn) {
+        const h = new Date(s.clockIn).getHours() + new Date(s.clockIn).getMinutes() / 60;
+        if (earliestIn === null || h < earliestIn) earliestIn = h;
+      }
+      if (s.clockOut) {
+        const h = new Date(s.clockOut).getHours() + new Date(s.clockOut).getMinutes() / 60;
+        if (latestOut === null || h > latestOut) latestOut = h;
+      }
+    }
+    const fmtHourDec = (h) => {
+      if (h === null) return '—';
+      const hr = Math.floor(h);
+      const mn = Math.round((h - hr) * 60);
+      return `${String(hr).padStart(2, '0')}:${String(mn).padStart(2, '0')}`;
+    };
+
+    // Longest session
+    let longestSessionMins = 0;
+    for (const s of sessions) {
+      const w = calcWorkedMinutes(s);
+      if (w > longestSessionMins) longestSessionMins = w;
+    }
+
+    // User initials for avatar
+    const initials = (req.user.name || '??').split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    const avatarBgColor = user && user.avatarConfig && user.avatarConfig.backgroundColor
+      ? `#${user.avatarConfig.backgroundColor}` : '#A29BFE';
+
+    // Fetch DiceBear avatar as PNG for embedding
+    let avatarBuffer = null;
+    const avatarUrl = user ? avatarUrlFromUser(user) : null;
+    if (avatarUrl && avatarUrl.startsWith('https://')) {
+      const pngUrl = avatarUrl.replace('/adventurer/svg?', '/adventurer/png?') + '&size=120';
+      try {
+        avatarBuffer = await new Promise((resolve, reject) => {
+          const req = https.get(pngUrl, { timeout: 4000 }, (resp) => {
+            if (resp.statusCode !== 200) return resolve(null);
+            const chunks = [];
+            resp.on('data', c => chunks.push(c));
+            resp.on('end', () => resolve(Buffer.concat(chunks)));
+          });
+          req.on('error', () => resolve(null));
+          req.on('timeout', () => { req.destroy(); resolve(null); });
+        });
+      } catch { avatarBuffer = null; }
+    }
 
     const filename = `worktime-${req.user.name}-${year}-${String(month).padStart(2, '0')}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
-    const doc = new PDFDocument({ margin: 48, size: 'A4' });
+    // ── Brand Colors ──
+    const C = {
+      primary: '#6C5CE7', primaryDark: '#5A4BD1', primaryLight: '#A29BFE', primaryBg: '#F0EEFF',
+      dark: '#1A1A2E', text: '#2D3436', textSecondary: '#636E72', textLight: '#B2BEC3',
+      border: '#DFE6E9', white: '#FFFFFF', bg: '#FAFBFC',
+      green: '#00B894', greenBg: '#E8F8F5', greenDark: '#00997A',
+      orange: '#FDCB6E', orangeBg: '#FFF8E1',
+      blue: '#0984E3', blueBg: '#E8F4FD',
+      red: '#D63031', redBg: '#FDECEA',
+      cyan: '#00CEC9', teal: '#00B894',
+    };
+
+    const PAGE_W = 595.28; // A4
+    const PAGE_H = 841.89;
+    const M = { top: 0, right: 40, bottom: 50, left: 40 };
+    const CONTENT_W = PAGE_W - M.left - M.right;
+
+    const doc = new PDFDocument({ margin: 0, size: 'A4', bufferPages: true });
     doc.pipe(res);
 
-    doc.fontSize(18).text('TaskFlow Work Time Report', { align: 'left' });
-    doc.moveDown(0.3);
-    doc.fontSize(11).fillColor('#555').text(`User: ${req.user.name}`);
-    doc.text(`Month: ${year}-${String(month).padStart(2, '0')}`);
-    doc.text(`Generated: ${new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC`);
-    doc.fillColor('#111');
-    doc.moveDown(1);
+    // ── Helpers ──
+    const fmtTime = (iso) => {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    };
+    const fmtDuration = (mins) => {
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return h > 0 ? `${h}h ${m}m` : `${m}m`;
+    };
+    const fmtDate = (dateStr) => {
+      const d = new Date(dateStr + 'T00:00:00');
+      return `${dayNames[d.getDay()]}, ${String(d.getDate()).padStart(2, '0')}`;
+    };
+    const roundedRect = (x, y, w, h, r, color) => {
+      doc.save(); doc.roundedRect(x, y, w, h, r).fill(color); doc.restore();
+    };
+    const drawLine = (x1, y1, x2, y2, color, width) => {
+      doc.save(); doc.moveTo(x1, y1).lineTo(x2, y2).strokeColor(color).lineWidth(width || 0.5).stroke(); doc.restore();
+    };
 
-    doc.fontSize(12).text(`Sessions: ${sessions.length}`);
-    doc.text(`Total worked: ${Math.floor(totalWorkedMinutes / 60)}h ${totalWorkedMinutes % 60}m`);
-    doc.text(`Total breaks: ${Math.floor(totalBreakMinutes / 60)}h ${totalBreakMinutes % 60}m`);
-    doc.moveDown(1);
-
-    doc.fontSize(11).text('Details', { underline: true });
-    doc.moveDown(0.4);
-
-    for (const s of sessions) {
-      const worked = calcWorkedMinutes(s);
-      const breaks = calcBreakMinutes(s);
-      const clockIn = s.clockIn ? new Date(s.clockIn).toLocaleString('en-GB') : '-';
-      const clockOut = s.clockOut ? new Date(s.clockOut).toLocaleString('en-GB') : '-';
-      const status = s.clockOut ? 'completed' : (s.status || 'working');
-
-      doc.fontSize(10).fillColor('#111').text(`${s.date}  |  ${locationLabel(s.location)}  |  ${status}`);
-      doc.fillColor('#444').text(`In: ${clockIn}`);
-      doc.text(`Out: ${clockOut}`);
-      doc.text(`Worked: ${Math.floor(worked / 60)}h ${worked % 60}m   Breaks: ${Math.floor(breaks / 60)}h ${breaks % 60}m`);
-      doc.fillColor('#111').moveDown(0.4);
-
-      if (doc.y > 740) {
-        doc.addPage();
+    // ── Draw arc segment for donut chart ──
+    const drawArc = (cx, cy, r, startAngle, endAngle, color, lineWidth) => {
+      doc.save();
+      const step = 0.02;
+      doc.lineWidth(lineWidth || 8).strokeColor(color);
+      doc.path(`M ${cx + r * Math.cos(startAngle)} ${cy + r * Math.sin(startAngle)}`);
+      let p = `M ${cx + r * Math.cos(startAngle)} ${cy + r * Math.sin(startAngle)} `;
+      for (let a = startAngle + step; a <= endAngle; a += step) {
+        p += `L ${cx + r * Math.cos(a)} ${cy + r * Math.sin(a)} `;
       }
+      p += `L ${cx + r * Math.cos(endAngle)} ${cy + r * Math.sin(endAngle)}`;
+      doc.path(p).stroke();
+      doc.restore();
+    };
+
+    // ── Small stat card ──
+    const drawStatCard = (x, y, w, h, label, value, accent, bg) => {
+      roundedRect(x, y, w, h, 6, bg);
+      roundedRect(x, y, 3, h, 2, accent);
+      doc.fontSize(6.5).fillColor(C.textSecondary).text(label.toUpperCase(), x + 12, y + 7, { width: w - 20 });
+      doc.fontSize(13).fillColor(C.dark).text(value, x + 12, y + 19, { width: w - 20 });
+    };
+
+    // ══════════════════════════════════════════════════════════════
+    // HEADER — compact with avatar
+    // ══════════════════════════════════════════════════════════════
+    const HEADER_H = 100;
+    const drawPageHeader = (isFirst) => {
+      // Dark gradient header
+      doc.save();
+      doc.rect(0, 0, PAGE_W, HEADER_H).fill(C.dark);
+      doc.rect(0, HEADER_H - 3, PAGE_W, 3).fill(C.primary);
+      // Subtle pattern dots
+      doc.opacity(0.03);
+      for (let px = 0; px < PAGE_W; px += 20) {
+        for (let py = 0; py < HEADER_H; py += 20) {
+          doc.circle(px, py, 1).fill(C.white);
+        }
+      }
+      doc.opacity(1);
+      doc.restore();
+
+      if (isFirst) {
+        // Avatar circle (top-right)
+        const avatarR = 28;
+        const avatarX = PAGE_W - M.right - avatarR - 8;
+        const avatarY = 40;
+        doc.save();
+        doc.circle(avatarX, avatarY, avatarR + 2).fill(C.primary);
+        if (avatarBuffer && avatarBuffer.length > 100) {
+          // Clip to circle and embed the actual avatar image
+          doc.circle(avatarX, avatarY, avatarR).clip();
+          doc.image(avatarBuffer, avatarX - avatarR, avatarY - avatarR, {
+            width: avatarR * 2, height: avatarR * 2,
+          });
+        } else {
+          // Fallback: colored circle with initials
+          doc.circle(avatarX, avatarY, avatarR).fill(avatarBgColor);
+          doc.fontSize(18).fillColor(C.dark)
+            .text(initials, avatarX - avatarR, avatarY - 10, { width: avatarR * 2, align: 'center' });
+        }
+        doc.restore();
+
+        // User name centered under avatar
+        const nameW = 120;
+        doc.fontSize(10).fillColor(C.white)
+          .text(req.user.name, avatarX - nameW / 2, avatarY + avatarR + 5, { width: nameW, align: 'center' });
+
+        // Logo + title
+        doc.fontSize(7).fillColor(C.primaryLight).opacity(0.6)
+          .text('T A S K F L O W', M.left, 14, { characterSpacing: 2 });
+        doc.opacity(1);
+        doc.fontSize(18).fillColor(C.white)
+          .text('Performance Report', M.left, 28);
+        doc.fontSize(11).fillColor(C.textLight)
+          .text(`${monthName} ${year}`, M.left, 52);
+        doc.fontSize(7).fillColor(C.textLight).opacity(0.5)
+          .text(`Generated ${new Date().toISOString().slice(0, 10)}`, M.left, 68);
+        doc.opacity(1);
+      } else {
+        doc.fontSize(7).fillColor(C.primaryLight).opacity(0.6)
+          .text('T A S K F L O W', M.left, 20, { characterSpacing: 2 });
+        doc.opacity(1);
+        doc.fontSize(12).fillColor(C.white)
+          .text(`${req.user.name} — ${monthName} ${year}`, M.left, 38);
+        doc.fontSize(8).fillColor(C.textLight)
+          .text('Performance Report (continued)', M.left, 56);
+      }
+    };
+
+    // ══════════════════════════════════════════════════════════════
+    // FOOTER
+    // ══════════════════════════════════════════════════════════════
+    const drawFooter = (pageNum, totalPages) => {
+      const fy = PAGE_H - 32;
+      drawLine(M.left, fy, PAGE_W - M.right, fy, C.border, 0.5);
+      doc.fontSize(6.5).fillColor(C.textLight)
+        .text('TaskFlow — Confidential', M.left, fy + 6);
+      doc.fontSize(6.5).fillColor(C.textLight)
+        .text(`Page ${pageNum} of ${totalPages}`, 0, fy + 6, { width: PAGE_W - M.right, align: 'right' });
+    };
+
+    // ══════════════════════════════════════════════════════════════
+    // PAGE 1 — Statistics Dashboard
+    // ══════════════════════════════════════════════════════════════
+    drawPageHeader(true);
+    let y = HEADER_H + 16;
+
+    // ── Section: Key Metrics (6 cards in 2 rows of 3) ──
+    doc.fontSize(8).fillColor(C.primary).text('KEY METRICS', M.left, y, { characterSpacing: 1.5 });
+    y += 14;
+    drawLine(M.left, y, M.left + 60, y, C.primary, 1.5);
+    y += 8;
+
+    const cW = (CONTENT_W - 16) / 3;
+    const cH = 40;
+    drawStatCard(M.left, y, cW, cH, 'Total Hours', `${totalHours}h`, C.primary, C.primaryBg);
+    drawStatCard(M.left + cW + 8, y, cW, cH, 'Sessions', `${sessions.length}`, C.green, C.greenBg);
+    drawStatCard(M.left + (cW + 8) * 2, y, cW, cH, 'Days Worked', `${uniqueDays}`, C.blue, C.blueBg);
+    y += cH + 8;
+
+    drawStatCard(M.left, y, cW, cH, 'Avg / Day', fmtDuration(avgPerDay), C.cyan, C.blueBg);
+    drawStatCard(M.left + cW + 8, y, cW, cH, 'Total Breaks', fmtDuration(totalBreakMinutes), C.orange, C.orangeBg);
+    drawStatCard(M.left + (cW + 8) * 2, y, cW, cH, 'Longest Session', fmtDuration(longestSessionMins), C.red, C.redBg);
+    y += cH + 16;
+
+    // ── Section: Performance & Contribution ──
+    doc.fontSize(8).fillColor(C.primary).text('PERFORMANCE & CONTRIBUTION', M.left, y, { characterSpacing: 1.5 });
+    y += 14;
+    drawLine(M.left, y, M.left + 120, y, C.primary, 1.5);
+    y += 10;
+
+    // Left: contribution donut + stats
+    const panelW = (CONTENT_W - 12) / 2;
+    roundedRect(M.left, y, panelW, 110, 6, C.bg);
+    // Donut chart for contribution
+    const donutCx = M.left + 55;
+    const donutCy = y + 55;
+    const donutR = 32;
+    // Background ring
+    doc.save();
+    doc.circle(donutCx, donutCy, donutR).lineWidth(10).strokeColor(C.border).stroke();
+    doc.restore();
+    // Filled arc
+    if (contributionPct > 0) {
+      const endAngle = -Math.PI / 2 + (contributionPct / 100) * Math.PI * 2;
+      drawArc(donutCx, donutCy, donutR, -Math.PI / 2, endAngle, C.primary, 10);
+    }
+    // Center text
+    doc.fontSize(16).fillColor(C.dark)
+      .text(`${contributionPct}%`, donutCx - 22, donutCy - 10, { width: 44, align: 'center' });
+    doc.fontSize(6).fillColor(C.textSecondary)
+      .text('CONTRIB.', donutCx - 22, donutCy + 8, { width: 44, align: 'center' });
+
+    // Stats next to donut
+    const sx = M.left + 110;
+    doc.fontSize(7).fillColor(C.textSecondary).text('SCHEDULE', sx, y + 14);
+    doc.fontSize(8.5).fillColor(C.dark).text(`Earliest In: ${fmtHourDec(earliestIn)}`, sx, y + 26);
+    doc.fontSize(8.5).fillColor(C.dark).text(`Latest Out: ${fmtHourDec(latestOut)}`, sx, y + 40);
+    doc.fontSize(7).fillColor(C.textSecondary).text('EFFICIENCY', sx, y + 60);
+    const netEfficiency = totalWorkedMinutes + totalBreakMinutes > 0
+      ? Math.round((totalWorkedMinutes / (totalWorkedMinutes + totalBreakMinutes)) * 100) : 0;
+    doc.fontSize(8.5).fillColor(C.dark).text(`Net Efficiency: ${netEfficiency}%`, sx, y + 72);
+    doc.fontSize(8.5).fillColor(C.dark).text(`Break Ratio: ${100 - netEfficiency}%`, sx, y + 86);
+
+    // Right: task stats panel
+    roundedRect(M.left + panelW + 12, y, panelW, 110, 6, C.bg);
+    const tx = M.left + panelW + 24;
+    doc.fontSize(7).fillColor(C.textSecondary).text('TASK OVERVIEW', tx, y + 14);
+
+    // Task progress bar
+    const barX = tx;
+    const barY = y + 30;
+    const barW = panelW - 28;
+    const barH = 10;
+    roundedRect(barX, barY, barW, barH, 4, C.border);
+    if (totalTasks > 0) {
+      const doneW = Math.max(0, (completedTasks / totalTasks) * barW);
+      const ipW = Math.max(0, (inProgressTasks / totalTasks) * barW);
+      const irW = Math.max(0, (inReviewTasks / totalTasks) * barW);
+      if (doneW > 0) roundedRect(barX, barY, Math.min(doneW, barW), barH, 4, C.green);
+      if (ipW > 0) doc.save(), doc.rect(barX + doneW, barY, ipW, barH).fill(C.blue), doc.restore();
+      if (irW > 0) doc.save(), doc.rect(barX + doneW + ipW, barY, irW, barH).fill(C.orange), doc.restore();
     }
 
-    if (!sessions.length) {
-      doc.fontSize(10).fillColor('#666').text('No work sessions found for this month.');
+    doc.fontSize(8.5).fillColor(C.dark).text(`Total Tasks: ${totalTasks}`, tx, barY + 16);
+    doc.fontSize(8).fillColor(C.green).text(`${completedTasks} Done`, tx, barY + 30);
+    doc.fontSize(8).fillColor(C.blue).text(`${inProgressTasks} In Progress`, tx + 55, barY + 30);
+    doc.fontSize(8).fillColor(C.orange).text(`${inReviewTasks} Review`, tx + 130, barY + 30);
+    doc.fontSize(8.5).fillColor(C.dark).text(`Completion Rate: ${taskCompletionRate}%`, tx, barY + 48);
+    // Small completion indicator
+    roundedRect(tx + 120, barY + 46, 40, 12, 4, taskCompletionRate >= 75 ? C.greenBg : taskCompletionRate >= 50 ? C.orangeBg : C.redBg);
+    doc.fontSize(7).fillColor(taskCompletionRate >= 75 ? C.green : taskCompletionRate >= 50 ? C.orange : C.red)
+      .text(taskCompletionRate >= 75 ? 'GREAT' : taskCompletionRate >= 50 ? 'OK' : 'LOW',
+        tx + 120, barY + 48, { width: 40, align: 'center' });
+
+    y += 120;
+
+    // ── Section: Location Breakdown ──
+    doc.fontSize(8).fillColor(C.primary).text('LOCATION BREAKDOWN', M.left, y, { characterSpacing: 1.5 });
+    y += 14;
+    drawLine(M.left, y, M.left + 90, y, C.primary, 1.5);
+    y += 8;
+
+    const locData = [
+      { key: 'office', label: 'Office', color: C.blue, bg: C.blueBg, count: locCounts.office, mins: locMinutes.office },
+      { key: 'home', label: 'Home Office', color: C.green, bg: C.greenBg, count: locCounts.home, mins: locMinutes.home },
+      { key: 'field', label: 'On The Go', color: C.orange, bg: C.orangeBg, count: locCounts.field, mins: locMinutes.field },
+    ];
+    const locBarW = CONTENT_W;
+    for (const loc of locData) {
+      const pct = sessions.length > 0 ? Math.round((loc.count / sessions.length) * 100) : 0;
+      roundedRect(M.left, y, locBarW, 22, 4, loc.bg);
+      roundedRect(M.left, y, 3, 22, 2, loc.color);
+      doc.fontSize(7.5).fillColor(C.dark).text(loc.label, M.left + 12, y + 6);
+      doc.fontSize(7).fillColor(C.textSecondary).text(`${loc.count} sessions`, M.left + 100, y + 7);
+      doc.fontSize(7).fillColor(C.textSecondary).text(fmtDuration(loc.mins), M.left + 180, y + 7);
+      // Mini bar
+      const miniBarW = 150;
+      const miniBarX = M.left + locBarW - miniBarW - 50;
+      roundedRect(miniBarX, y + 7, miniBarW, 8, 3, C.border);
+      if (pct > 0) roundedRect(miniBarX, y + 7, Math.max(4, (pct / 100) * miniBarW), 8, 3, loc.color);
+      doc.fontSize(7).fillColor(loc.color).text(`${pct}%`, M.left + locBarW - 42, y + 6, { width: 34, align: 'right' });
+      y += 26;
+    }
+    y += 8;
+
+    // ── Section: Daily Hours Bar Chart ──
+    if (sessions.length > 0) {
+      doc.fontSize(8).fillColor(C.primary).text('DAILY HOURS', M.left, y, { characterSpacing: 1.5 });
+      y += 14;
+      drawLine(M.left, y, M.left + 60, y, C.primary, 1.5);
+      y += 8;
+
+      const daysMap = new Map();
+      for (const s of sessions) {
+        const prev = daysMap.get(s.date) || 0;
+        daysMap.set(s.date, prev + calcWorkedMinutes(s));
+      }
+      const maxMins = Math.max(...daysMap.values(), 1);
+      const chartBarMaxW = CONTENT_W - 100;
+
+      for (const [dateStr, mins] of daysMap) {
+        if (y + 16 > PAGE_H - M.bottom - 20) break; // Don't overflow page 1
+        const barW = Math.max(3, (mins / maxMins) * chartBarMaxW);
+        const d = new Date(dateStr + 'T00:00:00');
+        const dayLabel = `${dayNames[d.getDay()]} ${String(d.getDate()).padStart(2, '0')}`;
+
+        doc.fontSize(7).fillColor(C.textSecondary)
+          .text(dayLabel, M.left, y + 2, { width: 40, align: 'right' });
+        roundedRect(M.left + 50, y, barW, 12, 3, C.primary);
+        doc.fontSize(6.5).fillColor(barW > 50 ? C.white : C.text)
+          .text(fmtDuration(mins), barW > 50 ? M.left + 54 : M.left + 54 + barW + 4, y + 2, { width: 50 });
+        y += 16;
+      }
+      y += 8;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // PAGE 2 — Session Log Table (if sessions exist)
+    // ══════════════════════════════════════════════════════════════
+    if (sessions.length > 0) {
+      doc.addPage();
+      drawPageHeader(false);
+      y = HEADER_H + 16;
+
+      doc.fontSize(8).fillColor(C.primary).text('SESSION LOG', M.left, y, { characterSpacing: 1.5 });
+      y += 14;
+      drawLine(M.left, y, M.left + 60, y, C.primary, 1.5);
+      y += 8;
+
+      // Table columns
+      const colX = {
+        date: M.left,
+        location: M.left + 110,
+        clockIn: M.left + 210,
+        clockOut: M.left + 275,
+        worked: M.left + 345,
+        breaks: M.left + 415,
+        pct: M.left + 465,
+      };
+      const rowH = 22;
+
+      const drawTableHeader = () => {
+        roundedRect(M.left, y, CONTENT_W, 20, 4, C.dark);
+        doc.fontSize(6.5).fillColor(C.white);
+        doc.text('DATE', colX.date + 8, y + 6, { width: 100 });
+        doc.text('LOCATION', colX.location + 4, y + 6, { width: 96 });
+        doc.text('IN', colX.clockIn + 4, y + 6, { width: 60 });
+        doc.text('OUT', colX.clockOut + 4, y + 6, { width: 65 });
+        doc.text('WORKED', colX.worked + 4, y + 6, { width: 66 });
+        doc.text('BREAKS', colX.breaks + 4, y + 6, { width: 46 });
+        doc.text('%', colX.pct + 4, y + 6, { width: 30 });
+        y += 22;
+      };
+
+      drawTableHeader();
+
+      for (let i = 0; i < sessions.length; i++) {
+        if (y + rowH > PAGE_H - M.bottom - 10) {
+          doc.addPage();
+          drawPageHeader(false);
+          y = HEADER_H + 16;
+          doc.fontSize(7).fillColor(C.textSecondary).text('SESSION LOG (continued)', M.left, y);
+          y += 14;
+          drawTableHeader();
+        }
+
+        const s = sessions[i];
+        const worked = calcWorkedMinutes(s);
+        const brk = calcBreakMinutes(s);
+        const sessionPct = totalWorkedMinutes > 0 ? Math.round((worked / totalWorkedMinutes) * 100) : 0;
+        const isEven = i % 2 === 0;
+
+        if (isEven) roundedRect(M.left, y, CONTENT_W, rowH, 2, C.bg);
+
+        const ty = y + 6;
+        doc.fontSize(7.5).fillColor(C.dark).text(fmtDate(s.date), colX.date + 8, ty, { width: 100 });
+        doc.fontSize(7).fillColor(C.textSecondary).text(locationLabel(s.location), colX.location + 4, ty, { width: 96 });
+        doc.fontSize(7.5).fillColor(C.dark).text(fmtTime(s.clockIn), colX.clockIn + 4, ty, { width: 60 });
+        const isActive = !s.clockOut;
+        doc.fontSize(7.5).fillColor(isActive ? C.green : C.dark)
+          .text(isActive ? 'Active' : fmtTime(s.clockOut), colX.clockOut + 4, ty, { width: 65 });
+        doc.fontSize(7.5).fillColor(C.primary).text(fmtDuration(worked), colX.worked + 4, ty, { width: 66 });
+        doc.fontSize(7).fillColor(brk > 0 ? C.orange : C.textLight)
+          .text(brk > 0 ? fmtDuration(brk) : '—', colX.breaks + 4, ty, { width: 46 });
+        doc.fontSize(7).fillColor(C.textSecondary).text(`${sessionPct}%`, colX.pct + 4, ty, { width: 30 });
+
+        y += rowH;
+      }
+
+      // Totals row
+      y += 4;
+      roundedRect(M.left, y, CONTENT_W, 24, 4, C.primaryBg);
+      roundedRect(M.left, y, 3, 24, 2, C.primary);
+      doc.fontSize(7.5).fillColor(C.textSecondary).text('TOTALS', colX.date + 10, y + 7);
+      doc.fontSize(8).fillColor(C.primary).text(fmtDuration(totalWorkedMinutes), colX.worked + 4, y + 7, { width: 66 });
+      doc.fontSize(7.5).fillColor(C.orange).text(fmtDuration(totalBreakMinutes), colX.breaks + 4, y + 7, { width: 46 });
+      doc.fontSize(7.5).fillColor(C.textSecondary).text('100%', colX.pct + 4, y + 7, { width: 30 });
+    }
+
+    // ── Add footers to all pages ──
+    const totalPages = doc.bufferedPageRange().count;
+    for (let i = 0; i < totalPages; i++) {
+      doc.switchToPage(i);
+      drawFooter(i + 1, totalPages);
     }
 
     doc.end();
   } catch (err) {
+    console.error('PDF report error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
