@@ -1255,7 +1255,7 @@ a { color: var(--accent); text-decoration: none; }
 }
 .status-slider.dragging { cursor: grabbing; touch-action: none; }
 .slider-rail {
-  position: absolute; top: 24px; left: calc(50% / var(--stop-count, 6)); right: calc(50% / var(--stop-count, 6));
+  position: absolute; top: 25px; left: calc(50% / var(--stop-count, 6)); right: calc(50% / var(--stop-count, 6));
   height: 2px; background: var(--border); border-radius: 999px;
 }
 .slider-progress {
@@ -1313,7 +1313,7 @@ a { color: var(--accent); text-decoration: none; }
 }
 .priority-slider.dragging { cursor: grabbing; touch-action: none; }
 .priority-slider .slider-rail {
-  position: absolute; top: 24px; left: calc(50% / var(--stop-count, 3)); right: calc(50% / var(--stop-count, 3));
+  position: absolute; top: 25px; left: calc(50% / var(--stop-count, 3)); right: calc(50% / var(--stop-count, 3));
   height: 2px; background: var(--border); border-radius: 999px;
 }
 .priority-slider .slider-stops {
@@ -1329,7 +1329,7 @@ a { color: var(--accent); text-decoration: none; }
 }
 .progress-slider.dragging { cursor: grabbing; touch-action: none; }
 .progress-slider .slider-rail {
-  position: absolute; top: 22px;
+  position: absolute; top: 23px;
   left: calc(50% / var(--stop-count, 21)); right: calc(50% / var(--stop-count, 21));
   height: 2px; background: var(--border); border-radius: 999px;
 }
@@ -6015,6 +6015,7 @@ function fitTaskChatToAvailableSpace() {
 
   // Expanded chat mode already has its own full-height layout.
   if (panel.classList.contains('chat-focus') || section.classList.contains('expanded')) {
+    section.style.minHeight = '';
     messages.style.height = '';
     messages.style.maxHeight = '';
     return;
@@ -6031,8 +6032,11 @@ function fitTaskChatToAvailableSpace() {
   const sectionChrome = headerH + pendingH + inputH + 18;
   const availableMessagesHeight = availableSectionHeight - sectionChrome;
 
-  // Fill free space when available, but keep a sane cap to avoid oversized message panes.
-  const targetHeight = Math.max(132, Math.min(availableMessagesHeight, 520));
+  // Let chat section itself occupy the free bottom area.
+  section.style.minHeight = `${Math.max(section.offsetHeight, availableSectionHeight)}px`;
+
+  // Fill free space with messages while keeping minimum readability.
+  const targetHeight = Math.max(132, availableMessagesHeight);
   messages.style.height = `${targetHeight}px`;
   messages.style.maxHeight = `${targetHeight}px`;
 }
