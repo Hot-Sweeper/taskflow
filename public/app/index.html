@@ -735,9 +735,7 @@ a { color: var(--accent); text-decoration: none; }
   margin-left: 2px; flex-shrink: 0; display: flex; align-items: center;
 }
 .kanban-col.collapsed .col-chevron { transform: rotate(-90deg); }
-.kanban-col-header .col-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-}
+.kanban-col-header .status-icon { width: 16px; height: 16px; }
 .kanban-col-header .col-count {
   font-size: 11px; font-weight: 500; color: var(--text-secondary);
   background: var(--bg-input); border-radius: 10px; padding: 1px 6px;
@@ -799,8 +797,36 @@ a { color: var(--accent); text-decoration: none; }
   overflow: hidden;
 }
 .task-card .card-priority {
-  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; margin-left: 8px;
+  flex-shrink: 0; margin-top: 2px; margin-left: 8px;
 }
+.status-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 999px; flex-shrink: 0;
+  color: var(--status-color, #999);
+  background: color-mix(in srgb, var(--status-color, #999) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--status-color, #999) 42%, transparent);
+}
+.status-icon svg { width: 11px; height: 11px; stroke-width: 2.3; }
+.status-inline-icon { width: 14px; height: 14px; }
+
+.priority-flag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px 2px 6px; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--priority-color, #999) 38%, transparent);
+  background: color-mix(in srgb, var(--priority-color, #999) 16%, transparent);
+  color: var(--priority-color, #999);
+  font-size: 10px; font-weight: 700; line-height: 1; white-space: nowrap;
+}
+.priority-flag::before {
+  content: ''; width: 2px; height: 12px; border-radius: 2px;
+  background: var(--priority-color, #999);
+}
+.priority-flag .flag-icon { display: inline-flex; align-items: center; }
+.priority-flag .flag-icon svg { width: 11px; height: 11px; stroke-width: 2.3; }
+.priority-flag .flag-text { max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+.priority-flag.icon-only { padding: 2px 6px 2px 5px; gap: 3px; }
+.priority-flag.icon-only::before { height: 10px; }
+.priority-flag.meta-priority-flag { font-size: 11px; padding: 3px 9px 3px 7px; }
 .task-card .card-bottom {
   display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap;
 }
@@ -932,6 +958,14 @@ a { color: var(--accent); text-decoration: none; }
 }
 .bulk-dropdown-item:hover { background: var(--bg-input); }
 .bulk-dropdown-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.bulk-dropdown-item .item-icon {
+  width: 16px; height: 16px; border-radius: 999px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--item-icon-color, var(--text-secondary));
+  background: color-mix(in srgb, var(--item-icon-color, var(--text-secondary)) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--item-icon-color, var(--text-secondary)) 38%, transparent);
+}
+.bulk-dropdown-item .item-icon svg { width: 10px; height: 10px; stroke-width: 2.3; }
 
 @media (max-width: 768px) {
   .bulk-action-bar { bottom: 100px; padding: 8px 12px; gap: 6px; }
@@ -1031,12 +1065,12 @@ a { color: var(--accent); text-decoration: none; }
   border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s;
 }
 .list-item:hover { background: var(--bg-card); }
-.list-item .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.list-item .status-icon { width: 16px; height: 16px; }
 .list-item .item-content { flex: 1; min-width: 0; }
 .list-item .item-title { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .list-item .item-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
 .list-item .item-priority {
-  font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+  flex-shrink: 0;
 }
 
 /* ═══ TASK DETAIL PANEL ═══ */
@@ -1125,10 +1159,6 @@ a { color: var(--accent); text-decoration: none; }
 .detail-subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.4; }
 .detail-subtitle.empty { font-style: italic; opacity: 0.5; }
 .label-with-icon { display: inline-flex; align-items: center; gap: 6px; }
-.prio-dot {
-  width: 10px; height: 10px; border-radius: 50%; display: inline-block;
-  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 20%, transparent);
-}
 .detail-meta-row {
   display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;
 }
@@ -1187,7 +1217,12 @@ a { color: var(--accent); text-decoration: none; }
   padding: 0 5px;
   margin-left: 4px;
 }
-.meta-chip .prio-dot { width: 8px; height: 8px; }
+.meta-chip.meta-status-chip {
+  color: var(--status-chip-color, var(--text-secondary));
+  border: 1px solid color-mix(in srgb, var(--status-chip-color, var(--text-secondary)) 32%, transparent);
+  background: color-mix(in srgb, var(--status-chip-color, var(--text-secondary)) 10%, transparent);
+}
+.meta-chip .status-icon { width: 14px; height: 14px; }
 .meta-chip input[type="date"] {
   background: transparent; border: none; color: var(--text); font-size: 12px;
   font-family: inherit; outline: none; padding: 2px 4px; color-scheme: dark; width: auto;
@@ -2036,9 +2071,17 @@ a { color: var(--accent); text-decoration: none; }
   cursor: pointer; transition: background 0.15s;
 }
 .day-detail-task:hover { background: var(--bg-input); }
-.day-detail-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.day-detail-dot {
+  width: 16px; height: 16px; border-radius: 999px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--priority-color, #999);
+  background: color-mix(in srgb, var(--priority-color, #999) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--priority-color, #999) 42%, transparent);
+}
+.day-detail-dot svg { width: 10px; height: 10px; stroke-width: 2.3; }
 .day-detail-task-title { flex: 1; font-size: 13px; font-weight: 500; }
-.day-detail-task-status { font-size: 11px; font-weight: 600; }
+.day-detail-task-status { font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+.day-detail-task-status .status-icon { width: 14px; height: 14px; }
 .day-detail-timeline-entry {
   display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 8px;
   cursor: pointer; transition: background 0.15s; position: relative;
@@ -2054,7 +2097,14 @@ a { color: var(--accent); text-decoration: none; }
 .day-entry-task-link { font-weight: 600; color: var(--text); }
 .day-entry-action { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
 .day-entry-detail-line { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; line-height: 1.4; }
-.day-entry-prio-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; vertical-align: middle; margin-right: 2px; }
+.day-entry-prio-dot {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px; border-radius: 999px; flex-shrink: 0;
+  color: var(--priority-color, #999);
+  background: color-mix(in srgb, var(--priority-color, #999) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--priority-color, #999) 38%, transparent);
+}
+.day-entry-prio-dot svg { width: 9px; height: 9px; stroke-width: 2.2; }
 .day-entry-note-preview {
   font-size: 11px; color: var(--text-secondary); margin-top: 4px; padding: 4px 8px;
   background: var(--bg-input); border-radius: 6px; line-height: 1.4;
@@ -2393,6 +2443,25 @@ a { color: var(--accent); text-decoration: none; }
   padding-right: 28px;
 }
 .atb-category-select:focus { border-color: var(--border-focus); }
+.atb-subflow-picker-row {
+  display: flex;
+  align-items: center;
+}
+.atb-subflow-filter {
+  margin-left: 0;
+  min-width: 0;
+  width: 100%;
+}
+.atb-subflow-filter .subflow-filter-btn {
+  border-radius: var(--radius-xs);
+  min-height: 38px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.atb-subflow-filter .subflow-filter-menu {
+  z-index: 95;
+}
 /* File picker row */
 .atb-files-row {
   display: flex; align-items: center; gap: 8px;
@@ -2428,11 +2497,9 @@ a { color: var(--accent); text-decoration: none; }
   .add-task-expand-inner > .atb-section-label[data-i18n="task.priority"] { order: 3; }
   .add-task-expand-inner > #atbPriority { order: 4; }
   .add-task-expand-inner > .atb-section-label[data-i18n="subflow.title"] { order: 5; }
-  .add-task-expand-inner > .atb-category-row:first-of-type { order: 6; }
-  .add-task-expand-inner > .atb-section-label[data-i18n="task.category"] { order: 7; }
-  .add-task-expand-inner > .atb-category-row:last-of-type { order: 8; }
-  .add-task-expand-inner > .atb-files-row { order: 9; }
-  .add-task-expand-inner > .atb-people-grid { order: 10; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .add-task-expand-inner > .atb-subflow-picker-row { order: 6; }
+  .add-task-expand-inner > .atb-files-row { order: 7; }
+  .add-task-expand-inner > .atb-people-grid { order: 8; grid-template-columns: 1fr 1fr; gap: 12px; }
 
   .atb-people-grid.phone-two-col,
   .detail-people-grid.phone-two-col {
@@ -2999,16 +3066,16 @@ a { color: var(--accent); text-decoration: none; }
           <div class="atb-section-label" data-i18n="task.priority">Priority</div>
           <div class="atb-priority" id="atbPriority"></div>
           <div class="atb-section-label" data-i18n="subflow.title">Section</div>
-          <div class="atb-category-row">
-            <select id="atbSubFlow" class="atb-category-select">
-              <option value="" data-i18n="subflow.none">No section</option>
-            </select>
-          </div>
-          <div class="atb-section-label" data-i18n="task.category">Category</div>
-          <div class="atb-category-row">
-            <select id="atbCategory" class="atb-category-select">
-              <option value="" data-i18n="task.noCategory">No category</option>
-            </select>
+          <div class="atb-subflow-picker-row">
+            <div class="subflow-filter atb-subflow-filter" id="atbSubflowFilter">
+              <button type="button" class="subflow-filter-btn" onclick="toggleAtbSubflowMenu(event)">
+                <span class="subflow-filter-icon" id="atbSubflowIcon"></span>
+                <span class="subflow-filter-label" id="atbSubflowLabel"></span>
+                <span class="subflow-filter-caret"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
+              </button>
+              <div class="subflow-filter-menu" id="atbSubflowMenu"></div>
+            </div>
+            <input type="hidden" id="atbSubFlow" value="">
           </div>
           <div class="atb-section-label" data-i18n="task.description">Description</div>
           <textarea id="atbDescription" rows="2" data-i18n-placeholder="task.noDescription" placeholder="Description (optional)..." style="width:100%;min-height:36px;padding:6px 8px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--bg-input);color:var(--text);resize:vertical;outline:none;font-family:inherit;font-size:13px;margin-bottom:8px;"></textarea>
@@ -3533,6 +3600,57 @@ function icon(name, size) {
   const p = ICON_PATHS[name];
   if (!p) return name; // fallback to raw text if not found
   return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+}
+
+const STATUS_ICON_MAP = {
+  'todo': 'clipboard',
+  'in-progress': 'play',
+  'on-hold': 'pause',
+  'needs-info': 'alert-triangle',
+  'in-review': 'rotate-ccw',
+  'done': 'check-circle'
+};
+
+const PRIORITY_ICON_MAP = {
+  'low': 'chart',
+  'medium': 'target',
+  'high': 'flame',
+  'urgent': 'alert-triangle'
+};
+
+function statusIconName(status) {
+  return STATUS_ICON_MAP[status] || 'clock';
+}
+
+function priorityIconName(priority) {
+  return PRIORITY_ICON_MAP[priority] || 'target';
+}
+
+function renderStatusIcon(status, className) {
+  const meta = STATUS_META[status] || {};
+  const color = meta.color || '#999';
+  const label = I18n.t(meta.label || '') || status || '';
+  const extra = className ? ` ${className}` : '';
+  return `<span class="status-icon${extra}" style="--status-color:${color}" title="${esc(label)}">${icon(statusIconName(status), 11)}</span>`;
+}
+
+function renderPriorityFlag(priority, showLabel, className) {
+  const meta = PRIORITY_META[priority] || {};
+  const color = meta.color || '#999';
+  const label = I18n.t(meta.label || '') || priority || '';
+  const extra = className ? ` ${className}` : '';
+  const iconHtml = `<span class="flag-icon">${icon(priorityIconName(priority), 11)}</span>`;
+  if (showLabel) {
+    return `<span class="priority-flag${extra}" style="--priority-color:${color}" title="${esc(label)}">${iconHtml}<span class="flag-text">${esc(label)}</span></span>`;
+  }
+  return `<span class="priority-flag icon-only${extra}" style="--priority-color:${color}" title="${esc(label)}">${iconHtml}</span>`;
+}
+
+function renderPriorityMarker(priority, className) {
+  const meta = PRIORITY_META[priority] || {};
+  const color = meta.color || '#999';
+  const cls = className || 'day-entry-prio-dot';
+  return `<span class="${cls}" style="--priority-color:${color}">${icon(priorityIconName(priority), 9)}</span>`;
 }
 
 // Flow icon set — keys into ICON_PATHS
@@ -4222,6 +4340,9 @@ document.addEventListener('click', (e) => {
   const container = document.getElementById('subflowFilter');
   if (container && !container.contains(e.target)) closeSubflowMenu();
 
+  const atbContainer = document.getElementById('atbSubflowFilter');
+  if (atbContainer && !atbContainer.contains(e.target)) closeAtbSubflowMenu();
+
   const detailContainer = document.getElementById('detailSubflowFilter');
   if (detailContainer && !detailContainer.contains(e.target)) closeDetailSubflowMenu();
 });
@@ -4283,7 +4404,7 @@ function renderKanban() {
     col.innerHTML = `
       <div class="kanban-col-header" onclick="toggleColumn('${status}', ${statusTasks.length})">
         <span class="col-chevron"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
-        <span class="col-dot" style="background:${meta.color}"></span>
+        ${renderStatusIcon(status)}
         <span>${I18n.t(meta.label)}</span>
         <span class="col-count">${statusTasks.length}</span>
       </div>
@@ -4370,7 +4491,6 @@ function createTaskCard(task) {
     document.querySelectorAll('.drag-header-over').forEach(el => el.classList.remove('drag-header-over'));
   };
 
-  const priorityColor = PRIORITY_META[task.priority]?.color || '#999';
   const deadline = deadlineDisplay(task.deadline);
   const assigneeIds = taskAssigneeIds(task);
   const assignees = assigneeIds.map(uid => members.find(m => m.userId === uid)).filter(Boolean);
@@ -4416,12 +4536,13 @@ function createTaskCard(task) {
     </div>`;
 
   const bulkCbHTML = `<span class="bulk-checkbox ${bulkSelectedIds.has(task.id) ? 'checked' : ''}"></span>`;
+  const priorityFlag = renderPriorityFlag(task.priority, false, 'card-priority');
 
   card.innerHTML = `
     <div class="card-top">
       ${bulkCbHTML}
       <span class="card-title">${esc(task.title)}</span>
-      <span class="card-priority" style="background:${priorityColor}"></span>
+      ${priorityFlag}
     </div>
     ${bottomHTML ? `<div class="card-bottom">${bottomHTML}</div>` : ''}
     ${progressBarHTML}
@@ -4446,7 +4567,6 @@ function renderList() {
 
   for (const task of filtered) {
     const meta = STATUS_META[task.status];
-    const pmeta = PRIORITY_META[task.priority];
     const item = document.createElement('div');
     item.className = 'list-item';
     if (bulkSelectedIds.has(task.id)) item.classList.add('bulk-selected');
@@ -4469,13 +4589,13 @@ function renderList() {
     }
     item.innerHTML = `
       ${bulkCb}
-      <span class="status-dot" style="background:${meta?.color || '#999'}"></span>
+      ${renderStatusIcon(task.status)}
       <div class="item-content">
         <div class="item-title">${esc(task.title)}</div>
         <div class="item-meta">${I18n.t(meta?.label || '')}${task.revisionRequested && task.status === 'todo' ? ` · ${I18n.t('task.revision')}` : ''}${task.recurrenceRule ? ` · ${icon('repeat', 11)}` : ''} · ${relativeTime(task.updatedAt || task.createdAt)}</div>
       </div>
       ${reviewActionsHTML}
-      <span class="item-priority" style="background:${pmeta?.color || '#999'}20;color:${pmeta?.color || '#999'}">${I18n.t(pmeta?.label || '')}</span>
+      ${renderPriorityFlag(task.priority, true, 'item-priority')}
     `;
     list.appendChild(item);
   }
@@ -4549,6 +4669,7 @@ function showBulkDropdown(anchorBtn, items) {
   dd.className = 'bulk-dropdown';
   dd.innerHTML = items.map(it => `
     <div class="bulk-dropdown-item" onclick="${it.onclick}">
+      ${it.icon ? `<span class="item-icon" style="--item-icon-color:${it.color || 'var(--text-secondary)'}">${icon(it.icon, 12)}</span>` : ''}
       ${it.dot ? `<span class="dot" style="background:${it.dot}"></span>` : ''}
       ${it.label}
     </div>
@@ -4570,7 +4691,8 @@ function showBulkDropdown(anchorBtn, items) {
 function openBulkStatus(e) {
   const items = STATUS_ORDER.map(s => ({
     label: I18n.t(STATUS_META[s].label),
-    dot: STATUS_META[s].color,
+    icon: statusIconName(s),
+    color: STATUS_META[s].color,
     onclick: `bulkSetField('status','${s}');closeBulkDropdown()`
   }));
   showBulkDropdown(e.currentTarget, items);
@@ -4580,7 +4702,8 @@ function openBulkPriority(e) {
   const priorities = ['low', 'medium', 'high', 'urgent'];
   const items = priorities.map(p => ({
     label: I18n.t(PRIORITY_META[p]?.label || p),
-    dot: PRIORITY_META[p]?.color || '#999',
+    icon: priorityIconName(p),
+    color: PRIORITY_META[p]?.color || '#999',
     onclick: `bulkSetField('priority','${p}');closeBulkDropdown()`
   }));
   showBulkDropdown(e.currentTarget, items);
@@ -4793,7 +4916,6 @@ async function deleteTemplate(templateId) {
 let atbSelectedAssignees = [];
 let atbSelectedOperators = [];
 let atbSelectedPriority = 'medium';
-let atbSelectedCategory = null;
 let atbFiles = [];
 let atbSubmitting = false;
 
@@ -4843,7 +4965,6 @@ function expandTaskBar() {
   renderAtbAssignees();
   renderAtbOperators();
   renderAtbPriority();
-  renderAtbCategories();
   renderAtbSubFlows();
   applyPeopleGridLayout();
 }
@@ -4861,11 +4982,10 @@ function resetTaskBar() {
   atbSelectedAssignees = [];
   atbSelectedOperators = currentUser?.id ? [currentUser.id] : [];
   atbSelectedPriority = 'medium';
-  atbSelectedCategory = null;
-  const catSel = document.getElementById('atbCategory');
-  if (catSel) catSel.value = '';
-  const sfSel = document.getElementById('atbSubFlow');
-  if (sfSel) sfSel.value = currentSubFlow !== 'all' ? currentSubFlow : '';
+  const sfInput = document.getElementById('atbSubFlow');
+  if (sfInput) sfInput.value = currentSubFlow !== 'all' ? currentSubFlow : '';
+  closeAtbSubflowMenu();
+  renderAtbSubFlows();
   atbFiles = [];
   document.getElementById('atbFileList').innerHTML = '';
   document.getElementById('atbFileInput').value = '';
@@ -4934,24 +5054,51 @@ function selectAtbPriority(p) {
 }
 
 function renderAtbSubFlows() {
-  const sel = document.getElementById('atbSubFlow');
-  if (!sel || !currentFlow) return;
+  const container = document.getElementById('atbSubflowFilter');
+  const menu = document.getElementById('atbSubflowMenu');
+  const label = document.getElementById('atbSubflowLabel');
+  const iconWrap = document.getElementById('atbSubflowIcon');
+  const hidden = document.getElementById('atbSubFlow');
+  if (!container || !menu || !label || !iconWrap || !hidden || !currentFlow) return;
+
   const subFlows = currentFlow.subFlows || [];
-  const prev = sel.value || (currentSubFlow !== 'all' ? currentSubFlow : '');
-  sel.innerHTML = `<option value="">${I18n.t('subflow.none') || 'No section'}</option>` +
-    subFlows.map(sf => `<option value="${esc(sf.id)}">${sf.icon ? icon(sf.icon, 14) + ' ' : ''}${esc(sf.name)}</option>`).join('');
-  if (prev && subFlows.some(sf => sf.id === prev)) sel.value = prev;
+  const selectedId = hidden.value || (currentSubFlow !== 'all' ? currentSubFlow : '');
+  const selectedFlow = subFlows.find(sf => sf.id === selectedId);
+  label.textContent = selectedFlow?.name || I18n.t('subflow.none');
+  iconWrap.innerHTML = icon(selectedFlow?.icon || 'layers', 16);
+
+  const items = [{ id: '', name: I18n.t('subflow.none'), icon: 'layers' }, ...subFlows];
+  menu.innerHTML = items.map((sf) => {
+    const itemId = sf.id || '';
+    const itemName = sf.name || I18n.t('subflow.none');
+    const itemIcon = sf.icon || 'layers';
+    const activeClass = itemId === selectedId ? 'active' : '';
+    const encodedId = itemId || '__none';
+    return `<button type="button" class="subflow-menu-item ${activeClass}" onclick="selectAtbSubflow('${encodedId}')">
+      <span class="subflow-filter-icon">${icon(itemIcon, 16)}</span>
+      <span class="subflow-filter-label">${esc(itemName)}</span>
+    </button>`;
+  }).join('');
 }
 
-async function renderAtbCategories() {
-  const sel = document.getElementById('atbCategory');
-  if (!sel || !currentFlow) return;
-  let cats = [];
-  try { cats = await API.getCategories(currentFlow.id); } catch {}
-  const prev = sel.value;
-  sel.innerHTML = `<option value="">${I18n.t('task.noCategory') || 'No category'}</option>` +
-    cats.map(c => `<option value="${esc(c.name)}" style="color:${esc(c.color || 'inherit')}">${esc(c.name)}</option>`).join('');
-  if (prev && cats.some(c => c.name === prev)) sel.value = prev;
+function toggleAtbSubflowMenu(event) {
+  if (event) event.stopPropagation();
+  const container = document.getElementById('atbSubflowFilter');
+  if (!container) return;
+  container.classList.toggle('open');
+}
+
+function closeAtbSubflowMenu() {
+  const container = document.getElementById('atbSubflowFilter');
+  if (container) container.classList.remove('open');
+}
+
+function selectAtbSubflow(subFlowId) {
+  const hidden = document.getElementById('atbSubFlow');
+  if (!hidden) return;
+  hidden.value = subFlowId === '__none' ? '' : subFlowId;
+  renderAtbSubFlows();
+  closeAtbSubflowMenu();
 }
 
 document.getElementById('atbFileInput').addEventListener('change', (e) => {
@@ -4982,15 +5129,25 @@ async function quickAddTask() {
   atbSubmitting = true;
   try {
     const desc = (document.getElementById('atbDescription')?.value || '').trim();
-    atbSelectedCategory = document.getElementById('atbCategory')?.value || null;
+    const memberIdSet = new Set(members.map(m => m.userId));
+    const safeAssignees = [...new Set(atbSelectedAssignees.filter(uid => memberIdSet.has(uid)))];
+    let safeOperators = [...new Set(atbSelectedOperators.filter(uid => memberIdSet.has(uid)))];
+    if (currentUser?.id && memberIdSet.has(currentUser.id) && !safeOperators.includes(currentUser.id)) {
+      safeOperators.push(currentUser.id);
+    }
+
+    if (!safeAssignees.length) {
+      toast(I18n.t('task.assigneeRequired'));
+      return;
+    }
+
     const task = await API.createTask(currentFlow.id, {
       title,
       priority: atbSelectedPriority,
       description: desc,
-      category: atbSelectedCategory || undefined,
-      assignedToList: atbSelectedAssignees,
-      assignedTo: atbSelectedAssignees[0] || null,
-      operators: atbSelectedOperators,
+      assignedToList: safeAssignees,
+      assignedTo: safeAssignees[0] || null,
+      operators: safeOperators,
       subFlowId: document.getElementById('atbSubFlow')?.value || (currentSubFlow !== 'all' ? currentSubFlow : null)
     });
     // Don't push here — let WS handler add it to avoid duplicates
@@ -5309,9 +5466,12 @@ function renderDetail(task) {
   const deadlineText = task.deadline ? new Date(task.deadline).toLocaleDateString() : I18n.t('common.none');
 
   // Initialize selected people before template
-  detailSelectedAssignees = taskAssigneeIds(task);
-  detailSelectedOperators = taskOperatorIds(task);
-  if (!detailSelectedOperators.includes(task.createdBy)) detailSelectedOperators.push(task.createdBy);
+  const memberIdSet = new Set(members.map(m => m.userId));
+  detailSelectedAssignees = taskAssigneeIds(task).filter(uid => memberIdSet.has(uid));
+  detailSelectedOperators = taskOperatorIds(task).filter(uid => memberIdSet.has(uid));
+  if (memberIdSet.has(task.createdBy) && !detailSelectedOperators.includes(task.createdBy)) {
+    detailSelectedOperators.push(task.createdBy);
+  }
 
   body.innerHTML = `
     <div class="detail-top-row ${caps.canPlan ? 'plan-mode' : ''}">
@@ -5333,12 +5493,9 @@ function renderDetail(task) {
     </div>
 
     <div class="detail-meta-row">
-      <span class="meta-chip">
-        <span class="prio-dot" style="background:${priorityMeta?.color || '#666'};color:${priorityMeta?.color || '#666'}"></span>
-        <span>${esc(I18n.t(priorityMeta?.label || ''))}</span>
-      </span>
-      <span class="meta-chip" style="color:${statusMeta?.color || '#999'}">
-        <span class="prio-dot" style="background:${statusMeta?.color || '#999'};color:${statusMeta?.color || '#999'}"></span>
+      ${renderPriorityFlag(task.priority, true, 'meta-priority-flag')}
+      <span class="meta-chip meta-status-chip" style="--status-chip-color:${statusMeta?.color || '#999'}">
+        ${renderStatusIcon(task.status)}
         <span>${esc(I18n.t(statusMeta?.label || ''))}</span>
       </span>
       <span class="meta-chip" title="${esc(I18n.t('task.progress'))}">${progressValue}%</span>
@@ -5761,30 +5918,59 @@ let _selfSaveTimer = null;
 async function saveDetail() {
   if (!currentTaskId || !currentFlow) return;
   const currentTask = tasks.find(t => t.id === currentTaskId);
+  if (!currentTask) return;
   const prevProgress = Math.max(0, Math.min(100, parseInt(currentTask?.progress, 10) || 0));
   const caps = getTaskRoleCaps(currentTask);
   let assignees = [];
   let operators = [];
   try { assignees = JSON.parse(document.getElementById('detailAssignee').value || '[]'); } catch {}
   try { operators = JSON.parse(document.getElementById('detailOperators').value || '[]'); } catch {}
-  if (currentTask?.createdBy && !operators.includes(currentTask.createdBy)) operators.push(currentTask.createdBy);
+
+  const memberIdSet = new Set(members.map(m => m.userId));
+  assignees = [...new Set(assignees.filter(uid => memberIdSet.has(uid)))];
+  operators = [...new Set(operators.filter(uid => memberIdSet.has(uid)))];
+  if (currentTask?.createdBy && memberIdSet.has(currentTask.createdBy) && !operators.includes(currentTask.createdBy)) {
+    operators.push(currentTask.createdBy);
+  }
+
+  const currentAssignees = [...new Set(taskAssigneeIds(currentTask).filter(uid => memberIdSet.has(uid)))];
+  const currentOperators = [...new Set(taskOperatorIds(currentTask).filter(uid => memberIdSet.has(uid)))];
+
+  const sameIdArray = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
   const data = {};
+
   if (caps.canPlan) {
-    data.title = document.getElementById('detailTitle')?.value?.trim() || currentTask?.title || '';
-    data.description = document.getElementById('detailDesc')?.value ?? (currentTask?.description || '');
-    data.assignedToList = assignees;
-    data.assignedTo = assignees[0] || null;
-    data.operators = operators;
-    data.deadline = document.getElementById('detailDeadline')?.value || null;
+    const nextTitle = document.getElementById('detailTitle')?.value?.trim() || currentTask?.title || '';
+    const nextDesc = document.getElementById('detailDesc')?.value ?? (currentTask?.description || '');
+    const nextDeadline = document.getElementById('detailDeadline')?.value || null;
+
+    if (nextTitle !== (currentTask.title || '')) data.title = nextTitle;
+    if (nextDesc !== (currentTask.description || '')) data.description = nextDesc;
+    if ((currentTask.deadline || null) !== nextDeadline) data.deadline = nextDeadline;
+
+    if (!sameIdArray(assignees, currentAssignees)) {
+      data.assignedToList = assignees;
+      data.assignedTo = assignees[0] || null;
+    }
+    if (!sameIdArray(operators, currentOperators)) {
+      data.operators = operators;
+    }
+
     // Sub-flow selection
     const subFlowEl = document.getElementById('detailSubFlow');
     if (subFlowEl) {
-      data.subFlowId = subFlowEl.value || null;
+      const nextSubFlowId = subFlowEl.value || null;
+      if ((currentTask.subFlowId || null) !== nextSubFlowId) {
+        data.subFlowId = nextSubFlowId;
+      }
     }
   }
   if (caps.canProgress) {
-    data.progress = Math.max(0, Math.min(100, parseInt(document.getElementById('detailProgress')?.value || '0', 10) || 0));
-    data.fromProgress = prevProgress;
+    const nextProgress = Math.max(0, Math.min(100, parseInt(document.getElementById('detailProgress')?.value || '0', 10) || 0));
+    if (nextProgress !== prevProgress) {
+      data.progress = nextProgress;
+      data.fromProgress = prevProgress;
+    }
   }
   if (Object.keys(data).length === 0) return;
   // Suppress WS echo re-render for this task
@@ -7058,11 +7244,10 @@ function renderCalendarDay(grid) {
     html += `<div class="cal-day-view-section">
       <div class="cal-day-view-section-title">${I18n.t('calendar.dayDetail.deadlines')}</div>`;
     for (const t of dayDeadlines) {
-      const col = priorityColors[t.priority] || '#999';
       html += `<div class="cal-day-timeline-row" onclick="openDetail('${t.id}')">
-        <span class="day-detail-dot" style="background:${col}"></span>
+        ${renderPriorityMarker(t.priority, 'day-detail-dot')}
         <span style="flex:1;font-size:12px;font-weight:500">${esc(t.title)}</span>
-        <span style="font-size:11px;color:${STATUS_META[t.status]?.color || '#999'}">${esc(I18n.t(STATUS_META[t.status]?.label || ''))}</span>
+        <span style="font-size:11px;color:${STATUS_META[t.status]?.color || '#999'};display:inline-flex;align-items:center;gap:4px">${renderStatusIcon(t.status, 'status-inline-icon')}${esc(I18n.t(STATUS_META[t.status]?.label || ''))}</span>
       </div>`;
     }
     html += '</div>';
@@ -7074,9 +7259,8 @@ function renderCalendarDay(grid) {
       <div class="cal-day-view-section-title">${icon('zap', 14)} ${I18n.t('calendar.dayDetail') || 'Activity'} (${dayActivity.length})</div>`;
     const maxShow = 10;
     for (const t of dayActivity.slice(0, maxShow)) {
-      const col = commons.priorityColors[t.priority] || '#999';
       html += `<div class="cal-day-timeline-row" onclick="openDetail('${t.id}')">
-        <span class="day-detail-dot" style="background:${col};width:8px;height:8px;border-radius:50%;flex-shrink:0"></span>
+        ${renderPriorityMarker(t.priority, 'day-detail-dot')}
         <span style="flex:1;font-size:12px;font-weight:500">${esc(t.title)}</span>
       </div>`;
     }
@@ -7260,13 +7444,12 @@ function openDayDetail(dateStr) {
       </div>`;
 
     for (const d of myDeltas) {
-      const col = priorityColors[d.priority] || '#999';
       const deltaClass = d.delta > 0 ? 'positive' : d.delta < 0 ? 'negative' : 'neutral';
       const deltaSign = d.delta > 0 ? '+' : '';
       html += `<div class="progress-delta-card" onclick="closeDayDetail();openDetail('${d.taskId}')">
         <div class="progress-delta-header">
           <div class="progress-delta-title">
-            <span class="day-entry-prio-dot" style="background:${col}"></span>
+            ${renderPriorityMarker(d.priority, 'day-entry-prio-dot')}
             ${esc(d.title)}
           </div>
           ${d.delta !== null ? `<span class="progress-delta-badge ${deltaClass}">${deltaSign}${d.delta}%</span>` : ''}
@@ -7297,11 +7480,10 @@ function openDayDetail(dateStr) {
     html += `<div class="day-detail-section">
       <div class="day-detail-section-title">${I18n.t('calendar.dayDetail.deadlines')}</div>`;
     for (const t of dayDeadlines) {
-      const col = priorityColors[t.priority] || '#999';
       html += `<div class="day-detail-task" onclick="closeDayDetail();openDetail('${t.id}')">
-        <span class="day-detail-dot" style="background:${col}"></span>
+        ${renderPriorityMarker(t.priority, 'day-detail-dot')}
         <span class="day-detail-task-title">${esc(t.title)}</span>
-        <span class="day-detail-task-status" style="color:${STATUS_META[t.status]?.color || '#999'}">${esc(I18n.t(STATUS_META[t.status]?.label || ''))}</span>
+        <span class="day-detail-task-status" style="color:${STATUS_META[t.status]?.color || '#999'}">${renderStatusIcon(t.status)}${esc(I18n.t(STATUS_META[t.status]?.label || ''))}</span>
       </div>`;
     }
     html += '</div>';
@@ -7326,13 +7508,12 @@ function openDayDetail(dateStr) {
     html += `<div class="day-detail-section">
       <div class="day-detail-section-title">${icon('users', 14)} ${I18n.t('calendar.othersProgress')}</div>`;
     for (const u of othersUpdates) {
-      const col = priorityColors[u.priority] || '#999';
       const deltaClass = u.delta > 0 ? 'positive' : u.delta < 0 ? 'negative' : 'neutral';
       const deltaSign = u.delta > 0 ? '+' : '';
       html += `<div class="others-update-card" onclick="closeDayDetail();openDetail('${u.taskId}')">
         <div class="progress-delta-header">
           <div class="progress-delta-title">
-            <span class="day-entry-prio-dot" style="background:${col}"></span>
+            ${renderPriorityMarker(u.priority, 'day-entry-prio-dot')}
             ${esc(u.title)}
           </div>
           ${u.delta !== null ? `<span class="progress-delta-badge ${deltaClass}">${deltaSign}${u.delta}%</span>` : ''}
@@ -7491,8 +7672,7 @@ function renderTimelineEntries(timeline, priorityColors) {
     const timeStr = new Date(entry.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     let icon_type = '';
     let iconClass = '';
-    const prioColor = PRIORITY_META[entry.task.priority]?.color || '#999';
-    let titleHtml = `<span class="day-entry-prio-dot" style="background:${prioColor}"></span><span class="day-entry-task-link">${esc(entry.task.title)}</span>`;
+    let titleHtml = `${renderPriorityMarker(entry.task.priority, 'day-entry-prio-dot')}<span class="day-entry-task-link">${esc(entry.task.title)}</span>`;
     let detailHtml = '';
     let extraHtml = '';
     if (entry.type === 'created') {
@@ -7639,13 +7819,12 @@ async function openUserDaySummary(dateStr, userId) {
         </div>`;
 
       for (const d of summary.progressDeltas) {
-        const col = priorityColors[d.priority] || '#999';
         const deltaClass = (d.progressDelta || 0) > 0 ? 'positive' : (d.progressDelta || 0) < 0 ? 'negative' : 'neutral';
         const deltaSign = (d.progressDelta || 0) > 0 ? '+' : '';
         html += `<div class="progress-delta-card" onclick="closeDayDetail();openDetail('${d.taskId}')">
           <div class="progress-delta-header">
             <div class="progress-delta-title">
-              <span class="day-entry-prio-dot" style="background:${col}"></span>
+              ${renderPriorityMarker(d.priority, 'day-entry-prio-dot')}
               ${esc(d.taskTitle)}
             </div>
             ${d.progressDelta !== null ? `<span class="progress-delta-badge ${deltaClass}">${deltaSign}${d.progressDelta}%</span>` : ''}
@@ -7752,11 +7931,10 @@ function showOverdueTasks() {
       </div>
       <div class="day-detail-section">`;
   for (const t of overdue) {
-    const col = priorityColors[t.priority] || '#999';
     const deadlineMs = new Date(t.deadline).getTime();
     const daysLate = (!deadlineMs || isNaN(deadlineMs) || deadlineMs < 0) ? '?' : Math.floor((Date.now() - deadlineMs) / 86400000);
     html += `<div class="day-detail-task" onclick="closeDayDetail();openDetail('${t.id}')">
-      <span class="day-detail-dot" style="background:${col}"></span>
+      ${renderPriorityMarker(t.priority, 'day-detail-dot')}
       <span class="day-detail-task-title">${esc(t.title)}</span>
       <span style="font-size:11px;color:var(--red);font-weight:600">${daysLate}d</span>
     </div>`;

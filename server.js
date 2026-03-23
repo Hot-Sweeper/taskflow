@@ -1775,6 +1775,39 @@ app.delete('/api/flows/:flowId/members/:userId', authMiddleware, flowOwnerMiddle
     }
     await storage.write('memberships.json', remaining);
 
+    // Remove stale task references for the kicked user in this flow.
+    const tasks = await storage.read('tasks.json');
+    let taskChanged = false;
+    const nowIso = new Date().toISOString();
+    for (const task of tasks) {
+      if (task.flowId !== req.params.flowId) continue;
+      let taskModified = false;
+
+      const beforeAssignees = getTaskAssigneeIds(task);
+      const nextAssignees = beforeAssignees.filter(uid => uid !== req.params.userId);
+      if (nextAssignees.length !== beforeAssignees.length) {
+        task.assignedToList = nextAssignees;
+        task.assignedTo = nextAssignees[0] || null;
+        taskChanged = true;
+        taskModified = true;
+      }
+
+      const beforeOperators = getTaskOperatorIds(task);
+      const nextOperators = beforeOperators.filter(uid => uid !== req.params.userId);
+      if (nextOperators.length !== beforeOperators.length) {
+        task.operators = nextOperators;
+        taskChanged = true;
+        taskModified = true;
+      }
+
+      if (taskModified) {
+        task.updatedAt = nowIso;
+      }
+    }
+    if (taskChanged) {
+      await storage.write('tasks.json', tasks);
+    }
+
     // Notify the kicked user
     broadcastToUser(req.params.userId, {
       type: 'flow:kicked',
@@ -2026,26 +2059,20 @@ app.put('/api/flows/:flowId/tasks/:id', authMiddleware, flowMemberMiddleware, as
       );
       const memberships = await storage.read('memberships.json');
       const flowMemberIds = new Set(memberships.filter(m => m.flowId === req.params.flowId).map(m => m.userId));
-      for (const uid of nextAssignees) {
-        if (!flowMemberIds.has(uid)) {
-          return res.status(400).json({ error: 'Assignee is not a member of this flow' });
-        }
-      }
-      tasks[idx].assignedToList = nextAssignees;
-      tasks[idx].assignedTo = nextAssignees[0] || null;
+      const memberAssignees = nextAssignees.filter(uid => flowMemberIds.has(uid));
+      tasks[idx].assignedToList = memberAssignees;
+      tasks[idx].assignedTo = memberAssignees[0] || null;
     }
 
     if (req.body.operators !== undefined) {
       const nextOperators = normalizeUserIdArray(req.body.operators);
-      if (!nextOperators.includes(tasks[idx].createdBy)) nextOperators.push(tasks[idx].createdBy);
       const memberships = await storage.read('memberships.json');
       const flowMemberIds = new Set(memberships.filter(m => m.flowId === req.params.flowId).map(m => m.userId));
-      for (const uid of nextOperators) {
-        if (!flowMemberIds.has(uid)) {
-          return res.status(400).json({ error: 'Operator is not a member of this flow' });
-        }
+      const memberOperators = nextOperators.filter(uid => flowMemberIds.has(uid));
+      if (flowMemberIds.has(tasks[idx].createdBy) && !memberOperators.includes(tasks[idx].createdBy)) {
+        memberOperators.push(tasks[idx].createdBy);
       }
-      tasks[idx].operators = nextOperators;
+      tasks[idx].operators = memberOperators;
     }
 
     // Review workflow guardrails:
