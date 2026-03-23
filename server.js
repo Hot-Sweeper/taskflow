@@ -99,6 +99,10 @@ async function authMiddleware(req, res, next) {
       req.user = { userId: key.userId, name: key.userName };
       req.token = token;
       req.isApiKey = true;
+      req.apiKeyConfig = {
+        allowedFlows: key.allowedFlows || [],
+        permissions: key.permissions || ['*']
+      };
       return next();
     } catch {
       return res.status(401).json({ error: 'Invalid API key' });
@@ -132,6 +136,12 @@ function adminAuth(req, res, next) {
 async function flowMemberMiddleware(req, res, next) {
   const flowId = req.params.flowId;
   if (!flowId) return res.status(400).json({ error: 'Flow ID required' });
+  // API key flow restriction check
+  if (req.isApiKey && req.apiKeyConfig?.allowedFlows?.length > 0) {
+    if (!req.apiKeyConfig.allowedFlows.includes(flowId)) {
+      return res.status(403).json({ error: 'API key does not have access to this flow' });
+    }
+  }
   const memberships = await storage.read('memberships.json');
   const membership = memberships.find(m => m.flowId === flowId && m.userId === req.user.userId);
   if (!membership) {
@@ -504,6 +514,71 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
+// Valid API key permission scopes
+const VALID_PERMISSIONS = [
+  '*',
+  'tasks:read', 'tasks:write',
+  'chat:read', 'chat:write',
+  'time:read', 'time:write',
+  'members:read',
+  'flows:read', 'flows:write',
+  'categories:read', 'categories:write',
+  'templates:read', 'templates:write',
+  'notifications:read',
+  'availability:read', 'availability:write'
+];
+
+// Check if API key has required permission scope
+function checkApiPermission(req, ...requiredPerms) {
+  if (!req.isApiKey) return true; // session tokens have full access
+  const perms = req.apiKeyConfig?.permissions || ['*'];
+  if (perms.includes('*')) return true;
+  return requiredPerms.some(p => perms.includes(p));
+}
+
+// Permission enforcement middleware for API keys — maps routes to required scopes
+const ROUTE_PERMISSION_MAP = [
+  { pattern: /\/tasks\/.*\/notes/, methods: ['POST'], perms: ['tasks:write'] },
+  { pattern: /\/tasks\/.*\/files/, methods: ['POST', 'DELETE'], perms: ['tasks:write'] },
+  { pattern: /\/tasks\/bulk/, methods: ['POST'], perms: ['tasks:write'] },
+  { pattern: /\/tasks/, methods: ['GET'], perms: ['tasks:read'] },
+  { pattern: /\/tasks/, methods: ['POST', 'PUT', 'DELETE'], perms: ['tasks:write'] },
+  { pattern: /\/chat\/.*\/read/, methods: ['PUT'], perms: ['chat:write'] },
+  { pattern: /\/chat/, methods: ['GET'], perms: ['chat:read'] },
+  { pattern: /\/chat/, methods: ['POST'], perms: ['chat:write'] },
+  { pattern: /\/time-sessions|\/daily-summary/, methods: ['GET'], perms: ['time:read'] },
+  { pattern: /\/time\/(clock|play|pause|status)/, methods: ['GET', 'POST'], perms: ['time:read', 'time:write'] },
+  { pattern: /\/members|\/presence/, methods: ['GET'], perms: ['members:read'] },
+  { pattern: /\/members/, methods: ['PUT'], perms: ['flows:write'] },
+  { pattern: /\/subflows/, methods: ['GET'], perms: ['flows:read'] },
+  { pattern: /\/subflows/, methods: ['POST', 'PUT', 'PATCH', 'DELETE'], perms: ['flows:write'] },
+  { pattern: /\/categories/, methods: ['GET'], perms: ['categories:read'] },
+  { pattern: /\/categories/, methods: ['POST'], perms: ['categories:write'] },
+  { pattern: /\/templates\/.*\/use/, methods: ['POST'], perms: ['templates:write'] },
+  { pattern: /\/templates/, methods: ['GET'], perms: ['templates:read'] },
+  { pattern: /\/templates/, methods: ['POST', 'PUT', 'DELETE'], perms: ['templates:write'] },
+  { pattern: /\/notifications/, methods: ['GET', 'PUT'], perms: ['notifications:read'] },
+  { pattern: /\/availability/, methods: ['GET'], perms: ['availability:read'] },
+  { pattern: /\/availability/, methods: ['POST', 'DELETE'], perms: ['availability:write'] },
+];
+
+app.use('/api/flows', (req, res, next) => {
+  if (!req.isApiKey) return next();
+  const perms = req.apiKeyConfig?.permissions || ['*'];
+  if (perms.includes('*')) return next();
+  const method = req.method.toUpperCase();
+  const url = req.originalUrl;
+  for (const rule of ROUTE_PERMISSION_MAP) {
+    if (rule.pattern.test(url) && rule.methods.includes(method)) {
+      if (!rule.perms.some(p => perms.includes(p))) {
+        return res.status(403).json({ error: `API key lacks required permission: ${rule.perms.join(' or ')}` });
+      }
+      return next();
+    }
+  }
+  next();
+});
+
 // API KEY MANAGEMENT
 // ═══════════════════════════════════════════════════════════════
 
@@ -529,7 +604,9 @@ app.get('/api/auth/api-keys', authMiddleware, async (req, res) => {
         keyPreview: k.key.slice(0, 8) + '...' + k.key.slice(-4),
         createdAt: k.createdAt,
         lastUsedAt: k.lastUsedAt,
-        revoked: k.revoked
+        revoked: k.revoked,
+        allowedFlows: k.allowedFlows || [],
+        permissions: k.permissions || ['*']
       }));
     res.json(userKeys);
   } catch (err) {
@@ -540,7 +617,7 @@ app.get('/api/auth/api-keys', authMiddleware, async (req, res) => {
 // Create a new API key
 app.post('/api/auth/api-keys', authMiddleware, async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, allowedFlows, permissions } = req.body;
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Key name is required' });
     }
@@ -549,6 +626,19 @@ app.post('/api/auth/api-keys', authMiddleware, async (req, res) => {
     if (activeKeys.length >= 10) {
       return res.status(400).json({ error: 'Maximum 10 active API keys per user' });
     }
+    // Validate allowedFlows — must be flow IDs the user is a member of
+    let validFlows = [];
+    if (Array.isArray(allowedFlows) && allowedFlows.length > 0) {
+      const memberships = await storage.read('memberships.json');
+      const userFlowIds = memberships.filter(m => m.userId === req.user.userId).map(m => m.flowId);
+      validFlows = allowedFlows.filter(fid => typeof fid === 'string' && userFlowIds.includes(fid));
+    }
+    // Validate permissions — must be known scopes
+    let validPerms = ['*'];
+    if (Array.isArray(permissions) && permissions.length > 0 && !permissions.includes('*')) {
+      validPerms = permissions.filter(p => VALID_PERMISSIONS.includes(p));
+      if (validPerms.length === 0) validPerms = ['*'];
+    }
     const key = generateApiKey();
     const entry = {
       id: crypto.randomUUID(),
@@ -556,14 +646,15 @@ app.post('/api/auth/api-keys', authMiddleware, async (req, res) => {
       userName: req.user.name,
       name: name.trim().slice(0, 50),
       key,
+      allowedFlows: validFlows,
+      permissions: validPerms,
       createdAt: new Date().toISOString(),
       lastUsedAt: null,
       revoked: false
     };
     apiKeys.push(entry);
     await storage.write('apikeys.json', apiKeys);
-    // Return full key ONLY on creation — never shown again
-    res.status(201).json({ id: entry.id, name: entry.name, key, createdAt: entry.createdAt });
+    res.status(201).json({ id: entry.id, name: entry.name, key, allowedFlows: entry.allowedFlows, permissions: entry.permissions, createdAt: entry.createdAt });
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }

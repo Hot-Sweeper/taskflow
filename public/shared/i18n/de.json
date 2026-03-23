@@ -401,5 +401,20 @@
   "apikeys.revoked": "Widerrufen",
   "apikeys.mcpSection": "MCP-Server",
   "apikeys.mcpDescription": "Verwende den MCP-Server, um KI-Agenten (Claude, GPT, etc.) mit deinem TaskFlow-Konto zu verbinden.",
-  "apikeys.nameRequired": "Schlüsselname ist erforderlich"
+  "apikeys.nameRequired": "Schl\u00fcsselname ist erforderlich",
+  "apikeys.flowAccess": "Flow-Zugriff",
+  "apikeys.allFlows": "Alle Flows",
+  "apikeys.permAccess": "Berechtigungen",
+  "apikeys.allPermissions": "Alle Berechtigungen",
+  "apikeys.scope.read": "Lesen",
+  "apikeys.scope.write": "Schreiben",
+  "apikeys.perm.tasks": "Aufgaben",
+  "apikeys.perm.chat": "Chat",
+  "apikeys.perm.time": "Zeiterfassung",
+  "apikeys.perm.members": "Mitglieder",
+  "apikeys.perm.flows": "Flows",
+  "apikeys.perm.categories": "Kategorien",
+  "apikeys.perm.templates": "Vorlagen",
+  "apikeys.perm.notifications": "Benachrichtigungen",
+  "apikeys.perm.availability": "Verf\u00fcgbarkeit"
 }

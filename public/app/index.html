@@ -2427,10 +2427,12 @@ a { color: var(--accent); text-decoration: none; }
   .add-task-expand-inner > #atbDescription { order: 2; }
   .add-task-expand-inner > .atb-section-label[data-i18n="task.priority"] { order: 3; }
   .add-task-expand-inner > #atbPriority { order: 4; }
-  .add-task-expand-inner > .atb-section-label[data-i18n="task.category"] { order: 5; }
-  .add-task-expand-inner > .atb-category-row { order: 6; }
-  .add-task-expand-inner > .atb-files-row { order: 7; }
-  .add-task-expand-inner > .atb-people-grid { order: 8; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .add-task-expand-inner > .atb-section-label[data-i18n="subflow.title"] { order: 5; }
+  .add-task-expand-inner > .atb-category-row:first-of-type { order: 6; }
+  .add-task-expand-inner > .atb-section-label[data-i18n="task.category"] { order: 7; }
+  .add-task-expand-inner > .atb-category-row:last-of-type { order: 8; }
+  .add-task-expand-inner > .atb-files-row { order: 9; }
+  .add-task-expand-inner > .atb-people-grid { order: 10; grid-template-columns: 1fr 1fr; gap: 12px; }
 
   .atb-people-grid.phone-two-col,
   .detail-people-grid.phone-two-col {
@@ -2618,6 +2620,34 @@ a { color: var(--accent); text-decoration: none; }
   outline: none; font-size: 13px;
 }
 .apikey-create-row input:focus { border-color: var(--border-focus); }
+.apikey-check {
+  display: flex; align-items: center; gap: 6px; font-size: 12px;
+  cursor: pointer; padding: 2px 0; color: var(--text);
+}
+.apikey-check input[type="checkbox"] {
+  accent-color: var(--primary); width: 14px; height: 14px; cursor: pointer;
+}
+.apikey-scope-grid {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 8px 12px; background: var(--bg-input); border-radius: var(--radius-xs);
+  border: 1px solid var(--border); margin-top: 4px;
+}
+.apikey-perm-group {
+  display: flex; align-items: center; gap: 8px; padding: 2px 0;
+}
+.apikey-perm-group-label {
+  font-size: 12px; font-weight: 600; min-width: 90px; color: var(--text);
+}
+.apikey-perm-group-checks { display: flex; gap: 12px; }
+.apikey-perm-badge {
+  display: inline-block; font-size: 10px; padding: 1px 6px;
+  border-radius: 8px; background: var(--bg-input); border: 1px solid var(--border);
+  color: var(--text-secondary); white-space: nowrap;
+}
+.apikey-perm-badge.all {
+  background: var(--primary-light, rgba(99,102,241,0.1)); border-color: var(--primary);
+  color: var(--primary);
+}
 
 /* ═══ EMPTY STATES ═══ */
 .empty-state {
@@ -2968,6 +2998,12 @@ a { color: var(--accent); text-decoration: none; }
           </div>
           <div class="atb-section-label" data-i18n="task.priority">Priority</div>
           <div class="atb-priority" id="atbPriority"></div>
+          <div class="atb-section-label" data-i18n="subflow.title">Section</div>
+          <div class="atb-category-row">
+            <select id="atbSubFlow" class="atb-category-select">
+              <option value="" data-i18n="subflow.none">No section</option>
+            </select>
+          </div>
           <div class="atb-section-label" data-i18n="task.category">Category</div>
           <div class="atb-category-row">
             <select id="atbCategory" class="atb-category-select">
@@ -4808,6 +4844,7 @@ function expandTaskBar() {
   renderAtbOperators();
   renderAtbPriority();
   renderAtbCategories();
+  renderAtbSubFlows();
   applyPeopleGridLayout();
 }
 
@@ -4827,6 +4864,8 @@ function resetTaskBar() {
   atbSelectedCategory = null;
   const catSel = document.getElementById('atbCategory');
   if (catSel) catSel.value = '';
+  const sfSel = document.getElementById('atbSubFlow');
+  if (sfSel) sfSel.value = currentSubFlow !== 'all' ? currentSubFlow : '';
   atbFiles = [];
   document.getElementById('atbFileList').innerHTML = '';
   document.getElementById('atbFileInput').value = '';
@@ -4894,6 +4933,16 @@ function selectAtbPriority(p) {
   renderAtbPriority();
 }
 
+function renderAtbSubFlows() {
+  const sel = document.getElementById('atbSubFlow');
+  if (!sel || !currentFlow) return;
+  const subFlows = currentFlow.subFlows || [];
+  const prev = sel.value || (currentSubFlow !== 'all' ? currentSubFlow : '');
+  sel.innerHTML = `<option value="">${I18n.t('subflow.none') || 'No section'}</option>` +
+    subFlows.map(sf => `<option value="${esc(sf.id)}">${sf.icon ? icon(sf.icon, 14) + ' ' : ''}${esc(sf.name)}</option>`).join('');
+  if (prev && subFlows.some(sf => sf.id === prev)) sel.value = prev;
+}
+
 async function renderAtbCategories() {
   const sel = document.getElementById('atbCategory');
   if (!sel || !currentFlow) return;
@@ -4942,7 +4991,7 @@ async function quickAddTask() {
       assignedToList: atbSelectedAssignees,
       assignedTo: atbSelectedAssignees[0] || null,
       operators: atbSelectedOperators,
-      subFlowId: currentSubFlow !== 'all' ? currentSubFlow : null
+      subFlowId: document.getElementById('atbSubFlow')?.value || (currentSubFlow !== 'all' ? currentSubFlow : null)
     });
     // Don't push here — let WS handler add it to avoid duplicates
     // Send files as first chat message
@@ -8396,6 +8445,50 @@ async function renderApiKeys() {
   const activeKeys = keys.filter(k => !k.revoked);
   const revokedKeys = keys.filter(k => k.revoked);
 
+  const permGroups = [
+    { label: I18n.t('apikeys.perm.tasks') || 'Tasks', perms: ['tasks:read', 'tasks:write'] },
+    { label: I18n.t('apikeys.perm.chat') || 'Chat', perms: ['chat:read', 'chat:write'] },
+    { label: I18n.t('apikeys.perm.time') || 'Time Tracking', perms: ['time:read', 'time:write'] },
+    { label: I18n.t('apikeys.perm.members') || 'Members', perms: ['members:read'] },
+    { label: I18n.t('apikeys.perm.flows') || 'Flows', perms: ['flows:read', 'flows:write'] },
+    { label: I18n.t('apikeys.perm.categories') || 'Categories', perms: ['categories:read', 'categories:write'] },
+    { label: I18n.t('apikeys.perm.templates') || 'Templates', perms: ['templates:read', 'templates:write'] },
+    { label: I18n.t('apikeys.perm.notifications') || 'Notifications', perms: ['notifications:read'] },
+    { label: I18n.t('apikeys.perm.availability') || 'Availability', perms: ['availability:read', 'availability:write'] },
+  ];
+
+  const permLabels = {
+    'tasks:read': I18n.t('apikeys.scope.read') || 'Read',
+    'tasks:write': I18n.t('apikeys.scope.write') || 'Write',
+    'chat:read': I18n.t('apikeys.scope.read') || 'Read',
+    'chat:write': I18n.t('apikeys.scope.write') || 'Write',
+    'time:read': I18n.t('apikeys.scope.read') || 'Read',
+    'time:write': I18n.t('apikeys.scope.write') || 'Write',
+    'members:read': I18n.t('apikeys.scope.read') || 'Read',
+    'flows:read': I18n.t('apikeys.scope.read') || 'Read',
+    'flows:write': I18n.t('apikeys.scope.write') || 'Write',
+    'categories:read': I18n.t('apikeys.scope.read') || 'Read',
+    'categories:write': I18n.t('apikeys.scope.write') || 'Write',
+    'templates:read': I18n.t('apikeys.scope.read') || 'Read',
+    'templates:write': I18n.t('apikeys.scope.write') || 'Write',
+    'notifications:read': I18n.t('apikeys.scope.read') || 'Read',
+    'availability:read': I18n.t('apikeys.scope.read') || 'Read',
+    'availability:write': I18n.t('apikeys.scope.write') || 'Write',
+  };
+
+  function renderKeyPerms(k) {
+    if (!k.permissions || k.permissions.includes('*')) return `<span class="apikey-perm-badge all">${I18n.t('apikeys.allPermissions') || 'All permissions'}</span>`;
+    return k.permissions.map(p => `<span class="apikey-perm-badge">${esc(p)}</span>`).join(' ');
+  }
+
+  function renderKeyFlows(k) {
+    if (!k.allowedFlows || k.allowedFlows.length === 0) return `<span class="apikey-perm-badge all">${I18n.t('apikeys.allFlows') || 'All flows'}</span>`;
+    return k.allowedFlows.map(fid => {
+      const f = flows.find(fl => fl.id === fid);
+      return `<span class="apikey-perm-badge">${f ? esc(f.name) : fid.slice(0,8)}</span>`;
+    }).join(' ');
+  }
+
   body.innerHTML = `
     <div class="settings-section">
       <h3>${I18n.t('apikeys.create') || 'Create API Key'}</h3>
@@ -8404,6 +8497,28 @@ async function renderApiKeys() {
         <input id="apiKeyNameInput" type="text" placeholder="${I18n.t('apikeys.namePlaceholder') || 'Key name (e.g. My Agent)'}" maxlength="50">
         <button class="btn-save" onclick="createApiKey()" style="white-space:nowrap;padding:8px 16px;font-size:13px">${icon('plus', 14)} ${I18n.t('common.create') || 'Create'}</button>
       </div>
+
+      <div style="margin-top:12px">
+        <div style="font-size:12px;font-weight:600;margin-bottom:6px">${I18n.t('apikeys.flowAccess') || 'Flow Access'}</div>
+        <label class="apikey-check" style="margin-bottom:4px"><input type="checkbox" id="apikeyAllFlows" checked onchange="toggleApiKeyAllFlows(this.checked)"> <span>${I18n.t('apikeys.allFlows') || 'All flows'}</span></label>
+        <div id="apikeyFlowList" class="apikey-scope-grid" style="display:none">
+          ${flows.map(f => `<label class="apikey-check"><input type="checkbox" value="${esc(f.id)}" class="apikey-flow-cb" checked> <span>${esc(f.name)}</span></label>`).join('')}
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div style="font-size:12px;font-weight:600;margin-bottom:6px">${I18n.t('apikeys.permAccess') || 'Permissions'}</div>
+        <label class="apikey-check" style="margin-bottom:4px"><input type="checkbox" id="apikeyAllPerms" checked onchange="toggleApiKeyAllPerms(this.checked)"> <span>${I18n.t('apikeys.allPermissions') || 'All permissions'}</span></label>
+        <div id="apikeyPermList" class="apikey-scope-grid" style="display:none">
+          ${permGroups.map(g => `
+            <div class="apikey-perm-group">
+              <div class="apikey-perm-group-label">${esc(g.label)}</div>
+              <div class="apikey-perm-group-checks">${g.perms.map(p => `<label class="apikey-check"><input type="checkbox" value="${p}" class="apikey-perm-cb" checked> <span>${esc(permLabels[p] || p.split(':')[1])}</span></label>`).join('')}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
       ${lastCreatedApiKey ? `
       <div class="apikey-new-box">
         <div style="font-size:12px;font-weight:600">${I18n.t('apikeys.created') || 'Key created!'}</div>
@@ -8422,6 +8537,8 @@ async function renderApiKeys() {
               <div class="apikey-name">${esc(k.name)}</div>
               <div class="apikey-preview">${esc(k.keyPreview)}</div>
               <div class="apikey-meta">${I18n.t('apikeys.lastUsed') || 'Last used'}: ${k.lastUsedAt ? relativeTime(k.lastUsedAt) : (I18n.t('common.never') || 'Never')}</div>
+              <div class="apikey-meta">${I18n.t('apikeys.flowAccess') || 'Flows'}: ${renderKeyFlows(k)}</div>
+              <div class="apikey-meta">${I18n.t('apikeys.permAccess') || 'Permissions'}: ${renderKeyPerms(k)}</div>
             </div>
             <button class="btn-sm btn-sm-danger" onclick="revokeApiKey('${k.id}','${esc(k.name)}')" title="${I18n.t('apikeys.revoke') || 'Revoke'}">${icon('x', 14)}</button>
           </div>
@@ -8450,12 +8567,33 @@ async function renderApiKeys() {
   `;
 }
 
+function toggleApiKeyAllFlows(checked) {
+  document.getElementById('apikeyFlowList').style.display = checked ? 'none' : '';
+}
+
+function toggleApiKeyAllPerms(checked) {
+  document.getElementById('apikeyPermList').style.display = checked ? 'none' : '';
+}
+
 async function createApiKey() {
   const input = document.getElementById('apiKeyNameInput');
   const name = input?.value.trim();
   if (!name) { toast(I18n.t('apikeys.nameRequired') || 'Key name is required'); return; }
+  // Collect flow permissions
+  const allFlows = document.getElementById('apikeyAllFlows')?.checked;
+  let allowedFlows = [];
+  if (!allFlows) {
+    allowedFlows = [...document.querySelectorAll('.apikey-flow-cb:checked')].map(cb => cb.value);
+  }
+  // Collect scope permissions
+  const allPerms = document.getElementById('apikeyAllPerms')?.checked;
+  let permissions = ['*'];
+  if (!allPerms) {
+    permissions = [...document.querySelectorAll('.apikey-perm-cb:checked')].map(cb => cb.value);
+    if (permissions.length === 0) permissions = ['*'];
+  }
   try {
-    const result = await API.createApiKey(name);
+    const result = await API.createApiKey(name, allowedFlows, permissions);
     lastCreatedApiKey = result.key;
     input.value = '';
     await renderApiKeys();

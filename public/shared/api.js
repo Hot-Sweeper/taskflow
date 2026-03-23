@@ -50,7 +50,7 @@ const API = {
 
   // ── API Keys ──
   getApiKeys() { return this.get('/api/auth/api-keys'); },
-  createApiKey(name) { return this.post('/api/auth/api-keys', { name }); },
+  createApiKey(name, allowedFlows, permissions) { return this.post('/api/auth/api-keys', { name, allowedFlows, permissions }); },
   revokeApiKey(keyId) { return this.del(`/api/auth/api-keys/${keyId}`); },
 
   // ── Avatar ──

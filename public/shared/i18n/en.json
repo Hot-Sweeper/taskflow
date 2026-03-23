@@ -401,5 +401,20 @@
   "apikeys.revoked": "Revoked",
   "apikeys.mcpSection": "MCP Server",
   "apikeys.mcpDescription": "Use the MCP server to connect AI agents (Claude, GPT, etc.) to your TaskFlow account.",
-  "apikeys.nameRequired": "Key name is required"
+  "apikeys.nameRequired": "Key name is required",
+  "apikeys.flowAccess": "Flow Access",
+  "apikeys.allFlows": "All flows",
+  "apikeys.permAccess": "Permissions",
+  "apikeys.allPermissions": "All permissions",
+  "apikeys.scope.read": "Read",
+  "apikeys.scope.write": "Write",
+  "apikeys.perm.tasks": "Tasks",
+  "apikeys.perm.chat": "Chat",
+  "apikeys.perm.time": "Time Tracking",
+  "apikeys.perm.members": "Members",
+  "apikeys.perm.flows": "Flows",
+  "apikeys.perm.categories": "Categories",
+  "apikeys.perm.templates": "Templates",
+  "apikeys.perm.notifications": "Notifications",
+  "apikeys.perm.availability": "Availability"
 }
