@@ -628,8 +628,17 @@ a { color: var(--accent); text-decoration: none; }
 .nav-item .nav-badge.visible { display: flex; }
 
 @media (max-width: 768px) {
-  #tabArchive,
   #tabStats {
+    display: none !important;
+  }
+
+  .tasks-archive-shortcut {
+    display: inline-flex !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .tasks-archive-shortcut {
     display: none !important;
   }
 }
@@ -826,6 +835,7 @@ a { color: var(--accent); text-decoration: none; }
 }
 .kanban-col-cards::-webkit-scrollbar { width: 2px; }
 .kanban-col-cards.drag-over { background: var(--accent-dim); border-radius: var(--radius-sm); }
+.kanban-col-cards .task-card.drop-before { box-shadow: inset 0 3px 0 0 var(--accent); }
 .kanban-col.drag-header-over { background: var(--accent-dim); border-radius: var(--radius-sm); }
 .kanban-col.col-empty .kanban-col-header { opacity: 0.5; cursor: default; }
 
@@ -1202,6 +1212,7 @@ a { color: var(--accent); text-decoration: none; }
   gap: 8px;
   overflow: hidden;
   padding: 12px;
+  min-height: 0;
 }
 .detail-panel.chat-focus .detail-body > :not(.detail-top-row):not(.detail-meta-row):not(.task-chat):not(#detailOperators):not(#detailAssignee) {
   display: none !important;
@@ -1512,7 +1523,15 @@ a { color: var(--accent); text-decoration: none; }
 
 /* Task Chat section */
 .task-chat { display: flex; flex-direction: column; height: auto; }
-.task-chat.expanded .chat-messages { max-height: 60vh; }
+.task-chat.expanded {
+  flex: 1;
+  min-height: 0;
+}
+.task-chat.expanded .chat-messages {
+  flex: 1;
+  min-height: 132px;
+  max-height: none;
+}
 .task-chat .chat-messages:empty::before { content: attr(data-empty); display: block; text-align: center; color: var(--text-secondary); font-size: 13px; padding: 24px 0; }
 .task-chat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .task-chat-header label { margin: 0; }
@@ -1551,6 +1570,114 @@ a { color: var(--accent); text-decoration: none; }
 .chat-pending-files { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 0; }
 .chat-pending-file { display: flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 12px; background: var(--bg-input); border: 1px solid var(--border); font-size: 11px; color: var(--text-secondary); }
 .chat-pending-file .remove-file { cursor: pointer; font-size: 14px; color: var(--danger); margin-left: 2px; }
+.chat-reply-preview {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.chat-reply-preview:empty { display: none; }
+.chat-reply-meta { min-width: 0; }
+.chat-reply-author { font-size: 11px; font-weight: 700; color: var(--accent); }
+.chat-reply-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-reply-dismiss {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.chat-reply-dismiss:hover { background: var(--bg-card); color: var(--text); }
+.chat-reply-quote {
+  border-left: 2px solid var(--accent);
+  padding: 6px 8px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.chat-msg.sent .chat-reply-quote,
+.msg-bubble.mine .chat-reply-quote {
+  border-left-color: rgba(255,255,255,0.92);
+  background: rgba(255,255,255,0.18);
+}
+.chat-msg.sent .chat-reply-author,
+.msg-bubble.mine .chat-reply-author {
+  color: rgba(255,255,255,0.95);
+}
+.chat-msg.sent .chat-reply-text,
+.msg-bubble.mine .chat-reply-text {
+  color: rgba(255,255,255,0.9);
+}
+.chat-msg-actions {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 2;
+}
+.chat-msg.sent .chat-msg-actions,
+.msg-bubble.mine .chat-msg-actions {
+  left: -18px;
+}
+.chat-msg.received .chat-msg-actions,
+.msg-bubble.theirs .chat-msg-actions {
+  right: -18px;
+}
+.chat-msg:hover .chat-msg-actions,
+.chat-msg:focus-within .chat-msg-actions,
+.msg-bubble:hover .chat-msg-actions,
+.msg-bubble:focus-within .chat-msg-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+.chat-reply-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.chat-reply-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--bg-input);
+}
+
+@media (hover: none) {
+  .chat-msg .chat-msg-actions,
+  .msg-bubble .chat-msg-actions {
+    opacity: 0.9;
+    pointer-events: auto;
+  }
+}
 
 /* Files section */
 .file-drop-zone {
@@ -1696,6 +1823,25 @@ a { color: var(--accent); text-decoration: none; }
   padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
 }
 .tab-header h3 { font-size: 15px; font-weight: 700; }
+.tab-header-actions { display: flex; align-items: center; gap: 8px; }
+.tab-header-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.tab-header-icon-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
 
 /* Person Profile Panel */
 .profile-hero {
@@ -1813,6 +1959,7 @@ a { color: var(--accent); text-decoration: none; }
 .msg-bubble {
   max-width: 75%; padding: 10px 14px; border-radius: 16px;
   font-size: 14px; line-height: 1.4; word-wrap: break-word;
+  position: relative;
 }
 .msg-bubble.mine {
   align-self: flex-end; background: var(--accent); color: #fff;
@@ -1835,6 +1982,7 @@ a { color: var(--accent); text-decoration: none; }
 .msg-file-link:hover { opacity: 0.8; }
 .msg-file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
 .msg-file-size { opacity: 0.7; font-size: 11px; flex-shrink: 0; }
+.msg-reply-preview { padding: 0 16px 6px; }
 .flow-chat-pending { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 16px 0; }
 .flow-chat-pending .chat-pending-file { display: flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 12px; background: var(--bg-input); border: 1px solid var(--border); font-size: 11px; color: var(--text-secondary); }
 .flow-chat-pending .remove-file { cursor: pointer; font-size: 14px; color: var(--danger); margin-left: 2px; }
@@ -1936,6 +2084,21 @@ a { color: var(--accent); text-decoration: none; }
 .time-main-btn.primary { background: var(--accent); color: #fff; }
 .time-main-btn.warn { background: var(--amber); color: #111; }
 .time-main-btn.danger { background: var(--red); color: #fff; }
+.time-main-btn.ghost { background: var(--bg-input); color: var(--text); border: 1px solid var(--border); }
+.time-unlogged-row {
+  display: none;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--text-secondary);
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.time-unlogged-row.active { display: flex; }
+.time-unlogged-text { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
 .time-location-switch {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px; margin-top: 12px;
@@ -2459,6 +2622,17 @@ a { color: var(--accent); text-decoration: none; }
 .add-task-expand-inner {
   padding: 0 16px 14px; display: flex; flex-direction: column; gap: 10px;
 }
+.atb-priority-subflow-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.atb-priority-col,
+.atb-subflow-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 /* Assignee carousel */
 .atb-section-label {
   font-size: 10px; font-weight: 700; text-transform: uppercase;
@@ -2544,6 +2718,26 @@ a { color: var(--accent); text-decoration: none; }
 .atb-subflow-filter .subflow-filter-menu {
   z-index: 95;
 }
+.atb-deadline-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.atb-deadline-input {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+  color-scheme: dark;
+}
+.atb-deadline-input:focus { border-color: var(--border-focus); }
+[data-theme="light"] .atb-deadline-input { color-scheme: light; }
 /* File picker row */
 .atb-files-row {
   display: flex; align-items: center; gap: 8px;
@@ -2569,6 +2763,11 @@ a { color: var(--accent); text-decoration: none; }
 @media (min-width: 900px) {
   .atb-people-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
   .detail-people-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
+  .atb-priority-subflow-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 14px;
+  }
 }
 
 @media (max-width: 899px) {
@@ -2576,10 +2775,8 @@ a { color: var(--accent); text-decoration: none; }
      title (top row) -> description -> priority -> attachments -> people grid */
   .add-task-expand-inner > .atb-section-label[data-i18n="task.description"] { order: 1; }
   .add-task-expand-inner > #atbDescription { order: 2; }
-  .add-task-expand-inner > .atb-section-label[data-i18n="task.priority"] { order: 3; }
-  .add-task-expand-inner > #atbPriority { order: 4; }
-  .add-task-expand-inner > .atb-section-label[data-i18n="subflow.title"] { order: 5; }
-  .add-task-expand-inner > .atb-subflow-picker-row { order: 6; }
+    .add-task-expand-inner > .atb-deadline-row { order: 3; }
+    .add-task-expand-inner > .atb-priority-subflow-row { order: 4; }
   .add-task-expand-inner > .atb-files-row { order: 7; }
   .add-task-expand-inner > .atb-people-grid { order: 8; grid-template-columns: 1fr 1fr; gap: 12px; }
 
@@ -2959,6 +3156,8 @@ a { color: var(--accent); text-decoration: none; }
   .time-main-row { align-items: flex-start; }
   .time-main-actions { width: 100%; }
   .time-main-btn { flex: 1; }
+  .time-unlogged-row { flex-wrap: wrap; }
+  .time-unlogged-row .time-main-btn { width: 100%; }
   .time-cal-day { min-height: 58px; padding: 5px; }
   .time-cal-date { font-size: 11px; }
   .time-cal-work { font-size: 10px; }
@@ -3038,13 +3237,10 @@ a { color: var(--accent); text-decoration: none; }
       </button>
       <button class="sidebar-nav-item" data-tab="tabPeople" onclick="switchTab('tabPeople')">
         <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span> <span data-i18n="nav.team">Team</span>
+        <span class="sidebar-badge" id="chatBadgeSidebar">0</span>
       </button>
       <button class="sidebar-nav-item" data-tab="tabTime" onclick="switchTab('tabTime')">
         <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> <span data-i18n="nav.time">Time Tracking</span>
-      </button>
-      <button class="sidebar-nav-item" data-tab="tabChat" onclick="switchTab('tabChat')">
-        <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span> <span data-i18n="nav.chat">Chat</span>
-        <span class="sidebar-badge" id="chatBadgeSidebar">0</span>
       </button>
       <button class="sidebar-nav-item" data-tab="tabNotify" onclick="switchTab('tabNotify')">
         <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></span> <span data-i18n="nav.notifications">Notifications</span>
@@ -3091,6 +3287,9 @@ a { color: var(--accent); text-decoration: none; }
   <div class="tab-content active" id="tabTasks">
     <div class="tab-header">
       <h3 data-i18n="nav.tasks">Tasks</h3>
+      <div class="tab-header-actions">
+        <button class="tab-header-icon-btn tasks-archive-shortcut" onclick="switchTab('tabArchive')" title="Archive" data-i18n-title="nav.archive" aria-label="Archive"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg></button>
+      </div>
     </div>
     <div class="tasks-toolbar">
       <div class="view-toggle">
@@ -3141,6 +3340,32 @@ a { color: var(--accent); text-decoration: none; }
       </div>
       <div class="add-task-expand">
         <div class="add-task-expand-inner">
+          <div class="atb-section-label" data-i18n="task.description">Description</div>
+          <textarea id="atbDescription" rows="2" data-i18n-placeholder="task.noDescription" placeholder="Description (optional)..." style="width:100%;min-height:36px;padding:6px 8px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--bg-input);color:var(--text);resize:vertical;outline:none;font-family:inherit;font-size:13px;margin-bottom:8px;"></textarea>
+          <div class="atb-deadline-row">
+            <div class="atb-section-label" data-i18n="task.deadline">Deadline</div>
+            <input type="date" id="atbDeadline" class="atb-deadline-input" value="">
+          </div>
+          <div class="atb-priority-subflow-row">
+            <div class="atb-priority-col">
+              <div class="atb-section-label" data-i18n="task.priority">Priority</div>
+              <div class="atb-priority" id="atbPriority"></div>
+            </div>
+            <div class="atb-subflow-col">
+              <div class="atb-section-label" data-i18n="subflow.title">Section</div>
+              <div class="atb-subflow-picker-row">
+                <div class="subflow-filter atb-subflow-filter" id="atbSubflowFilter">
+                  <button type="button" class="subflow-filter-btn" onclick="toggleAtbSubflowMenu(event)">
+                    <span class="subflow-filter-icon" id="atbSubflowIcon"></span>
+                    <span class="subflow-filter-label" id="atbSubflowLabel"></span>
+                    <span class="subflow-filter-caret"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
+                  </button>
+                  <div class="subflow-filter-menu" id="atbSubflowMenu"></div>
+                </div>
+                <input type="hidden" id="atbSubFlow" value="">
+              </div>
+            </div>
+          </div>
           <div class="atb-people-grid">
             <div class="atb-people-col">
               <div class="atb-section-label" data-i18n="task.operators">Operators (can approve)</div>
@@ -3151,22 +3376,6 @@ a { color: var(--accent); text-decoration: none; }
               <div class="atb-assignees" id="atbAssignees"></div>
             </div>
           </div>
-          <div class="atb-section-label" data-i18n="task.priority">Priority</div>
-          <div class="atb-priority" id="atbPriority"></div>
-          <div class="atb-section-label" data-i18n="subflow.title">Section</div>
-          <div class="atb-subflow-picker-row">
-            <div class="subflow-filter atb-subflow-filter" id="atbSubflowFilter">
-              <button type="button" class="subflow-filter-btn" onclick="toggleAtbSubflowMenu(event)">
-                <span class="subflow-filter-icon" id="atbSubflowIcon"></span>
-                <span class="subflow-filter-label" id="atbSubflowLabel"></span>
-                <span class="subflow-filter-caret"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
-              </button>
-              <div class="subflow-filter-menu" id="atbSubflowMenu"></div>
-            </div>
-            <input type="hidden" id="atbSubFlow" value="">
-          </div>
-          <div class="atb-section-label" data-i18n="task.description">Description</div>
-          <textarea id="atbDescription" rows="2" data-i18n-placeholder="task.noDescription" placeholder="Description (optional)..." style="width:100%;min-height:36px;padding:6px 8px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--bg-input);color:var(--text);resize:vertical;outline:none;font-family:inherit;font-size:13px;margin-bottom:8px;"></textarea>
           <div class="atb-files-row">
             <label><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.49"/></svg></span> <span data-i18n="task.files">Attachments</span>
               <input type="file" id="atbFileInput" multiple hidden>
@@ -3221,6 +3430,10 @@ a { color: var(--accent); text-decoration: none; }
             <button class="time-main-btn warn" id="timePauseBtn" onclick="toggleTimerPause()" data-i18n="time.pause">Pause</button>
             <button class="time-main-btn primary" id="timeClockBtn" onclick="toggleTimeClock()" data-i18n="time.clockin">Clock In</button>
           </div>
+        </div>
+        <div class="time-unlogged-row" id="timeUnloggedRow">
+          <div class="time-unlogged-text" id="timeUnloggedText"></div>
+          <button class="time-main-btn ghost" id="timeCatchUpBtn" onclick="catchUpOnlineTime()" data-i18n="time.catchup">Catch Up</button>
         </div>
         <div class="time-location-switch">
           <button class="time-loc-btn" id="locOfficeBtn" onclick="setTimeLocation('office')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V5a1 1 0 011-1h12a1 1 0 011 1v16"/><line x1="9" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="10" y2="16"/><line x1="14" y1="16" x2="15" y2="16"/></svg><span data-i18n="time.office">Office</span></button>
@@ -3321,11 +3534,12 @@ a { color: var(--accent); text-decoration: none; }
         </div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-typing" id="chatTyping"></div>
+        <div class="msg-reply-preview chat-reply-preview" id="flowChatReplyPreview"></div>
         <div class="flow-chat-pending" id="flowChatPending"></div>
         <div class="chat-input-bar">
           <input type="file" id="flowChatFileInput" multiple style="display:none" onchange="onFlowChatFiles(this)">
           <button class="chat-attach-btn" onclick="document.getElementById('flowChatFileInput').click()" title="Attach file"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.49"/></svg></button>
-          <input id="chatInput" type="text" data-i18n-placeholder="chat.placeholder" placeholder="Type a message...">
+          <input id="chatInput" type="text" data-i18n-placeholder="chat.placeholder" placeholder="Type a message..." onpaste="onFlowChatPaste(event)">
           <button class="send-btn" onclick="sendFlowChatMessage()" aria-label="Send message"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
         </div>
       </div>
@@ -3412,15 +3626,11 @@ a { color: var(--accent); text-decoration: none; }
       <button class="nav-item" data-tab="tabPeople" onclick="switchTab('tabPeople')">
         <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span>
         <span data-i18n="nav.team">Team</span>
+        <span class="nav-badge" id="chatBadge">0</span>
       </button>
       <button class="nav-item" data-tab="tabTime" onclick="switchTab('tabTime')">
         <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
         <span data-i18n="nav.time">Time</span>
-      </button>
-      <button class="nav-item" data-tab="tabChat" onclick="switchTab('tabChat')">
-        <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
-        <span data-i18n="nav.chat">Chat</span>
-        <span class="nav-badge" id="chatBadge">0</span>
       </button>
       <button class="nav-item" data-tab="tabNotify" onclick="switchTab('tabNotify')">
         <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></span>
@@ -3548,7 +3758,9 @@ let conversations = [];
 let currentChatUserId = null;
 let chatMessages = [];
 let flowChatPendingFiles = [];
+let flowChatReplyTarget = null;
 let currentTaskId = null;    // detail panel
+let taskChatReplyTarget = null;
 let taskChatUnread = new Map();
 let currentView = 'kanban';
 let currentFilter = 'all';
@@ -3556,6 +3768,8 @@ let ownerFilter = 'all'; // 'all' | 'mine' | 'created'
 let currentSubFlow = 'all'; // 'all' | subFlowId
 let timerSession = null;
 let timerInterval = null;
+let unloggedTimerInterval = null;
+let unloggedOnlineState = { unloggedMs: 0, running: false, startedAt: null, canCatchUp: false };
 let typingTimeout = null;
 let typingSendTimeout = null;
 let notifications = [];
@@ -3570,6 +3784,7 @@ let calWeekStart = null; // Date object for current week start (Monday)
 let calDayDate = null; // Date object for current day view
 let flowTimeSessions = []; // flow-wide time sessions for shared calendar
 let inviteAvatarConfig = null; // DiceBear config to attach to invite link
+let activeDragTaskId = null;
 
 // models.js already declares STATUS, STATUS_ORDER, STATUS_META, PRIORITY, PRIORITY_META, etc. at global scope
 
@@ -3681,6 +3896,7 @@ const ICON_PATHS = {
   'map-pin': '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1118 0z"/><circle cx="12" cy="10" r="3"/>',
   clock:     '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
   'message-circle': '<path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>',
+  reply:     '<polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a6 6 0 00-6-6H4"/>',
   calendar:  '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
   maximize:  '<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>',
   minimize:  '<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/>',
@@ -4208,6 +4424,7 @@ function goToFlowPicker() {
   const flowSettings = document.getElementById('flowSettingsPanel');
   if (flowSettings && flowSettings.classList.contains('active')) { closeFlowSettings(); return; }
   stopNotificationsPolling();
+  setUnloggedTickerActive(false);
   currentFlow = null;
   currentTaskId = null;
   closeDetail();
@@ -4219,7 +4436,7 @@ function goToFlowPicker() {
 // TAB NAVIGATION
 // ═══════════════════════════════════════════════════════════════
 function switchTab(tabId) {
-  if (isMobile() && (tabId === 'tabArchive' || tabId === 'tabStats')) {
+  if (isMobile() && tabId === 'tabStats') {
     tabId = 'tabTasks';
   }
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -4307,7 +4524,56 @@ function getFilteredTasks() {
       return isReviewable && (canReview || isAssigned);
     });
   }
-  return filtered;
+  return [...filtered].sort(compareTasksByBoardOrder);
+}
+
+const TASK_MANUAL_ORDER_FIELD = 'orderIndex';
+const ORDER_NORMALIZE_GAP_EPSILON = 0.000001;
+const ORDER_NORMALIZE_STEP = 1024;
+let orderNormalizeQueue = Promise.resolve();
+
+function priorityRank(priority) {
+  const rank = { urgent: 4, high: 3, medium: 2, low: 1 };
+  return rank[priority] || 0;
+}
+
+function getTaskManualSortValue(task) {
+  const raw = task?.[TASK_MANUAL_ORDER_FIELD];
+  return Number.isFinite(raw) ? raw : null;
+}
+
+function getTaskDefaultSortValue(task) {
+  const createdMs = Number.isFinite(new Date(task?.createdAt || 0).getTime())
+    ? new Date(task.createdAt).getTime()
+    : 0;
+  const bucket = (5 - priorityRank(task?.priority)) * 1e15;
+  return bucket + createdMs;
+}
+
+function getTaskEffectiveSortValue(task) {
+  const manual = getTaskManualSortValue(task);
+  if (manual !== null) return manual;
+  return getTaskDefaultSortValue(task);
+}
+
+function compareTasksByBoardOrder(a, b) {
+  const aOrder = getTaskEffectiveSortValue(a);
+  const bOrder = getTaskEffectiveSortValue(b);
+  if (aOrder !== bOrder) return aOrder - bOrder;
+
+  const priDiff = priorityRank(b?.priority) - priorityRank(a?.priority);
+  if (priDiff !== 0) return priDiff;
+
+  const updatedDiff = new Date(b?.updatedAt || b?.createdAt || 0).getTime() - new Date(a?.updatedAt || a?.createdAt || 0).getTime();
+  if (updatedDiff !== 0) return updatedDiff;
+
+  return String(a?.id || '').localeCompare(String(b?.id || ''));
+}
+
+function getStatusOrderedTasks(status, excludeTaskId) {
+  return tasks
+    .filter(t => !t.archived && t.status === status && t.id !== excludeTaskId)
+    .sort(compareTasksByBoardOrder);
 }
 
 async function loadArchivedTasks() {
@@ -4681,13 +4947,35 @@ function renderKanban() {
       e.preventDefault();
       colDragCounter = 0;
       col.classList.remove('drag-header-over');
+      clearKanbanDropIndicators();
       const taskId = e.dataTransfer.getData('text/plain');
-      if (taskId) moveTask(taskId, status);
+      if (taskId) moveTask(taskId, status, null);
     };
 
     const cards = document.createElement('div');
     cards.className = 'kanban-col-cards';
     cards.dataset.status = status;
+    cards.ondragover = (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      cards.classList.add('drag-over');
+      updateKanbanDropIndicator(cards, e.clientY, activeDragTaskId);
+    };
+    cards.ondragleave = (e) => {
+      if (!cards.contains(e.relatedTarget)) {
+        cards.classList.remove('drag-over');
+        clearKanbanDropIndicator(cards);
+      }
+    };
+    cards.ondrop = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      cards.classList.remove('drag-over');
+      const taskId = e.dataTransfer.getData('text/plain');
+      const beforeTaskId = getDropBeforeTaskId(cards, e.clientY, taskId);
+      clearKanbanDropIndicator(cards);
+      if (taskId) moveTask(taskId, status, beforeTaskId);
+    };
 
     for (const task of statusTasks) {
       cards.appendChild(createTaskCard(task));
@@ -4718,6 +5006,7 @@ function createTaskCard(task) {
   card.ondragstart = (e) => {
     e.dataTransfer.setData('text/plain', task.id);
     card.classList.add('dragging');
+    activeDragTaskId = task.id;
     // Defer column expansion so the DOM doesn't shift during dragstart
     // (shifting the dragged element mid-dragstart cancels the drag in most browsers)
     requestAnimationFrame(() => {
@@ -4733,6 +5022,8 @@ function createTaskCard(task) {
   };
   card.ondragend = () => {
     card.classList.remove('dragging');
+    activeDragTaskId = null;
+    clearKanbanDropIndicators();
     // Re-collapse columns that were collapsed before drag
     if (desktopDragCollapsed) {
       desktopDragCollapsed.forEach(col => col.classList.add('collapsed'));
@@ -5232,6 +5523,8 @@ function resetTaskBar() {
   input.value = '';
   const descInput = document.getElementById('atbDescription');
   if (descInput) descInput.value = '';
+  const deadlineInput = document.getElementById('atbDeadline');
+  if (deadlineInput) deadlineInput.value = '';
   atbSelectedAssignees = [];
   atbSelectedOperators = currentUser?.id ? [currentUser.id] : [];
   atbSelectedPriority = 'medium';
@@ -5382,6 +5675,7 @@ async function quickAddTask() {
   atbSubmitting = true;
   try {
     const desc = (document.getElementById('atbDescription')?.value || '').trim();
+    const deadline = document.getElementById('atbDeadline')?.value || null;
     const memberIdSet = new Set(members.map(m => m.userId));
     const safeAssignees = [...new Set(atbSelectedAssignees.filter(uid => memberIdSet.has(uid)))];
     let safeOperators = [...new Set(atbSelectedOperators.filter(uid => memberIdSet.has(uid)))];
@@ -5398,6 +5692,7 @@ async function quickAddTask() {
       title,
       priority: atbSelectedPriority,
       description: desc,
+      deadline,
       assignedToList: safeAssignees,
       assignedTo: safeAssignees[0] || null,
       operators: safeOperators,
@@ -5432,18 +5727,145 @@ document.addEventListener('pointerdown', (e) => {
   }
 });
 
-async function moveTask(taskId, newStatus) {
+function clearKanbanDropIndicators() {
+  document.querySelectorAll('.kanban-col-cards').forEach(clearKanbanDropIndicator);
+}
+
+function clearKanbanDropIndicator(cardsEl) {
+  if (!cardsEl) return;
+  cardsEl.querySelectorAll('.task-card.drop-before').forEach(card => card.classList.remove('drop-before'));
+}
+
+function getDropBeforeTaskId(cardsEl, clientY, draggingTaskId) {
+  if (!cardsEl) return null;
+  const cards = [...cardsEl.querySelectorAll('.task-card:not(.dragging)')].filter(card => card.dataset.taskId && card.dataset.taskId !== draggingTaskId);
+  for (const card of cards) {
+    const rect = card.getBoundingClientRect();
+    if (clientY < rect.top + rect.height / 2) {
+      return card.dataset.taskId;
+    }
+  }
+  return null;
+}
+
+function updateKanbanDropIndicator(cardsEl, clientY, draggingTaskId) {
+  if (!cardsEl) return null;
+  clearKanbanDropIndicator(cardsEl);
+  const beforeTaskId = getDropBeforeTaskId(cardsEl, clientY, draggingTaskId);
+  if (!beforeTaskId) return null;
+  const marker = cardsEl.querySelector(`.task-card[data-task-id="${beforeTaskId}"]`);
+  if (marker) marker.classList.add('drop-before');
+  return beforeTaskId;
+}
+
+function computeDroppedTaskOrder(status, taskId, beforeTaskId) {
+  const ordered = getStatusOrderedTasks(status, taskId);
+  let prevValue = null;
+  let nextValue = null;
+
+  if (beforeTaskId) {
+    const idx = ordered.findIndex(t => t.id === beforeTaskId);
+    if (idx >= 0) {
+      nextValue = getTaskEffectiveSortValue(ordered[idx]);
+      if (idx > 0) prevValue = getTaskEffectiveSortValue(ordered[idx - 1]);
+    } else if (ordered.length) {
+      prevValue = getTaskEffectiveSortValue(ordered[ordered.length - 1]);
+    }
+  } else if (ordered.length) {
+    prevValue = getTaskEffectiveSortValue(ordered[ordered.length - 1]);
+  }
+
+  if (prevValue !== null && nextValue !== null) {
+    const gap = nextValue - prevValue;
+    if (!Number.isFinite(gap) || gap <= ORDER_NORMALIZE_GAP_EPSILON) return null;
+    return prevValue + gap / 2;
+  }
+  if (prevValue !== null) return prevValue + 1;
+  if (nextValue !== null) return nextValue - 1;
+  return getTaskDefaultSortValue({ priority: 'medium', createdAt: new Date().toISOString() });
+}
+
+function needsStatusOrderNormalization(status) {
+  const ordered = getStatusOrderedTasks(status, null);
+  if (ordered.length < 2) return false;
+  let previous = null;
+  for (const task of ordered) {
+    const current = getTaskEffectiveSortValue(task);
+    if (!Number.isFinite(current)) return true;
+    if (previous !== null && (current - previous) <= ORDER_NORMALIZE_GAP_EPSILON) return true;
+    previous = current;
+  }
+  return false;
+}
+
+async function normalizeStatusOrder(status) {
+  if (!currentFlow || !status) return;
+  const ordered = getStatusOrderedTasks(status, null);
+  if (!ordered.length) return;
+
+  const changed = [];
+  for (let i = 0; i < ordered.length; i++) {
+    const task = ordered[i];
+    const targetOrder = (i + 1) * ORDER_NORMALIZE_STEP;
+    if (getTaskManualSortValue(task) !== targetOrder) {
+      changed.push({ task, targetOrder });
+    }
+  }
+  if (!changed.length) return;
+
+  for (const entry of changed) {
+    const updated = await API.updateTask(currentFlow.id, entry.task.id, { [TASK_MANUAL_ORDER_FIELD]: entry.targetOrder });
+    Object.assign(entry.task, updated);
+  }
+  renderTasks();
+}
+
+function queueStatusOrderNormalization(status) {
+  if (!status) return;
+  orderNormalizeQueue = orderNormalizeQueue
+    .then(() => normalizeStatusOrder(status))
+    .catch(() => {});
+}
+
+async function moveTask(taskId, newStatus, beforeTaskId = null) {
   const task = tasks.find(t => t.id === taskId);
-  if (!task || task.status === newStatus) return;
+  if (!task || !newStatus) return;
   const oldStatus = task.status;
+  const oldOrder = getTaskManualSortValue(task);
+  let nextOrder = computeDroppedTaskOrder(newStatus, taskId, beforeTaskId);
+  if (nextOrder === null) {
+    try {
+      await normalizeStatusOrder(newStatus);
+      nextOrder = computeDroppedTaskOrder(newStatus, taskId, beforeTaskId);
+    } catch {}
+  }
+  if (nextOrder === null) {
+    nextOrder = getTaskDefaultSortValue({ priority: task.priority || 'medium', createdAt: new Date().toISOString() });
+  }
+  const payload = {
+    [TASK_MANUAL_ORDER_FIELD]: nextOrder
+  };
+  if (task.status !== newStatus) payload.status = newStatus;
+
   try {
-    const updated = await API.updateTask(currentFlow.id, taskId, { status: newStatus });
+    const updated = await API.updateTask(currentFlow.id, taskId, payload);
     Object.assign(task, updated);
     renderTasks();
+
+    if (needsStatusOrderNormalization(newStatus)) {
+      queueStatusOrderNormalization(newStatus);
+    }
+    if (oldStatus !== newStatus && needsStatusOrderNormalization(oldStatus)) {
+      queueStatusOrderNormalization(oldStatus);
+    }
+
     // Show undo toast
-    undoToast(I18n.t('task.moved') || 'Task moved', async () => {
+    undoToast(oldStatus === newStatus ? (I18n.t('task.reordered') || 'Task reordered') : (I18n.t('task.moved') || 'Task moved'), async () => {
       try {
-        const reverted = await API.updateTask(currentFlow.id, taskId, { status: oldStatus });
+        const revertPayload = { status: oldStatus };
+        revertPayload[TASK_MANUAL_ORDER_FIELD] = oldOrder === null ? null : oldOrder;
+        if (oldStatus === newStatus) delete revertPayload.status;
+        const reverted = await API.updateTask(currentFlow.id, taskId, revertPayload);
         Object.assign(task, reverted);
         renderTasks();
       } catch (e) { toast(e.message); }
@@ -5483,6 +5905,7 @@ function initTouchDrag(card, taskId) {
       card,
       ghost: null,
       targetStatus: null,
+      targetBeforeTaskId: null,
       active: false,
       tapped: true,
       timer: setTimeout(() => {
@@ -5533,6 +5956,7 @@ function initTouchDrag(card, taskId) {
         // Clean up drag state
         if (touchDragState.ghost) touchDragState.ghost.remove();
         touchDragState.card.classList.remove('dragging');
+        clearKanbanDropIndicators();
         document.querySelectorAll('.kanban-col-cards.drag-over').forEach(el => el.classList.remove('drag-over'));
         const board = document.getElementById('kanbanView');
         if (board) { board.style.touchAction = ''; }
@@ -5618,6 +6042,8 @@ function moveTouchDrag(touch) {
   // Clear all drag-over
   document.querySelectorAll('.kanban-col-cards.drag-over').forEach(c => c.classList.remove('drag-over'));
   touchDragState.targetStatus = null;
+  touchDragState.targetBeforeTaskId = null;
+  clearKanbanDropIndicators();
 
   if (el) {
     const colCards = el.closest('.kanban-col-cards');
@@ -5626,11 +6052,13 @@ function moveTouchDrag(touch) {
     if (colCards) {
       colCards.classList.add('drag-over');
       touchDragState.targetStatus = colCards.dataset.status;
+      touchDragState.targetBeforeTaskId = updateKanbanDropIndicator(colCards, touch.clientY, touchDragState.taskId);
     } else if (colHeader && col) {
       const cards = col.querySelector('.kanban-col-cards');
       if (cards) {
         cards.classList.add('drag-over');
         touchDragState.targetStatus = cards.dataset.status;
+        clearKanbanDropIndicator(cards);
       }
     } else if (col) {
       // Fallback: finger is on the column itself (e.g. gap area)
@@ -5638,6 +6066,7 @@ function moveTouchDrag(touch) {
       if (cards) {
         cards.classList.add('drag-over');
         touchDragState.targetStatus = cards.dataset.status;
+        clearKanbanDropIndicator(cards);
       }
     }
   }
@@ -5645,9 +6074,10 @@ function moveTouchDrag(touch) {
 
 function endTouchDrag() {
   if (!touchDragState) return;
-  const { ghost, card, taskId, targetStatus } = touchDragState;
+  const { ghost, card, taskId, targetStatus, targetBeforeTaskId } = touchDragState;
   if (ghost) ghost.remove();
   card.classList.remove('dragging');
+  clearKanbanDropIndicators();
   document.querySelectorAll('.kanban-col-cards.drag-over').forEach(c => c.classList.remove('drag-over'));
 
   // Restore board touch-action
@@ -5672,7 +6102,7 @@ function endTouchDrag() {
   });
 
   if (targetStatus && taskId) {
-    moveTask(taskId, targetStatus);
+    moveTask(taskId, targetStatus, targetBeforeTaskId || null);
   }
 }
 
@@ -5682,6 +6112,10 @@ function endTouchDrag() {
 function openDetail(taskId) {
   const task = tasks.find(t => t.id === taskId);
   if (!task) return;
+  if (currentTaskId && currentTaskId !== taskId) {
+    chatPendingFiles = [];
+    taskChatReplyTarget = null;
+  }
   currentTaskId = taskId;
 
   document.getElementById('detailOverlay').classList.add('active');
@@ -5699,6 +6133,8 @@ function closeDetail() {
   document.getElementById('detailPanel').classList.remove('active');
   document.getElementById('detailPanel').classList.remove('chat-focus');
   currentTaskId = null;
+  chatPendingFiles = [];
+  taskChatReplyTarget = null;
   chatIsExpanded = false;
   // Update hash (remove task part)
   updateHash();
@@ -5892,13 +6328,14 @@ function renderDetail(task) {
         <button class="task-chat-expand-btn" onclick="toggleChatExpand()" id="chatExpandBtn">${icon('maximize', 14)}</button>
       </div>
       <div class="chat-messages" id="taskChatMessages" data-empty="${I18n.t('task.chat.empty') || 'Noch keine Nachrichten'}"></div>
+      <div class="chat-reply-preview" id="taskChatReplyPreview"></div>
       <div class="chat-pending-files" id="taskChatPendingFiles"></div>
       <div class="chat-input-bar">
         <button class="chat-attach-btn" onclick="document.getElementById('taskChatFileInput').click()" title="${I18n.t('task.chat.attach') || 'Datei anhängen'}">
           ${icon('paperclip', 16)}
         </button>
         <input type="file" id="taskChatFileInput" multiple style="display:none" onchange="onTaskChatFilesSelected(this)">
-        <textarea id="taskChatInput" rows="1" data-i18n-placeholder="task.chat.placeholder" placeholder="${I18n.t('task.chat.placeholder') || 'Nachricht schreiben...'}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendTaskChatMessage()}" oninput="autoResizeTaskChatInput(this)"></textarea>
+        <textarea id="taskChatInput" rows="1" data-i18n-placeholder="task.chat.placeholder" placeholder="${I18n.t('task.chat.placeholder') || 'Nachricht schreiben...'}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendTaskChatMessage()}" oninput="autoResizeTaskChatInput(this)" onpaste="onTaskChatPaste(event)"></textarea>
         <button class="chat-send-btn" onclick="sendTaskChatMessage()" title="${I18n.t('task.chat.send') || 'Senden'}">
           ${icon('send', 16)}
         </button>
@@ -5917,6 +6354,7 @@ function renderDetail(task) {
   if (caps.canPlan && (currentFlow?.subFlows?.length > 0)) renderDetailSubflowPicker();
   if (caps.canProgress) renderProgressSlider(task);
   renderTaskChat(task);
+  renderTaskReplyPreview();
   // Restore chat expanded state
   if (chatIsExpanded) {
     const section = document.getElementById('taskChatSection');
@@ -6247,6 +6685,40 @@ async function saveDetail() {
 let chatPendingFiles = [];
 let chatIsExpanded = false;
 
+function renderTaskReplyPreview() {
+  const el = document.getElementById('taskChatReplyPreview');
+  if (!el) return;
+  if (!taskChatReplyTarget) {
+    el.innerHTML = '';
+    return;
+  }
+  const authorName = taskChatReplyTarget.authorId === currentUser?.id
+    ? (I18n.t('common.you') || 'You')
+    : (taskChatReplyTarget.author || '');
+  el.innerHTML = `
+    <div class="chat-reply-meta">
+      <div class="chat-reply-author">${esc(I18n.t('chat.replyingTo') || 'Replying to')} ${esc(authorName)}</div>
+      <div class="chat-reply-text">${esc(chatReplySnippet(taskChatReplyTarget))}</div>
+    </div>
+    <button class="chat-reply-dismiss" type="button" onclick="clearTaskChatReply()" title="${esc(I18n.t('chat.replyCancel') || 'Cancel reply')}">${icon('x', 14)}</button>
+  `;
+}
+
+function setTaskChatReplyTarget(noteId) {
+  const task = tasks.find(t => t.id === currentTaskId);
+  if (!task) return;
+  const note = (task.notes || []).find(n => n.id === noteId);
+  if (!note) return;
+  taskChatReplyTarget = note;
+  renderTaskReplyPreview();
+  document.getElementById('taskChatInput')?.focus();
+}
+
+function clearTaskChatReply() {
+  taskChatReplyTarget = null;
+  renderTaskReplyPreview();
+}
+
 function scrollTaskChatToBottom() {
   const container = document.getElementById('taskChatMessages');
   if (!container) return;
@@ -6263,15 +6735,33 @@ function fitTaskChatToAvailableSpace() {
   const messages = document.getElementById('taskChatMessages');
   if (!panel || !body || !section || !messages) return;
 
+  const useViewport = window.visualViewport;
+  const viewportBottom = useViewport ? (useViewport.offsetTop + useViewport.height) : window.innerHeight;
+  const bodyRect = body.getBoundingClientRect();
+
   // Expanded chat mode already has its own full-height layout.
   if (panel.classList.contains('chat-focus') || section.classList.contains('expanded')) {
-    section.style.minHeight = '';
-    messages.style.height = '';
-    messages.style.maxHeight = '';
+    const availableBodyHeight = Math.floor(viewportBottom - bodyRect.top - 8);
+    if (Number.isFinite(availableBodyHeight) && availableBodyHeight > 180) {
+      body.style.maxHeight = `${availableBodyHeight}px`;
+      const headerH = section.querySelector('.task-chat-header')?.offsetHeight || 0;
+      const replyH = section.querySelector('.chat-reply-preview')?.offsetHeight || 0;
+      const pendingH = section.querySelector('.chat-pending-files')?.offsetHeight || 0;
+      const inputH = section.querySelector('.chat-input-bar')?.offsetHeight || 0;
+      const sectionChrome = headerH + replyH + pendingH + inputH + 20;
+      const targetMessagesHeight = Math.max(132, availableBodyHeight - sectionChrome);
+      section.style.minHeight = `${Math.max(180, availableBodyHeight - 8)}px`;
+      messages.style.height = `${targetMessagesHeight}px`;
+      messages.style.maxHeight = `${targetMessagesHeight}px`;
+    }
     return;
   }
 
-  const bodyRect = body.getBoundingClientRect();
+  body.style.maxHeight = '';
+  section.style.minHeight = '';
+  messages.style.height = '';
+  messages.style.maxHeight = '';
+
   const sectionRect = section.getBoundingClientRect();
   const availableSectionHeight = Math.floor(bodyRect.bottom - sectionRect.top);
   if (!Number.isFinite(availableSectionHeight) || availableSectionHeight <= 0) return;
@@ -6335,13 +6825,23 @@ function renderTaskChat(task) {
     }
 
     const textHtml = note.text ? `<div>${esc(note.text)}</div>` : '';
+    const reply = note.replyTo;
+    const replyAuthor = reply
+      ? (reply.authorId === currentUser?.id ? (I18n.t('common.you') || 'You') : (reply.author || ''))
+      : '';
+    const replyHtml = reply
+      ? `<div class="chat-reply-quote"><div class="chat-reply-author">${esc(replyAuthor)}</div><div class="chat-reply-text">${esc(chatReplySnippet(reply))}</div></div>`
+      : '';
+    const actionHtml = `<div class="chat-msg-actions"><button class="chat-reply-btn" type="button" onclick="setTaskChatReplyTarget('${note.id}')" title="${esc(I18n.t('chat.reply') || 'Reply')}" aria-label="${esc(I18n.t('chat.reply') || 'Reply')}">${icon('reply', 12)}</button></div>`;
 
     div.innerHTML = `
       ${isSent ? '' : avatarHtml}
       <div class="chat-bubble">
         ${!isSent ? `<div class="chat-bubble-meta"><strong>${esc(note.author)}</strong></div>` : ''}
+        ${replyHtml}
         ${textHtml}
         ${filesHtml}
+        ${actionHtml}
         <div class="chat-bubble-meta">${relativeTime(note.createdAt)}</div>
       </div>
     `;
@@ -6362,11 +6862,11 @@ function toggleChatExpand() {
   if (chatIsExpanded && currentTaskId) taskChatUnread.delete(currentTaskId);
   if (panel) panel.classList.toggle('chat-focus', chatIsExpanded);
   if (btn) btn.innerHTML = chatIsExpanded ? icon('minimize', 14) : icon('maximize', 14);
+  requestAnimationFrame(() => {
+    fitTaskChatToAvailableSpace();
+    scrollTaskChatToBottom();
+  });
   scrollTaskChatToBottom();
-  if (currentTaskId) {
-    const task = tasks.find(t => t.id === currentTaskId);
-    if (task) renderDetail(task);
-  }
 }
 
 function expandChat() {
@@ -6379,11 +6879,11 @@ function expandChat() {
     if (panel) panel.classList.add('chat-focus');
     const btn = document.getElementById('chatExpandBtn');
     if (btn) btn.innerHTML = icon('minimize', 14);
+    requestAnimationFrame(() => {
+      fitTaskChatToAvailableSpace();
+      scrollTaskChatToBottom();
+    });
     scrollTaskChatToBottom();
-    if (currentTaskId) {
-      const task = tasks.find(t => t.id === currentTaskId);
-      if (task) renderDetail(task);
-    }
   }
 }
 
@@ -6392,6 +6892,14 @@ function onTaskChatFilesSelected(input) {
   chatPendingFiles.push(...newFiles);
   renderTaskPendingFiles();
   input.value = '';
+}
+
+function onTaskChatPaste(event) {
+  const files = extractClipboardFiles(event);
+  if (!files.length) return;
+  event.preventDefault();
+  chatPendingFiles.push(...files);
+  renderTaskPendingFiles();
 }
 
 function renderTaskPendingFiles() {
@@ -6434,11 +6942,17 @@ async function sendTaskChatMessage() {
   try {
     const fd = new FormData();
     if (text) fd.append('text', text);
+    if (taskChatReplyTarget?.id) fd.append('replyToId', taskChatReplyTarget.id);
     for (const f of chatPendingFiles) fd.append('files', f);
     const note = await API.addNote(currentFlow.id, currentTaskId, fd);
-    if (input) { input.value = ''; input.style.height = 'auto'; }
+    if (input) {
+      input.value = '';
+      input.style.height = 'auto';
+    }
     chatPendingFiles = [];
+    taskChatReplyTarget = null;
     renderTaskPendingFiles();
+    renderTaskReplyPreview();
     // Add note locally (server no longer echoes back to sender)
     const task = tasks.find(t => t.id === currentTaskId);
     if (task) {
@@ -6446,7 +6960,12 @@ async function sendTaskChatMessage() {
       if (!task.notes.find(n => n.id === note.id)) {
         task.notes.push(note);
       }
-      renderDetail(task);
+      renderTaskChat(task);
+      renderTasks();
+    }
+    if (input) {
+      autoResizeTaskChatInput(input);
+      input.focus();
     }
   } catch (err) {
     toast(err.message);
@@ -6695,7 +7214,7 @@ function openPersonProfile(member, presence) {
       <div class="person-status-row" style="justify-content:center">${statusInfo}</div>
     </div>
     <div class="profile-actions">
-      <button class="profile-btn profile-btn-chat" onclick="openChatWithMember('${member.userId}', '${esc(member.userName)}', '${esc(member.avatarUrl || '')}', '${esc(member.role || '')}')">
+      <button class="profile-btn profile-btn-chat" onclick="openChatWithMember('${member.userId}')">
         ${icon('message-circle', 16)} ${I18n.t('nav.chat')}
       </button>
     </div>
@@ -6715,10 +7234,18 @@ function closePersonProfile() {
   document.getElementById('personPanel').classList.remove('active');
 }
 
-function openChatWithMember(userId, userName, avatarUrl, role) {
+function openChatWithMember(userId) {
+  if (!userId) return;
   closePersonProfile();
   switchTab('tabChat');
-  const conv = { userId, userName, userAvatarUrl: avatarUrl, userRole: role };
+  const knownConv = conversations.find(c => c.userId === userId);
+  const member = members.find(m => m.userId === userId);
+  const conv = knownConv || {
+    userId,
+    userName: member?.userName || '',
+    userAvatarUrl: member?.avatarUrl || '',
+    userRole: member?.role || ''
+  };
   openChatView(conv);
 }
 
@@ -6917,6 +7444,31 @@ async function kickMember(userId, userName) {
 // ═══════════════════════════════════════════════════════════════
 // CHAT TAB
 // ═══════════════════════════════════════════════════════════════
+function chatReplySnippet(entry) {
+  const txt = String(entry?.text || '').trim();
+  if (txt) return txt.length > 90 ? `${txt.slice(0, 87)}...` : txt;
+  const fileCount = Array.isArray(entry?.files) ? entry.files.length : 0;
+  if (fileCount > 0) {
+    return I18n.t('chat.replyAttachment', { count: fileCount }) || `${fileCount} file${fileCount === 1 ? '' : 's'}`;
+  }
+  return I18n.t('chat.emptyMessage') || 'Message';
+}
+
+function extractClipboardFiles(event) {
+  const data = event?.clipboardData;
+  if (!data) return [];
+  const files = [];
+  for (const item of Array.from(data.items || [])) {
+    if (item.kind !== 'file') continue;
+    const file = item.getAsFile();
+    if (file) files.push(file);
+  }
+  if (!files.length && data.files?.length) {
+    files.push(...Array.from(data.files));
+  }
+  return files;
+}
+
 async function loadConversations() {
   if (!currentFlow) return;
   try {
@@ -6972,8 +7524,10 @@ function updateChatBadge() {
   const total = conversations.reduce((s, c) => s + (c.unread || 0), 0);
   // Mobile bottom nav badge
   const badge = document.getElementById('chatBadge');
-  badge.textContent = total;
-  badge.classList.toggle('visible', total > 0);
+  if (badge) {
+    badge.textContent = total;
+    badge.classList.toggle('visible', total > 0);
+  }
   // Desktop sidebar badge
   const sidebarBadge = document.getElementById('chatBadgeSidebar');
   if (sidebarBadge) {
@@ -6984,6 +7538,8 @@ function updateChatBadge() {
 
 async function openChatView(conv) {
   currentChatUserId = conv.userId;
+  flowChatReplyTarget = null;
+  renderFlowReplyPreview();
   document.getElementById('convList').style.display = 'none';
   const chatView = document.getElementById('chatView');
   chatView.classList.add('active');
@@ -7028,7 +7584,9 @@ async function openChatView(conv) {
 function closeChatView() {
   currentChatUserId = null;
   flowChatPendingFiles = [];
+  flowChatReplyTarget = null;
   renderFlowChatPending();
+  renderFlowReplyPreview();
   document.getElementById('chatView').classList.remove('active');
   document.getElementById('convList').style.display = '';
 }
@@ -7064,6 +7622,14 @@ function renderChatMessages() {
     const bubble = document.createElement('div');
     bubble.className = `msg-bubble ${isMine ? 'mine' : 'theirs'}`;
 
+    const reply = msg.replyTo;
+    const replyAuthor = reply
+      ? (reply.from === currentUser?.id ? (I18n.t('common.you') || 'You') : (reply.fromName || ''))
+      : '';
+    const replyHtml = reply
+      ? `<div class="chat-reply-quote"><div class="chat-reply-author">${esc(replyAuthor)}</div><div class="chat-reply-text">${esc(chatReplySnippet(reply))}</div></div>`
+      : '';
+
     let filesHtml = '';
     if (msg.files && msg.files.length) {
       const items = msg.files.map(f => {
@@ -7084,18 +7650,61 @@ function renderChatMessages() {
     }
 
     const textHtml = msg.text ? `<div>${esc(msg.text)}</div>` : '';
+    const actionHtml = `<div class="chat-msg-actions"><button class="chat-reply-btn" type="button" onclick="setFlowChatReplyTarget('${msg.id}')" title="${esc(I18n.t('chat.reply') || 'Reply')}" aria-label="${esc(I18n.t('chat.reply') || 'Reply')}">${icon('reply', 12)}</button></div>`;
     const readIcon = isMine ? `<span class="msg-read-icon${msg.read ? ' read' : ''}">${msg.read
       ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12l5 5L17 6"/><path d="M7 12l5 5L23 6"/></svg>'
       : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>'
     }</span>` : '';
     bubble.innerHTML = `
+      ${replyHtml}
       ${filesHtml}
       ${textHtml}
+      ${actionHtml}
       <div class="msg-time">${new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}${readIcon}</div>
     `;
     container.appendChild(bubble);
   }
   container.scrollTop = container.scrollHeight;
+}
+
+function renderFlowReplyPreview() {
+  const el = document.getElementById('flowChatReplyPreview');
+  if (!el) return;
+  if (!flowChatReplyTarget) {
+    el.innerHTML = '';
+    return;
+  }
+  const authorName = flowChatReplyTarget.from === currentUser?.id
+    ? (I18n.t('common.you') || 'You')
+    : (flowChatReplyTarget.fromName || '');
+  el.innerHTML = `
+    <div class="chat-reply-meta">
+      <div class="chat-reply-author">${esc(I18n.t('chat.replyingTo') || 'Replying to')} ${esc(authorName)}</div>
+      <div class="chat-reply-text">${esc(chatReplySnippet(flowChatReplyTarget))}</div>
+    </div>
+    <button class="chat-reply-dismiss" type="button" onclick="clearFlowChatReply()" title="${esc(I18n.t('chat.replyCancel') || 'Cancel reply')}">${icon('x', 14)}</button>
+  `;
+}
+
+function setFlowChatReplyTarget(messageId) {
+  const message = chatMessages.find(m => m.id === messageId);
+  if (!message) return;
+  flowChatReplyTarget = message;
+  renderFlowReplyPreview();
+  document.getElementById('chatInput')?.focus();
+}
+
+function clearFlowChatReply() {
+  flowChatReplyTarget = null;
+  renderFlowReplyPreview();
+}
+
+function onFlowChatPaste(event) {
+  const files = extractClipboardFiles(event);
+  if (!files.length) return;
+  event.preventDefault();
+  flowChatPendingFiles.push(...files);
+  renderFlowChatPending();
 }
 
 function onFlowChatFiles(input) {
@@ -7126,16 +7735,20 @@ async function sendFlowChatMessage() {
   try {
     const fd = new FormData();
     if (text) fd.append('text', text);
+    if (flowChatReplyTarget?.id) fd.append('replyToId', flowChatReplyTarget.id);
     for (const f of flowChatPendingFiles) fd.append('files', f);
     const msg = await API.sendMessage(currentFlow.id, currentChatUserId, fd);
     chatMessages.push(msg);
     renderChatMessages();
     input.value = '';
     flowChatPendingFiles = [];
+    flowChatReplyTarget = null;
     renderFlowChatPending();
+    renderFlowReplyPreview();
     const conv = conversations.find(c => c.userId === currentChatUserId);
     if (conv) conv.lastMessage = msg;
     renderConversations();
+    input.focus();
   } catch (err) {
     toast(err.message);
   }
@@ -7203,6 +7816,94 @@ function normalizeClientTimeLocation(location) {
   return 'field';
 }
 
+function getCurrentUserPresence() {
+  return presenceData.find(pr => pr.userId === currentUser?.id) || null;
+}
+
+function isOnlineNotClockedIn() {
+  const mine = getCurrentUserPresence();
+  return !!mine?.online && !timerSession;
+}
+
+function getUnloggedOnlineMsNow() {
+  let ms = Number(unloggedOnlineState?.unloggedMs || 0);
+  if (!Number.isFinite(ms) || ms < 0) ms = 0;
+  if (unloggedOnlineState?.running && unloggedOnlineState?.startedAt) {
+    const startedMs = new Date(unloggedOnlineState.startedAt).getTime();
+    if (Number.isFinite(startedMs)) {
+      ms += Math.max(0, Date.now() - startedMs);
+    }
+  }
+  return Math.max(0, Math.round(ms));
+}
+
+function formatUnloggedDuration(ms) {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
+  return `${m}m ${String(s).padStart(2, '0')}s`;
+}
+
+function setUnloggedTickerActive(active) {
+  if (active && !unloggedTimerInterval) {
+    unloggedTimerInterval = setInterval(() => {
+      renderUnloggedCatchUpRow();
+    }, 1000);
+  } else if (!active && unloggedTimerInterval) {
+    clearInterval(unloggedTimerInterval);
+    unloggedTimerInterval = null;
+  }
+}
+
+function renderUnloggedCatchUpRow() {
+  const row = document.getElementById('timeUnloggedRow');
+  const textEl = document.getElementById('timeUnloggedText');
+  const catchUpBtn = document.getElementById('timeCatchUpBtn');
+  if (!row || !textEl || !catchUpBtn) return;
+
+  if (!isOnlineNotClockedIn()) {
+    row.classList.remove('active');
+    setUnloggedTickerActive(false);
+    return;
+  }
+
+  const ms = getUnloggedOnlineMsNow();
+  const canCatchUp = ms >= 60000;
+
+  row.classList.add('active');
+  textEl.textContent = `${I18n.t('time.unloggedOnline') || 'Unlogged online time'}: ${formatUnloggedDuration(ms)}`;
+  catchUpBtn.style.display = canCatchUp ? '' : 'none';
+
+  setUnloggedTickerActive(!!unloggedOnlineState?.running);
+}
+
+async function loadCatchUpStatus() {
+  try {
+    unloggedOnlineState = await API.getTimeCatchUpStatus();
+  } catch {
+    unloggedOnlineState = { unloggedMs: 0, running: false, startedAt: null, canCatchUp: false };
+  }
+  renderUnloggedCatchUpRow();
+}
+
+async function catchUpOnlineTime() {
+  if (timerSession) return;
+  try {
+    const location = preferredTimeLocation || 'office';
+    const result = await API.catchUpTime(location);
+    await loadCatchUpStatus();
+    if (currentFlow) {
+      renderTimeTab();
+      renderPeople();
+    }
+    toast(I18n.t('time.catchupAdded', { minutes: result.addedMinutes || 0 }) || `Added ${result.addedMinutes || 0}m`);
+  } catch (err) {
+    toast(err.message);
+  }
+}
+
 async function renderTimeTab() {
   if (!currentFlow) return;
   const token = ++timeRenderToken;
@@ -7257,10 +7958,16 @@ function renderTimeControls() {
   const pauseBtn = document.getElementById('timePauseBtn');
   if (!clock || !status || !clockBtn || !pauseBtn) return;
 
+  const onlineNoClock = isOnlineNotClockedIn();
+
   if (!timerSession) {
     clock.textContent = '00:00:00';
-    status.textContent = I18n.t('time.status.offline');
-    clockBtn.textContent = I18n.t('time.clockin');
+    status.textContent = onlineNoClock
+      ? (I18n.t('time.status.onlineNotClocked') || 'Online - not clocked in')
+      : I18n.t('time.status.offline');
+    clockBtn.textContent = onlineNoClock
+      ? (I18n.t('time.clockinNow') || I18n.t('time.clockin'))
+      : I18n.t('time.clockin');
     clockBtn.className = 'time-main-btn primary';
     pauseBtn.disabled = true;
     pauseBtn.style.opacity = '0.5';
@@ -7276,6 +7983,8 @@ function renderTimeControls() {
     pauseBtn.style.opacity = '1';
     pauseBtn.textContent = isBreak ? I18n.t('time.play') : I18n.t('time.pause');
   }
+
+  renderUnloggedCatchUpRow();
 
   const activeLoc = timerSession?.location || preferredTimeLocation || 'office';
   document.getElementById('locOfficeBtn')?.classList.toggle('active', activeLoc === 'office');
@@ -8492,6 +9201,7 @@ async function loadTimerStatus() {
     timerSession = await API.getTimeStatus();
     if (timerSession?.location) preferredTimeLocation = timerSession.location;
   } catch { timerSession = null; }
+  await loadCatchUpStatus();
   updateTimerUI();
 }
 
@@ -8561,6 +9271,7 @@ async function doClock(action) {
       await API.clockOut();
       timerSession = null;
     }
+    await loadCatchUpStatus();
     updateTimerUI();
     if (currentFlow) {
       renderPeople();
@@ -9251,6 +9962,15 @@ window.addEventListener('resize', () => {
   fitTaskChatToAvailableSpace();
 });
 
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    fitTaskChatToAvailableSpace();
+  });
+  window.visualViewport.addEventListener('scroll', () => {
+    fitTaskChatToAvailableSpace();
+  });
+}
+
 function renderNotifications() {
   const list = document.getElementById('notifList');
   if (!notifications.length) {
@@ -9285,6 +10005,10 @@ function renderNotificationItem(n) {
       ? 'assign'
       : n.type === 'note_added'
       ? 'note'
+  : n.type === 'task_mention'
+  ? 'note'
+  : n.type === 'chat_mention'
+  ? 'member'
       : n.type === 'member_joined'
       ? 'member'
       : n.type === 'task_stale'
@@ -9296,6 +10020,8 @@ function renderNotificationItem(n) {
       : 'task';
     const iconSvg = n.type === 'task_assigned' ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
       : n.type === 'note_added' ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+      : n.type === 'task_mention' ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M16 12v1a3 3 0 006 0v-1a10 10 0 10-4 8"/></svg>'
+      : n.type === 'chat_mention' ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><circle cx="12" cy="11" r="1.5"/></svg>'
       : n.type === 'member_joined' ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>'
       : n.type === 'task_updated' ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>'
       : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>';
@@ -9320,6 +10046,8 @@ function isActionNeededNotification(n) {
   return n.type === 'task_review_pending'
     || n.type === 'task_needs_info'
     || n.type === 'task_revision_requested'
+    || n.type === 'task_mention'
+    || n.type === 'chat_mention'
     || n.type === 'task_assigned'
     || n.type === 'task_stale'
     || n.type === 'deadline_reminder';
@@ -9384,6 +10112,16 @@ function notificationDescription(n) {
       ? I18n.t('notifications.taskApprovedBy', { name: n.actorName })
       : I18n.t('notifications.taskApproved');
   }
+  if (n.type === 'task_mention') {
+    return n.actorName
+      ? I18n.t('notifications.taskMentionBy', { name: n.actorName })
+      : I18n.t('notifications.taskMention');
+  }
+  if (n.type === 'chat_mention') {
+    return n.actorName
+      ? I18n.t('notifications.chatMentionBy', { name: n.actorName })
+      : I18n.t('notifications.chatMention');
+  }
   if (n.type === 'task_stale') {
     return I18n.t('notifications.taskStale');
   }
@@ -9440,6 +10178,19 @@ async function onNotifClick(id) {
     // For info-needed and note notifications, expand the chat so user can respond
     if (notif.type === 'task_needs_info' || notif.type === 'note_added' || notif.type === 'task_revision_requested') {
       setTimeout(() => expandChat(), 100);
+    }
+    return;
+  }
+  if (notif.refType === 'task_mention' && notif.taskId) {
+    openDetail(notif.taskId);
+    setTimeout(() => expandChat(), 100);
+    return;
+  }
+  if (notif.refType === 'chat_mention') {
+    const targetUserId = notif.chatUserId || notif.actorId || notif.refId;
+    if (targetUserId) {
+      switchTab('tabChat');
+      openChatWithMember(targetUserId);
     }
   }
 }
@@ -9692,8 +10443,22 @@ function setupWSListeners() {
     }
   });
 
-  WS.on('presence:online', async () => { await renderPeople(); renderConversations(); updateChatHeaderStatus(); });
-  WS.on('presence:offline', async () => { await renderPeople(); renderConversations(); updateChatHeaderStatus(); });
+  WS.on('presence:online', async (msg) => {
+    await renderPeople();
+    renderConversations();
+    updateChatHeaderStatus();
+    if (msg?.userId === currentUser?.id) {
+      loadCatchUpStatus();
+    }
+  });
+  WS.on('presence:offline', async (msg) => {
+    await renderPeople();
+    renderConversations();
+    updateChatHeaderStatus();
+    if (msg?.userId === currentUser?.id) {
+      loadCatchUpStatus();
+    }
+  });
 
   WS.on('time:status', async (msg) => {
     if (!currentFlow) return;

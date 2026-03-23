@@ -1,6 +1,171 @@
-build everything keep codebase clean and then commit to a git repo so i can later push and deploy on railway. when ur done let me test it. (build everything keep codebase clean and then commit to a git repo so i can later push and deploy on railway. when ur done let me test it. # Task Tracker — Comprehensive Plan (v2)
+# Task Tracker — Comprehensive Plan (v2)
 
 ## Overview
+
+## Current Sprint Backlog (2026-03-23)
+
+Purpose: Track the new requested changes in implementation order so we can ship them in smaller, testable batches.
+
+Status legend:
+- `[ ]` not started
+- `[~]` in progress
+- `[x]` done
+
+### Phase A — Quick UI Stabilization (Easiest Wins First)
+
+1. `[x]` Archive shortcut fix + platform behavior
+   - Goal: Fix broken archive icon render and show shortcut only on phone while desktop keeps archive in navigation tab.
+   - Acceptance criteria:
+     - No raw template text appears for icon.
+     - Phone shows header archive shortcut; desktop hides it.
+     - Archive tab remains accessible via desktop sidebar.
+
+2. `[x]` Reply UX refactor (WhatsApp-like edge icon, no text button)
+   - Goal: Remove inline "Reply/Antworten" text actions and use subtle edge-hover icon action.
+   - Acceptance criteria:
+     - Reply action appears as icon at message edge.
+     - Reply quote readability is improved in sent and received bubbles.
+
+3. `[x]` Task detail chat expanded/maximized rendering fix (PC + mobile)
+   - Goal: Expanded chat must render correctly and stay usable in both viewport classes.
+   - Scope:
+     - Height calculation, scroll anchoring, input bar positioning, and message clipping.
+   - Acceptance criteria:
+     - No overlap/cutoff in expanded mode.
+     - Messages and composer remain visible when keyboard opens on mobile.
+     - Returning from expanded mode keeps stable layout state.
+
+4. `[x]` Desktop quick-create layout improvement
+   - Goal: On desktop, use horizontal space better in task creation area.
+   - Scope:
+     - Priority slider on left and Abteilungen/Subflow selector on right (same row where screen width allows).
+     - Keep phone layout stacked (current mobile behavior).
+   - Acceptance criteria:
+     - Desktop/tablet wide viewport shows side-by-side layout.
+     - Mobile remains unchanged and readable.
+
+### Phase B — Task Board Ordering (Core UX Behavior)
+
+5. `[x]` Default sort by priority (most important on top)
+   - Goal: Use priority-first order by default wherever tasks are rendered.
+   - Acceptance criteria:
+     - High/urgent tasks appear above medium/low by default.
+     - Manual drag order can override default position when user reorders.
+
+6. `[x]` Vertical task reorder inside status columns (desktop + mobile)
+   - Goal: Enable dragging tasks up/down within the same column, not just cross-column status moves.
+   - Acceptance criteria:
+     - Drop insertion point is visible while dragging.
+     - Reordered position persists after refresh and real-time updates.
+
+### Phase C — Routing + Task Creation + Notification Quality
+
+7. `[x]` Invite link fallback behavior (used avatar/invite links)
+   - Goal: If an invite/avatar link is opened by a user who already has an account (or is already logged in), the flow should gracefully route to normal auth/home instead of forcing invite-avatar onboarding.
+   - Acceptance criteria:
+     - Logged-in user opening an old invite/avatar link lands in app home/flow picker.
+     - Logged-out user with existing account can use normal login path without broken invite flow.
+     - Fresh user can still use valid invite links normally.
+
+8. `[x]` Add deadline in quick task creation flow
+   - Goal: User can set deadline while creating a task (not only after opening details).
+   - Acceptance criteria:
+     - Deadline input available in quick-add expanded section.
+     - Created task persists selected deadline immediately.
+
+9. `[x]` Notification scope hardening for task creation
+   - Problem: Uninvolved users currently receive task-created notifications.
+   - Goal: Only relevant users receive creation notifications.
+   - Target recipients (to verify in code before finalizing):
+     - Task creator (optional/self-notify off by default), assignees, operators, and possibly flow owner if required by policy.
+   - Acceptance criteria:
+     - Uninvolved members receive no task-created notification.
+
+10. `[x]` Reduce status-change notification noise
+   - Goal: Disable/limit status-change notifications to prevent overload.
+   - Acceptance criteria:
+     - Generic status-change notifications are no longer sent to all users.
+     - Critical notifications (review requests/approvals, direct mentions) continue to work.
+
+### Phase D — Mentions System
+
+11. `[x]` `@mention` parsing in chats (flow chat + task chat)
+   - Goal: Allow tagging members via `@name` (or stable internal token) in message text.
+   - Scope:
+     - Mention detection and user resolution.
+     - Mention metadata persisted with message/note.
+   - Acceptance criteria:
+     - Mentioned user is reliably identified even with similar names.
+     - Mention survives reload/history retrieval.
+
+12. `[x]` Mention notifications in Benachrichtigungen
+   - Goal: Mentioned users receive high-signal notifications.
+   - Acceptance criteria:
+     - Mentioned users receive one notification per message/note event.
+     - Non-mentioned users do not receive mention notifications.
+     - Notification click deep-links to relevant chat/task context.
+
+### Phase E — Online Not Clocked-In Nudge + Catch-Up Time
+
+13. `[x]` Online-but-not-clocked-in state UI
+   - Goal: If user is online but not clocked in, show prominent "Clock in now" prompt.
+   - Scope:
+     - Big CTA in time area.
+     - Gray running "unlogged online time" indicator.
+   - Acceptance criteria:
+     - Timer starts counting only while online and not clocked in.
+     - Display is visually distinct (gray) and non-confusing.
+
+14. `[x]` Catch-up button for unlogged online time
+   - Goal: Allow adding accumulated online-not-clocked time into tracked work.
+   - Rules:
+     - Button appears only after > 1 minute accumulated.
+     - Primary button label changes to "Clock in now" in this state.
+   - Acceptance criteria:
+     - Catch-up action adds expected amount accurately.
+     - State resets correctly after catch-up or clock-in.
+     - No double-counting.
+
+## Delivery Strategy
+
+Recommended implementation order (easiest and most convenient path):
+1. Phase A (quick UI stabilization)
+2. Phase B (task board ordering behavior)
+3. Phase C (routing + task creation + notification cleanup)
+4. Phase D (mentions end-to-end)
+5. Phase E (time tracking nudge + catch-up)
+
+## Immediate Continuation Plan (Fix Track)
+
+Goal: Continue from completed fixes and finish the remaining UX tasks with low regression risk.
+
+1. `[x]` Finish task chat expanded/maximized rendering fix
+  - Implement final height/viewport behavior for desktop and mobile keyboard scenarios.
+  - Add manual checks: open detail, expand chat, type multi-line, attach file, collapse/expand again.
+
+2. `[x]` Finish desktop quick-create layout improvement
+  - Move priority + subflow into a desktop-optimized row.
+  - Keep current mobile stack unchanged.
+  - Validate at 1024px, 1440px, and <=768px.
+
+3. `[x]` Add reorder stability hardening
+  - Add normalization helper for very dense orderIndex values after repeated drag operations.
+  - Verify websocket updates keep local ordering stable for all connected clients.
+
+4. `[x]` Regression pass for completed fixes
+  - Archive shortcut: phone visible, desktop hidden, archive tab navigation intact.
+  - Reply icon UX: visible on hover (desktop) and usable on touch (mobile).
+  - Priority default sort + vertical reorder persisted after reload.
+
+5. `[x]` Proceed to Phase C implementation block
+  - Invite link fallback.
+  - Quick-add deadline.
+  - Notification scope + noise reduction.
+
+Each phase should be shipped with:
+- targeted manual test checklist (desktop + mobile)
+- regression check for notifications and chat rendering
+- small commit(s) per feature block
 
 A **multi-user** task management system running on a **single domain** with three subpages: `/boss` for Managers, `/worker` for Workers, and `/admin` for system administration. One Node.js server, one deployment, three UIs under the same URL.
 

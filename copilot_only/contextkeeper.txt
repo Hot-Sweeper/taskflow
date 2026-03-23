@@ -195,3 +195,22 @@ All Phase 2 features done:
 - Atomic writes via storage.write()
 - Front-end polling: notification poll every 15s
 - readArraySafe() helper for safe JSON read
+
+## 2026-03-23 Chat Migration + Reply/Paste Update
+- Dedicated Chat navigation buttons removed from desktop/mobile nav; chat badge moved onto Team nav buttons (`chatBadge`, `chatBadgeSidebar`).
+- Chat access is now Team-driven via member profile action (`openChatWithMember(userId)`), while chat view container (`tabChat`) remains for compatibility.
+- Added archive shortcut icon on Tasks header (`tasks-archive-shortcut`) that opens archive tab on desktop; hidden on mobile.
+- Flow chat enhancements in `public/app/index.html`:
+   - Reply composer state (`flowChatReplyTarget`) and reply quote rendering for messages.
+   - Sending includes optional multipart `replyToId`.
+   - Clipboard file/image paste support (`onFlowChatPaste`, `extractClipboardFiles`) adds files to pending attachments.
+- Task chat enhancements in `public/app/index.html`:
+   - Reply composer state (`taskChatReplyTarget`) and reply quote rendering for notes.
+   - Sending includes optional multipart `replyToId`.
+   - Clipboard file/image paste support (`onTaskChatPaste`) adds files to pending attachments.
+   - After send, task chat now keeps input focus and no longer re-renders full detail panel (uses `renderTaskChat(task)`), preventing focus loss.
+- Backend additive schema changes in `server.js`:
+   - `POST /api/flows/:flowId/chat/:userId` accepts optional `replyToId` and stores compact `replyTo` snapshot on message.
+   - `POST /api/flows/:flowId/tasks/:id/notes` accepts optional `replyToId` and stores compact `replyTo` snapshot on note.
+   - Existing `messages.json` and task notes remain compatible; no migration/delete paths added.
+- New i18n keys added to EN/DE: `chat.reply`, `chat.replyingTo`, `chat.replyCancel`, `chat.replyAttachment`, `chat.emptyMessage`.

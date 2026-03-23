@@ -360,6 +360,21 @@ function flowIcon(name, size = 20) {
 
 // ═══ INIT ═══
 async function init() {
+  // Logged-in users opening invite/avatar links should continue to app home.
+  const existingToken = localStorage.getItem('taskflow_token');
+  if (existingToken) {
+    try {
+      const meRes = await fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${existingToken}` }
+      });
+      if (meRes.ok) {
+        window.location.href = '/app/';
+        return;
+      }
+      localStorage.removeItem('taskflow_token');
+    } catch {}
+  }
+
   // Parse preset avatar from URL
   if (presetAvatarParam) {
     try {

@@ -123,6 +123,8 @@ const API = {
   updateTimeLocation(location) { return this.post('/api/time/location', { location }); },
   heartbeat() { return this.post('/api/time/heartbeat'); },
   getTimeStatus() { return this.get('/api/time/status'); },
+  getTimeCatchUpStatus() { return this.get('/api/time/catch-up/status'); },
+  catchUpTime(location) { return this.post('/api/time/catch-up', { location }); },
   getTimeSessions(params) {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
     return this.get('/api/time/sessions' + qs);

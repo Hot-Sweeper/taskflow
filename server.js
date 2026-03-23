@@ -317,6 +317,7 @@ wss.on('connection', (ws, req) => {
           wsClients.set(ws, session);
           // Broadcast online presence
           broadcast({ type: 'presence:online', userId: session.userId });
+          syncUnloggedOnlineTracking(session.userId).catch(() => {});
           // Send initial sync — user's flows and memberships
           const [memberships, flows, users] = await Promise.all([
             storage.read('memberships.json'),
@@ -352,6 +353,7 @@ wss.on('connection', (ws, req) => {
     wsClients.delete(ws);
     // Broadcast offline if no other connections for this user
     if (leaving && !getOnlineUserIds().has(leaving.userId)) {
+      syncUnloggedOnlineTracking(leaving.userId).catch(() => {});
       lastSeenMap.set(leaving.userId, new Date().toISOString());
       markLastSeenDirty();
       broadcast({ type: 'presence:offline', userId: leaving.userId, lastSeen: lastSeenMap.get(leaving.userId) });
@@ -376,6 +378,116 @@ function getOnlineUserIds() {
     if (ws.readyState === 1) ids.add(client.userId);
   }
   return ids;
+}
+
+const MIN_CATCH_UP_MS = 60 * 1000;
+
+async function readOnlineCatchupRows() {
+  try {
+    const rows = await storage.read('onlinecatchup.json');
+    return Array.isArray(rows) ? rows : [];
+  } catch {
+    return [];
+  }
+}
+
+async function writeOnlineCatchupRows(rows) {
+  await storage.write('onlinecatchup.json', rows);
+}
+
+function computeUnloggedOnlineMs(row, nowMs = Date.now()) {
+  if (!row || typeof row !== 'object') return 0;
+  let ms = Number(row.accumulatedMs || 0);
+  if (!Number.isFinite(ms) || ms < 0) ms = 0;
+  if (row.startedAt) {
+    const startMs = new Date(row.startedAt).getTime();
+    if (Number.isFinite(startMs) && nowMs > startMs) {
+      ms += (nowMs - startMs);
+    }
+  }
+  return Math.max(0, Math.round(ms));
+}
+
+async function syncUnloggedOnlineTracking(userId, options = {}) {
+  if (!userId) {
+    return { userId: null, unloggedMs: 0, running: false, startedAt: null };
+  }
+
+  const reset = !!options.reset;
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
+  const today = nowIso.slice(0, 10);
+
+  const [rows, timelog] = await Promise.all([
+    readOnlineCatchupRows(),
+    storage.read('timelog.json')
+  ]);
+
+  const online = getOnlineUserIds().has(userId);
+  const hasActiveSession = (Array.isArray(timelog) ? timelog : []).some(t =>
+    t && t.userId === userId && t.date === today && !t.clockOut
+  );
+
+  let changed = false;
+  let row = rows.find(r => r && r.userId === userId);
+  if (!row) {
+    row = {
+      userId,
+      accumulatedMs: 0,
+      startedAt: null,
+      updatedAt: nowIso
+    };
+    rows.push(row);
+    changed = true;
+  }
+
+  let accumulatedMs = Number(row.accumulatedMs || 0);
+  if (!Number.isFinite(accumulatedMs) || accumulatedMs < 0) accumulatedMs = 0;
+  row.accumulatedMs = Math.round(accumulatedMs);
+
+  let startedMs = row.startedAt ? new Date(row.startedAt).getTime() : NaN;
+  if (row.startedAt && !Number.isFinite(startedMs)) {
+    row.startedAt = nowIso;
+    startedMs = nowMs;
+    changed = true;
+  }
+
+  const shouldTrackLive = !reset && online && !hasActiveSession;
+
+  if (row.startedAt && !shouldTrackLive) {
+    const delta = Math.max(0, nowMs - startedMs);
+    row.accumulatedMs = Math.max(0, Math.round(Number(row.accumulatedMs || 0) + delta));
+    row.startedAt = null;
+    changed = true;
+  }
+
+  if (reset) {
+    if (row.startedAt !== null) {
+      row.startedAt = null;
+      changed = true;
+    }
+    if (Number(row.accumulatedMs || 0) !== 0) {
+      row.accumulatedMs = 0;
+      changed = true;
+    }
+  } else if (!row.startedAt && shouldTrackLive) {
+    row.startedAt = nowIso;
+    changed = true;
+  }
+
+  row.updatedAt = nowIso;
+
+  if (changed) {
+    await writeOnlineCatchupRows(rows);
+  }
+
+  return {
+    userId,
+    accumulatedMs: Number(row.accumulatedMs || 0),
+    startedAt: row.startedAt || null,
+    running: !!row.startedAt,
+    unloggedMs: computeUnloggedOnlineMs(row, nowMs)
+  };
 }
 
 function broadcast(data, filterFn) {
@@ -1846,6 +1958,76 @@ function getTaskOperatorIds(task) {
   return normalizeUserIdArray(task.operators);
 }
 
+function normalizeMentionKey(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._\-\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractMentionTokens(text) {
+  const source = String(text || '');
+  const tokens = new Set();
+  const mentionPattern = /(^|[^a-zA-Z0-9._-])@([a-zA-Z0-9][a-zA-Z0-9._-]{1,31})/g;
+  let match;
+  while ((match = mentionPattern.exec(source)) !== null) {
+    tokens.add(match[2].toLowerCase());
+  }
+  return [...tokens];
+}
+
+async function resolveMentionUserIds(flowId, text, excludeUserIds = []) {
+  const tokens = extractMentionTokens(text);
+  if (!tokens.length) return [];
+
+  const [memberships, users] = await Promise.all([
+    storage.read('memberships.json'),
+    storage.read('users.json')
+  ]);
+
+  const userById = new Map((Array.isArray(users) ? users : []).map(u => [u.id, u]));
+  const aliasToUserIds = new Map();
+
+  const addAlias = (alias, userId) => {
+    const key = String(alias || '').trim().toLowerCase();
+    if (!key || key.length < 2) return;
+    if (!aliasToUserIds.has(key)) aliasToUserIds.set(key, new Set());
+    aliasToUserIds.get(key).add(userId);
+  };
+
+  for (const member of (Array.isArray(memberships) ? memberships : [])) {
+    if (!member || member.flowId !== flowId || !member.userId) continue;
+    const user = userById.get(member.userId);
+    if (!user || !user.name) continue;
+
+    const normalizedName = normalizeMentionKey(user.name);
+    const compact = normalizedName.replace(/\s+/g, '');
+    const underscored = normalizedName.replace(/\s+/g, '_');
+    const firstToken = normalizedName.split(' ')[0] || '';
+    const rawToken = String(user.name).trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
+
+    addAlias(compact, member.userId);
+    addAlias(underscored, member.userId);
+    addAlias(firstToken, member.userId);
+    addAlias(rawToken, member.userId);
+  }
+
+  const excludeSet = new Set((Array.isArray(excludeUserIds) ? excludeUserIds : []).filter(Boolean));
+  const resolved = new Set();
+
+  for (const token of tokens) {
+    const normalizedToken = normalizeMentionKey(token).replace(/\s+/g, '');
+    const candidates = aliasToUserIds.get(token) || aliasToUserIds.get(normalizedToken);
+    if (!candidates || candidates.size !== 1) continue;
+    const [userId] = candidates;
+    if (!excludeSet.has(userId)) resolved.add(userId);
+  }
+
+  return [...resolved];
+}
+
 function canUserReviewTask(task, userId) {
   if (!task || !userId) return false;
   return task.createdBy === userId || getTaskOperatorIds(task).includes(userId);
@@ -1968,7 +2150,7 @@ app.get('/api/flows/:flowId/tasks', authMiddleware, flowMemberMiddleware, async 
 // Create a task in a flow
 app.post('/api/flows/:flowId/tasks', authMiddleware, flowMemberMiddleware, async (req, res) => {
   try {
-    const { title, description, priority, deadline, assignedTo, assignedToList, operators, category, subFlowId, recurrenceRule } = req.body;
+    const { title, description, priority, deadline, assignedTo, assignedToList, operators, category, subFlowId, recurrenceRule, orderIndex } = req.body;
     if (!title || !title.trim()) {
       return res.status(400).json({ error: 'Title is required' });
     }
@@ -2029,6 +2211,7 @@ app.post('/api/flows/:flowId/tasks', authMiddleware, flowMemberMiddleware, async
       files: [],
       recurrenceRule: recurrenceRule || null,
       recurrenceSeriesId: recurrenceRule ? crypto.randomUUID() : null,
+      orderIndex: Number.isFinite(Number(orderIndex)) ? Number(orderIndex) : null,
       archived: false,
       archivedAt: null,
       completedAt: null,
@@ -2049,8 +2232,17 @@ app.post('/api/flows/:flowId/tasks', authMiddleware, flowMemberMiddleware, async
         createNotification({ flowId: req.params.flowId, type: 'task_assigned', title: task.title, body: `${req.user.name} assigned you a task`, targetUserId: uid, actorId: req.user.userId, actorName: req.user.name, refId: task.id, refType: 'task' }).catch(() => {});
       }
     }
-    // Notify flow about new task
-    createNotification({ flowId: req.params.flowId, type: 'task_created', title: task.title, body: `${req.user.name} created a task`, targetUserId: null, actorId: req.user.userId, actorName: req.user.name, refId: task.id, refType: 'task' }).catch(() => {});
+
+    // Scoped creation notification: only involved users (assignees/operators/creator), no broadcast.
+    const creationTargets = new Set([
+      ...getTaskAssigneeIds(task),
+      ...getTaskOperatorIds(task),
+      task.createdBy
+    ].filter(id => id));
+    for (const uid of creationTargets) {
+      if (uid === req.user.userId) continue; // self-notify off by default
+      createNotification({ flowId: req.params.flowId, type: 'task_created', title: task.title, body: `${req.user.name} created a task`, targetUserId: uid, actorId: req.user.userId, actorName: req.user.name, refId: task.id, refType: 'task' }).catch(() => {});
+    }
 
     res.status(201).json(task);
   } catch (err) {
@@ -2069,7 +2261,15 @@ app.put('/api/flows/:flowId/tasks/:id', authMiddleware, flowMemberMiddleware, as
     const oldStatus = tasks[idx].status;
     const oldAssignees = getTaskAssigneeIds(tasks[idx]);
     const allowed = ['title', 'description', 'priority', 'status',
-      'category', 'assignedTo', 'deadline', 'subFlowId', 'recurrenceRule'];
+      'category', 'assignedTo', 'deadline', 'subFlowId', 'recurrenceRule', 'orderIndex'];
+
+    if (req.body.orderIndex !== undefined && req.body.orderIndex !== null) {
+      const parsedOrder = Number(req.body.orderIndex);
+      if (!Number.isFinite(parsedOrder)) {
+        return res.status(400).json({ error: 'Invalid orderIndex' });
+      }
+      req.body.orderIndex = parsedOrder;
+    }
     
     // Validate subFlowId if provided
     if (req.body.subFlowId !== undefined) {
@@ -2093,6 +2293,10 @@ app.put('/api/flows/:flowId/tasks/:id', authMiddleware, flowMemberMiddleware, as
     if (req.body.status !== undefined && req.body.status !== oldStatus) {
       if (!Array.isArray(tasks[idx].statusLog)) tasks[idx].statusLog = [];
       tasks[idx].statusLog.push({ from: oldStatus, to: req.body.status, at: _now, by: req.user.userId });
+
+      if (req.body.orderIndex === undefined) {
+        tasks[idx].orderIndex = null;
+      }
 
       if (req.body.status === 'done') {
         tasks[idx].completedAt = _now;
@@ -2167,7 +2371,7 @@ app.put('/api/flows/:flowId/tasks/:id', authMiddleware, flowMemberMiddleware, as
     tasks[idx].updatedAt = _now;
 
     // Update lastActivityAt on meaningful changes (status, progress, assignment, review)
-    const meaningfulKeys = ['status', 'progress', 'assignedTo', 'assignedToList', 'operators'];
+    const meaningfulKeys = ['status', 'progress', 'assignedTo', 'assignedToList', 'operators', 'orderIndex'];
     if (meaningfulKeys.some(k => req.body[k] !== undefined)) {
       tasks[idx].lastActivityAt = tasks[idx].updatedAt;
     }
@@ -2178,11 +2382,8 @@ app.put('/api/flows/:flowId/tasks/:id', authMiddleware, flowMemberMiddleware, as
     // Notify on status change
     const updTask = tasks[idx];
     if (req.body.status && req.body.status !== oldStatus) {
-      const notifTargets = new Set([...getTaskAssigneeIds(updTask), updTask.createdBy].filter(id => id));
-      for (const uid of notifTargets) {
-        createNotification({ flowId: req.params.flowId, type: 'task_updated', title: updTask.title, body: `${req.user.name} changed status to ${req.body.status}`, targetUserId: uid, actorId: req.user.userId, actorName: req.user.name, refId: updTask.id, refType: 'task' }).catch(() => {});
-      }
-
+      // Generic status-change notifications are intentionally muted to reduce noise.
+      // Keep only high-signal notifications below.
       if (req.body.status === 'needs-info' && updTask.createdBy && updTask.createdBy !== req.user.userId) {
         createNotification({ flowId: req.params.flowId, type: 'task_needs_info', title: updTask.title, body: `${req.user.name} needs more information`, targetUserId: updTask.createdBy, actorId: req.user.userId, actorName: req.user.name, refId: updTask.id, refType: 'task' }).catch(() => {});
       }
@@ -2344,15 +2545,45 @@ app.post('/api/flows/:flowId/tasks/:id/notes', authMiddleware, flowMemberMiddlew
       type: f.mimetype
     }));
 
+    const replyToId = typeof req.body.replyToId === 'string' ? req.body.replyToId.trim() : '';
+    let replyTo = null;
+    if (replyToId) {
+      const sourceNotes = Array.isArray(tasks[idx].notes) ? tasks[idx].notes : [];
+      const source = sourceNotes.find(n => n && n.id === replyToId);
+      if (source) {
+        replyTo = {
+          id: source.id,
+          author: source.author || source.userName || '',
+          authorId: source.authorId || source.userId || null,
+          text: String(source.text || '').slice(0, 1200),
+          createdAt: source.createdAt || null,
+          files: Array.isArray(source.files)
+            ? source.files.map(f => ({
+                name: f.name,
+                storedName: f.storedName,
+                size: f.size,
+                type: f.type
+              }))
+            : []
+        };
+      }
+    }
+
+    const mentionUserIds = await resolveMentionUserIds(req.params.flowId, text, [req.user.userId]);
+
     const note = {
       id: crypto.randomUUID(),
       text: text.trim(),
       author: req.user.name,
       authorId: req.user.userId,
       files: noteFiles,
+      ...(mentionUserIds.length ? { mentions: mentionUserIds } : {}),
+      ...(replyTo ? { replyTo } : {}),
       createdAt: new Date().toISOString()
     };
 
+    if (!Array.isArray(tasks[idx].notes)) tasks[idx].notes = [];
+    if (!Array.isArray(tasks[idx].files)) tasks[idx].files = [];
     tasks[idx].notes.push(note);
     tasks[idx].files.push(...noteFiles);
     tasks[idx].updatedAt = new Date().toISOString();
@@ -2361,11 +2592,29 @@ app.post('/api/flows/:flowId/tasks/:id/notes', authMiddleware, flowMemberMiddlew
     await storage.write('tasks.json', tasks);
     await broadcastToFlow(req.params.flowId, { type: 'note:added', payload: { taskId: req.params.id, note } }, req.user.userId);
 
-    // Notify task assignee/creator about the note
+    // Notify task assignee/creator about the note (except direct mentions which get dedicated notifications).
     const taskForNote = tasks[idx];
-    const noteTargets = new Set([...getTaskAssigneeIds(taskForNote), taskForNote.createdBy].filter(id => id && id !== req.user.userId));
+    const mentionTargets = new Set(mentionUserIds);
+    const noteTargets = new Set(
+      [...getTaskAssigneeIds(taskForNote), taskForNote.createdBy]
+        .filter(id => id && id !== req.user.userId && !mentionTargets.has(id))
+    );
     for (const uid of noteTargets) {
       createNotification({ flowId: req.params.flowId, type: 'note_added', title: taskForNote.title, body: `${req.user.name} added a note`, targetUserId: uid, actorId: req.user.userId, actorName: req.user.name, refId: taskForNote.id, refType: 'task' }).catch(() => {});
+    }
+    for (const uid of mentionTargets) {
+      createNotification({
+        flowId: req.params.flowId,
+        type: 'task_mention',
+        title: taskForNote.title,
+        body: `${req.user.name} mentioned you in task chat`,
+        targetUserId: uid,
+        actorId: req.user.userId,
+        actorName: req.user.name,
+        refId: note.id,
+        refType: 'task_mention',
+        taskId: taskForNote.id
+      }).catch(() => {});
     }
 
     res.status(201).json(note);
@@ -2484,7 +2733,7 @@ async function readArraySafe(filename) {
 }
 
 // Helper: create and broadcast a notification
-async function createNotification({ flowId, type, title, body, targetUserId, actorId, actorName, refId, refType }) {
+async function createNotification({ flowId, type, title, body, targetUserId, actorId, actorName, refId, refType, taskId, chatUserId }) {
   const notifications = await readArraySafe('notifications.json');
 
   // Prevent duplicates: if same type+refId+targetUserId exists and is unread, skip
@@ -2499,7 +2748,7 @@ async function createNotification({ flowId, type, title, body, targetUserId, act
   const notif = {
     id: crypto.randomUUID(),
     flowId,
-    type,           // 'task_created','task_updated','task_assigned','note_added','member_joined','member_left','info_request'
+    type,           // 'task_created','task_updated','task_assigned','note_added','task_mention','chat_mention','member_joined','member_left','info_request'
     title,
     body: body || '',
     targetUserId,   // who receives this (null = all flow members)
@@ -2507,6 +2756,8 @@ async function createNotification({ flowId, type, title, body, targetUserId, act
     actorName,
     refId: refId || null,   // e.g. task id
     refType: refType || null, // e.g. 'task'
+    taskId: taskId || null,
+    chatUserId: chatUserId || null,
     read: false,
     createdAt: new Date().toISOString()
   };
@@ -2883,6 +3134,40 @@ app.post('/api/flows/:flowId/chat/:userId', authMiddleware, flowMemberMiddleware
       return res.status(400).json({ error: 'Message text or files required' });
     }
 
+    const messages = await storage.read('messages.json');
+    const replyToId = typeof req.body.replyToId === 'string' ? req.body.replyToId.trim() : '';
+    let replyTo = null;
+    if (replyToId) {
+      const source = messages.find(m =>
+        m &&
+        m.id === replyToId &&
+        m.flowId === req.params.flowId &&
+        (
+          (m.from === req.user.userId && m.to === req.params.userId) ||
+          (m.from === req.params.userId && m.to === req.user.userId)
+        )
+      );
+      if (source) {
+        replyTo = {
+          id: source.id,
+          from: source.from,
+          fromName: source.fromName || '',
+          text: String(source.text || '').slice(0, 1200),
+          createdAt: source.createdAt || null,
+          files: Array.isArray(source.files)
+            ? source.files.map(f => ({
+                name: f.name,
+                storedName: f.storedName,
+                size: f.size,
+                type: f.type
+              }))
+            : []
+        };
+      }
+    }
+
+    const mentionUserIds = await resolveMentionUserIds(req.params.flowId, text, [req.user.userId]);
+
     const message = {
       id: crypto.randomUUID(),
       flowId: req.params.flowId,
@@ -2891,13 +3176,30 @@ app.post('/api/flows/:flowId/chat/:userId', authMiddleware, flowMemberMiddleware
       to: req.params.userId,
       text: text.trim(),
       files: chatFiles,
+      ...(mentionUserIds.length ? { mentions: mentionUserIds } : {}),
+      ...(replyTo ? { replyTo } : {}),
       read: false,
       createdAt: new Date().toISOString()
     };
 
-    const messages = await storage.read('messages.json');
     messages.push(message);
     await storage.write('messages.json', messages);
+
+    const mentionTargets = mentionUserIds.filter(uid => uid === req.params.userId);
+    for (const uid of mentionTargets) {
+      createNotification({
+        flowId: req.params.flowId,
+        type: 'chat_mention',
+        title: req.user.name,
+        body: `${req.user.name} mentioned you in chat`,
+        targetUserId: uid,
+        actorId: req.user.userId,
+        actorName: req.user.name,
+        refId: message.id,
+        refType: 'chat_mention',
+        chatUserId: req.user.userId
+      }).catch(() => {});
+    }
 
     broadcastToUser(req.params.userId, {
       type: 'chat:message',
@@ -3038,6 +3340,7 @@ app.post('/api/time/clock-in', authMiddleware, async (req, res) => {
     };
     timelog.push(session);
     await storage.write('timelog.json', timelog);
+    await syncUnloggedOnlineTracking(req.user.userId, { reset: true });
 
     broadcastTimeStatus(req.user.userId, session);
 
@@ -3071,6 +3374,7 @@ app.post('/api/time/clock-out', authMiddleware, async (req, res) => {
     timelog[idx].totalWorked = Math.round((clockOut - clockIn - breakTime) / 60000);
 
     await storage.write('timelog.json', timelog);
+    await syncUnloggedOnlineTracking(req.user.userId);
     broadcastTimeStatus(req.user.userId, timelog[idx]);
     res.json(timelog[idx]);
   } catch (err) {
@@ -3174,10 +3478,81 @@ app.post('/api/time/heartbeat', authMiddleware, async (req, res) => {
 
 app.get('/api/time/status', authMiddleware, async (req, res) => {
   try {
+    await syncUnloggedOnlineTracking(req.user.userId);
     const timelog = await storage.read('timelog.json');
     const today = new Date().toISOString().slice(0, 10);
     const mySession = timelog.find(t => t.userId === req.user.userId && t.date === today && !t.clockOut);
     res.json(mySession || null);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/time/catch-up/status', authMiddleware, async (req, res) => {
+  try {
+    const state = await syncUnloggedOnlineTracking(req.user.userId);
+    res.json({
+      userId: req.user.userId,
+      running: !!state.running,
+      startedAt: state.startedAt || null,
+      unloggedMs: Number(state.unloggedMs || 0),
+      canCatchUp: Number(state.unloggedMs || 0) >= MIN_CATCH_UP_MS
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/time/catch-up', authMiddleware, async (req, res) => {
+  try {
+    const timelog = await storage.read('timelog.json');
+    const nowIso = new Date().toISOString();
+    const today = nowIso.slice(0, 10);
+
+    const activeSession = timelog.find(t => t.userId === req.user.userId && t.date === today && !t.clockOut);
+    if (activeSession) {
+      return res.status(400).json({ error: 'Cannot catch up while clocked in' });
+    }
+
+    const state = await syncUnloggedOnlineTracking(req.user.userId);
+    const unloggedMs = Number(state.unloggedMs || 0);
+    if (unloggedMs < MIN_CATCH_UP_MS) {
+      return res.status(400).json({ error: 'No catch-up time available yet' });
+    }
+
+    const workedMinutes = Math.floor(unloggedMs / 60000);
+    const accountedMs = workedMinutes * 60000;
+    const clockOutIso = nowIso;
+    const clockInIso = new Date(Date.now() - accountedMs).toISOString();
+    const location = normalizeTimeLocation(req.body?.location) || 'office';
+
+    const session = {
+      id: crypto.randomUUID(),
+      userId: req.user.userId,
+      userName: req.user.name,
+      date: today,
+      clockIn: clockInIso,
+      clockOut: clockOutIso,
+      location,
+      status: 'offline',
+      currentTask: null,
+      breaks: [],
+      totalWorked: workedMinutes,
+      isCatchUp: true,
+      catchUpMs: accountedMs,
+      createdAt: nowIso
+    };
+
+    timelog.push(session);
+    await storage.write('timelog.json', timelog);
+    await syncUnloggedOnlineTracking(req.user.userId, { reset: true });
+
+    broadcastTimeStatus(req.user.userId, null);
+    res.status(201).json({
+      success: true,
+      addedMinutes: workedMinutes,
+      session
+    });
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -4050,7 +4425,7 @@ app.get('/api/admin/export/:file', adminAuth, async (req, res) => {
 app.post('/api/admin/import/:file', adminAuth, async (req, res) => {
   try {
     const allowed = ['users.json', 'tasks.json', 'flows.json', 'memberships.json',
-      'timelog.json', 'categories.json', 'config.json', 'messages.json'];
+      'timelog.json', 'categories.json', 'config.json', 'messages.json', 'onlinecatchup.json'];
     const filename = req.params.file;
     if (!allowed.includes(filename)) {
       return res.status(400).json({ error: 'Invalid file' });
@@ -4093,7 +4468,7 @@ app.get('/api/admin/health', adminAuth, async (req, res) => {
   try {
     const dataDir = storage.getDataDir();
     const files = ['users.json', 'tasks.json', 'flows.json', 'memberships.json',
-      'timelog.json', 'categories.json', 'config.json', 'messages.json'];
+      'timelog.json', 'categories.json', 'config.json', 'messages.json', 'onlinecatchup.json'];
     const sizes = {};
     for (const f of files) {
       try {
@@ -4137,7 +4512,7 @@ app.delete('/api/admin/wipe', adminAuth, async (req, res) => {
   try {
     const dataFiles = ['users.json', 'tasks.json', 'flows.json', 'memberships.json',
       'timelog.json', 'categories.json', 'messages.json', 'notifications.json',
-      'sessions.json', 'teams.json', 'requests.json'];
+      'sessions.json', 'teams.json', 'requests.json', 'onlinecatchup.json'];
     for (const f of dataFiles) {
       await storage.write(f, []);
     }
