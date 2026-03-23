@@ -103,6 +103,7 @@
   "task.files": "Attachments",
   "task.files.drop": "Drop files here or click to upload",
   "task.category": "Category",
+  "task.noCategory": "No category",
   "task.add.note": "Add note...",
   "task.empty": "No tasks yet",
   "task.detail": "Task Details",

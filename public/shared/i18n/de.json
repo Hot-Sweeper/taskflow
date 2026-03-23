@@ -103,6 +103,7 @@
   "task.files": "Anhänge",
   "task.files.drop": "Dateien hierher ziehen oder klicken",
   "task.category": "Kategorie",
+  "task.noCategory": "Keine Kategorie",
   "task.add.note": "Notiz hinzufügen...",
   "task.empty": "Noch keine Aufgaben",
   "task.detail": "Aufgabendetails",

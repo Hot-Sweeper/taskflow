@@ -2323,7 +2323,7 @@ a { color: var(--accent); text-decoration: none; }
 .add-task-expand {
   max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1);
 }
-.add-task-bar.expanded .add-task-expand { max-height: 400px; }
+.add-task-bar.expanded .add-task-expand { max-height: 70vh; overflow-y: auto; }
 .add-task-expand-inner {
   padding: 0 16px 14px; display: flex; flex-direction: column; gap: 10px;
 }
@@ -2378,6 +2378,21 @@ a { color: var(--accent); text-decoration: none; }
   display: flex; justify-content: space-between;
   position: relative; z-index: 1;
 }
+/* Category picker */
+.atb-category-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.atb-category-select {
+  flex: 1; padding: 6px 10px; border-radius: var(--radius-xs);
+  border: 1px solid var(--border); background: var(--bg-input);
+  color: var(--text); font-size: 13px; font-family: inherit;
+  outline: none; cursor: pointer; appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+  padding-right: 28px;
+}
+.atb-category-select:focus { border-color: var(--border-focus); }
 /* File picker row */
 .atb-files-row {
   display: flex; align-items: center; gap: 8px;
@@ -2412,8 +2427,10 @@ a { color: var(--accent); text-decoration: none; }
   .add-task-expand-inner > #atbDescription { order: 2; }
   .add-task-expand-inner > .atb-section-label[data-i18n="task.priority"] { order: 3; }
   .add-task-expand-inner > #atbPriority { order: 4; }
-  .add-task-expand-inner > .atb-files-row { order: 5; }
-  .add-task-expand-inner > .atb-people-grid { order: 6; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .add-task-expand-inner > .atb-section-label[data-i18n="task.category"] { order: 5; }
+  .add-task-expand-inner > .atb-category-row { order: 6; }
+  .add-task-expand-inner > .atb-files-row { order: 7; }
+  .add-task-expand-inner > .atb-people-grid { order: 8; grid-template-columns: 1fr 1fr; gap: 12px; }
 
   .atb-people-grid.phone-two-col,
   .detail-people-grid.phone-two-col {
@@ -2919,6 +2936,12 @@ a { color: var(--accent); text-decoration: none; }
           </div>
           <div class="atb-section-label" data-i18n="task.priority">Priority</div>
           <div class="atb-priority" id="atbPriority"></div>
+          <div class="atb-section-label" data-i18n="task.category">Category</div>
+          <div class="atb-category-row">
+            <select id="atbCategory" class="atb-category-select">
+              <option value="" data-i18n="task.noCategory">No category</option>
+            </select>
+          </div>
           <div class="atb-section-label" data-i18n="task.description">Description</div>
           <textarea id="atbDescription" rows="2" data-i18n-placeholder="task.noDescription" placeholder="Description (optional)..." style="width:100%;min-height:36px;padding:6px 8px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--bg-input);color:var(--text);resize:vertical;outline:none;font-family:inherit;font-size:13px;margin-bottom:8px;"></textarea>
           <div class="atb-files-row">
@@ -4691,6 +4714,7 @@ async function deleteTemplate(templateId) {
 let atbSelectedAssignees = [];
 let atbSelectedOperators = [];
 let atbSelectedPriority = 'medium';
+let atbSelectedCategory = null;
 let atbFiles = [];
 let atbSubmitting = false;
 
@@ -4740,6 +4764,7 @@ function expandTaskBar() {
   renderAtbAssignees();
   renderAtbOperators();
   renderAtbPriority();
+  renderAtbCategories();
   applyPeopleGridLayout();
 }
 
@@ -4756,6 +4781,9 @@ function resetTaskBar() {
   atbSelectedAssignees = [];
   atbSelectedOperators = currentUser?.id ? [currentUser.id] : [];
   atbSelectedPriority = 'medium';
+  atbSelectedCategory = null;
+  const catSel = document.getElementById('atbCategory');
+  if (catSel) catSel.value = '';
   atbFiles = [];
   document.getElementById('atbFileList').innerHTML = '';
   document.getElementById('atbFileInput').value = '';
@@ -4823,6 +4851,17 @@ function selectAtbPriority(p) {
   renderAtbPriority();
 }
 
+async function renderAtbCategories() {
+  const sel = document.getElementById('atbCategory');
+  if (!sel || !currentFlow) return;
+  let cats = [];
+  try { cats = await API.getCategories(currentFlow.id); } catch {}
+  const prev = sel.value;
+  sel.innerHTML = `<option value="">${I18n.t('task.noCategory') || 'No category'}</option>` +
+    cats.map(c => `<option value="${esc(c.name)}" style="color:${esc(c.color || 'inherit')}">${esc(c.name)}</option>`).join('');
+  if (prev && cats.some(c => c.name === prev)) sel.value = prev;
+}
+
 document.getElementById('atbFileInput').addEventListener('change', (e) => {
   for (const f of e.target.files) atbFiles.push(f);
   e.target.value = '';
@@ -4851,10 +4890,12 @@ async function quickAddTask() {
   atbSubmitting = true;
   try {
     const desc = (document.getElementById('atbDescription')?.value || '').trim();
+    atbSelectedCategory = document.getElementById('atbCategory')?.value || null;
     const task = await API.createTask(currentFlow.id, {
       title,
       priority: atbSelectedPriority,
       description: desc,
+      category: atbSelectedCategory || undefined,
       assignedToList: atbSelectedAssignees,
       assignedTo: atbSelectedAssignees[0] || null,
       operators: atbSelectedOperators,

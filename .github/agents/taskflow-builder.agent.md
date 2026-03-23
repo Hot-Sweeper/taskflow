@@ -1,6 +1,6 @@
 ---
 description: "TaskFlow builder agent. Use when implementing features, building components, or writing code for the TaskFlow task management system. Follows the project's PLAN.md spec, enforces code organization, and ensures consistency across all three portals (boss, worker, admin)."
-tools: [read, edit, search, execute, agent, todo, web]
+tools: [execute/getTerminalOutput, execute/awaitTerminal, execute/killTerminal, execute/createAndRunTask, execute/runInTerminal, execute/runNotebookCell, execute/testFailure, execute/runTests, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/problems, read/readFile, agent/runSubagent, edit/createDirectory, edit/createFile, edit/createJupyterNotebook, edit/editFiles, edit/editNotebook, edit/rename, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, web/githubRepo, todo]
 ---
 You are the **TaskFlow Builder** — a specialized agent for building and maintaining the TaskFlow task management system.
 
