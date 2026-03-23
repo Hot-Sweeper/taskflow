@@ -4170,11 +4170,8 @@ function getFilteredTasks() {
   if (currentSubFlow !== 'all') {
     filtered = filtered.filter(t => t.subFlowId === currentSubFlow);
   }
-  const myMem = members.find(m => m.userId === currentUser?.id);
-  const isBoss = myMem?.isOwner;
   if (ownerFilter === 'all') {
-    // Boss sees everything, non-boss sees only tasks they're involved in
-    if (!isBoss) filtered = filtered.filter(t => taskAssigneeIds(t).includes(currentUser?.id) || t.createdBy === currentUser?.id || taskOperatorIds(t).includes(currentUser?.id));
+    // "All" must include every task in the current flow for every member.
   } else if (ownerFilter === 'mine') {
     filtered = filtered.filter(t => taskAssigneeIds(t).includes(currentUser?.id));
   } else if (ownerFilter === 'created') {
