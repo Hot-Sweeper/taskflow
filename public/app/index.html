@@ -7988,7 +7988,8 @@ function changeTimeMonth(direction) {
 async function downloadTimeReport() {
   try {
     const month = timeMonth + 1;
-    const res = await fetch(`/api/time/report?month=${month}&year=${timeYear}`, {
+    const lang = I18n.currentLang || 'en';
+    const res = await fetch(`/api/time/report?month=${month}&year=${timeYear}&lang=${lang}`, {
       headers: { Authorization: `Bearer ${API.token}` }
     });
     if (!res.ok) {

@@ -215,6 +215,10 @@ tr:hover td { background: var(--bg-hover); }
     <div id="sec-timelog" class="section">
       <div class="page-header">
         <h2 data-i18n="admin.timelog">Time Log</h2>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="openImportTimelog()">📥 Import JSON</button>
+          <button class="btn btn-primary btn-sm" onclick="openAddTime()">+ Add Time Entry</button>
+        </div>
       </div>
       <div class="card">
         <table>
@@ -335,6 +339,59 @@ tr:hover td { background: var(--bg-hover); }
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('createUserModal')" data-i18n="common.cancel">Cancel</button>
       <button class="btn btn-primary" onclick="createUser()" data-i18n="common.save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD TIME ENTRY MODAL -->
+<div id="addTimeModal" class="modal-overlay">
+  <div class="modal">
+    <h3>Add Time Entry</h3>
+    <div class="form-group">
+      <label>User</label>
+      <select id="atUserId"></select>
+    </div>
+    <div class="form-group">
+      <label>Date</label>
+      <input type="date" id="atDate">
+    </div>
+    <div class="form-group">
+      <label>Clock In</label>
+      <input type="time" id="atClockIn" step="60">
+    </div>
+    <div class="form-group">
+      <label>Clock Out</label>
+      <input type="time" id="atClockOut" step="60">
+    </div>
+    <div class="form-group">
+      <label>Location</label>
+      <select id="atLocation">
+        <option value="office">Office</option>
+        <option value="home">Home Office</option>
+        <option value="field">On The Go</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('addTimeModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAddTime()">Add Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT TIMELOG MODAL -->
+<div id="importTimeModal" class="modal-overlay">
+  <div class="modal">
+    <h3>Import Timelog Entries</h3>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">
+      Upload a JSON file with an array of entries. Each entry needs: <code>userId</code>, <code>date</code> (YYYY-MM-DD), <code>clockIn</code> (ISO), <code>clockOut</code> (ISO), and optional <code>location</code>.
+    </p>
+    <div class="form-group">
+      <label>JSON File</label>
+      <input type="file" id="importTimeFile" accept=".json">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('importTimeModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitImportTimelog()">Import</button>
     </div>
   </div>
 </div>
@@ -539,6 +596,7 @@ async function deleteTeam(id) {
 }
 
 // ═══ TIMELOG ═══
+let cachedUsers = null;
 async function loadTimelog() {
   const res = await adminFetch('/api/admin/timelog');
   const entries = await res.json();
@@ -553,6 +611,68 @@ async function loadTimelog() {
       <td>${t.totalWorked ? TaskModels.formatDuration(t.totalWorked) : '—'}</td>
     </tr>
   `).join('');
+}
+
+async function getUsers() {
+  if (cachedUsers) return cachedUsers;
+  const res = await adminFetch('/api/admin/users');
+  cachedUsers = await res.json();
+  return cachedUsers;
+}
+
+async function openAddTime() {
+  const users = await getUsers();
+  const sel = document.getElementById('atUserId');
+  sel.innerHTML = users.map(u => `<option value="${u.id}">${esc(u.name)}</option>`).join('');
+  document.getElementById('atDate').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('atClockIn').value = '09:00';
+  document.getElementById('atClockOut').value = '17:00';
+  document.getElementById('addTimeModal').classList.add('open');
+}
+
+async function submitAddTime() {
+  const userId = document.getElementById('atUserId').value;
+  const date = document.getElementById('atDate').value;
+  const clockInTime = document.getElementById('atClockIn').value;
+  const clockOutTime = document.getElementById('atClockOut').value;
+  const location = document.getElementById('atLocation').value;
+  if (!userId || !date || !clockInTime || !clockOutTime) return toast('All fields required', 'error');
+  const clockIn = `${date}T${clockInTime}:00`;
+  const clockOut = `${date}T${clockOutTime}:00`;
+  try {
+    await adminFetch('/api/admin/timelog', {
+      method: 'POST',
+      body: JSON.stringify({ userId, date, clockIn, clockOut, location }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    closeModal('addTimeModal');
+    toast('Time entry added', 'success');
+    loadTimelog();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+function openImportTimelog() {
+  document.getElementById('importTimeFile').value = '';
+  document.getElementById('importTimeModal').classList.add('open');
+}
+
+async function submitImportTimelog() {
+  const fileInput = document.getElementById('importTimeFile');
+  if (!fileInput.files.length) return toast('Select a file', 'error');
+  try {
+    const text = await fileInput.files[0].text();
+    const entries = JSON.parse(text);
+    if (!Array.isArray(entries)) throw new Error('File must contain a JSON array');
+    const res = await adminFetch('/api/admin/timelog/import', {
+      method: 'POST',
+      body: JSON.stringify({ entries }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    closeModal('importTimeModal');
+    toast(`Imported ${data.imported} entries`, 'success');
+    loadTimelog();
+  } catch (err) { toast(err.message, 'error'); }
 }
 
 // ═══ SETTINGS ═══

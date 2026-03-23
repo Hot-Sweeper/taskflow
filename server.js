@@ -3088,6 +3088,58 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
     const month = Math.max(1, Math.min(12, parseInt(req.query.month || String(now.getMonth() + 1), 10)));
     const year = Math.max(2000, Math.min(2100, parseInt(req.query.year || String(now.getFullYear()), 10)));
     const prefix = `${year}-${String(month).padStart(2, '0')}`;
+    const lang = (req.query.lang || 'en').toLowerCase();
+
+    // ── Localization ──
+    const i18n = {
+      en: {
+        months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+        days: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+        loc: { office: 'Office', home: 'Home Office', field: 'On The Go' },
+        title: 'Performance Report', continued: 'continued',
+        generated: 'Generated', confidential: 'Confidential',
+        page: 'Page', of: 'of',
+        keyMetrics: 'KEY METRICS',
+        totalHours: 'Total Hours', sessions: 'Sessions', daysWorked: 'Days Worked',
+        avgDay: 'Avg / Day', totalBreaks: 'Total Breaks', longestSession: 'Longest Session',
+        perfContrib: 'PERFORMANCE & CONTRIBUTION',
+        contrib: 'CONTRIB.', schedule: 'SCHEDULE',
+        earliestIn: 'Earliest In', latestOut: 'Latest Out',
+        efficiency: 'EFFICIENCY', netEfficiency: 'Net Efficiency', breakRatio: 'Break Ratio',
+        taskOverview: 'TASK OVERVIEW', totalTasks: 'Total Tasks',
+        done: 'Done', inProgress: 'In Progress', review: 'Review',
+        completionRate: 'Completion Rate', great: 'GREAT', ok: 'OK', low: 'LOW',
+        locBreakdown: 'LOCATION BREAKDOWN', sessionsPl: 'sessions',
+        dailyHours: 'DAILY HOURS',
+        sessionLog: 'SESSION LOG',
+        date: 'DATE', location: 'LOCATION', inCol: 'IN', outCol: 'OUT',
+        worked: 'WORKED', breaks: 'BREAKS', active: 'Active', totals: 'TOTALS',
+      },
+      de: {
+        months: ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'],
+        days: ['So','Mo','Di','Mi','Do','Fr','Sa'],
+        loc: { office: 'Büro', home: 'Homeoffice', field: 'Außeneinsatz' },
+        title: 'Leistungsbericht', continued: 'Fortsetzung',
+        generated: 'Erstellt', confidential: 'Vertraulich',
+        page: 'Seite', of: 'von',
+        keyMetrics: 'KENNZAHLEN',
+        totalHours: 'Gesamtstunden', sessions: 'Sitzungen', daysWorked: 'Arbeitstage',
+        avgDay: 'Ø pro Tag', totalBreaks: 'Pausen gesamt', longestSession: 'Längste Sitzung',
+        perfContrib: 'LEISTUNG & BEITRAG',
+        contrib: 'BEITRAG', schedule: 'ZEITEN',
+        earliestIn: 'Frühester Start', latestOut: 'Spätestes Ende',
+        efficiency: 'EFFIZIENZ', netEfficiency: 'Netto-Effizienz', breakRatio: 'Pausenanteil',
+        taskOverview: 'AUFGABENÜBERSICHT', totalTasks: 'Aufgaben gesamt',
+        done: 'Erledigt', inProgress: 'In Bearbeitung', review: 'Prüfung',
+        completionRate: 'Abschlussrate', great: 'SUPER', ok: 'OK', low: 'NIEDRIG',
+        locBreakdown: 'STANDORTVERTEILUNG', sessionsPl: 'Sitzungen',
+        dailyHours: 'TÄGLICHE STUNDEN',
+        sessionLog: 'SITZUNGSPROTOKOLL',
+        date: 'DATUM', location: 'STANDORT', inCol: 'EIN', outCol: 'AUS',
+        worked: 'GEARBEITET', breaks: 'PAUSEN', active: 'Aktiv', totals: 'GESAMT',
+      },
+    };
+    const t = i18n[lang] || i18n.en;
 
     // ── Load all data ──
     const [timelog, allTasks, allUsers, teams] = await Promise.all([
@@ -3108,11 +3160,7 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
     const allMonthSessions = timelog
       .filter(t => typeof t.date === 'string' && t.date.startsWith(prefix));
 
-    const locationLabel = (loc) => {
-      if (loc === 'home') return 'Home Office';
-      if (loc === 'field') return 'On The Go';
-      return 'Office';
-    };
+    const locationLabel = (loc) => t.loc[loc] || t.loc.office;
 
     const calcBreakMinutes = (session) => {
       const breaks = Array.isArray(session.breaks) ? session.breaks : [];
@@ -3139,10 +3187,9 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
     const totalWorkedMinutes = sessions.reduce((sum, s) => sum + calcWorkedMinutes(s), 0);
     const totalBreakMinutes = sessions.reduce((sum, s) => sum + calcBreakMinutes(s), 0);
     const totalHours = (totalWorkedMinutes / 60).toFixed(1);
-    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthNames = t.months;
     const monthName = monthNames[month - 1];
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayNames = t.days;
 
     const uniqueDays = new Set(sessions.map(s => s.date)).size;
     const avgPerDay = uniqueDays > 0 ? Math.round(totalWorkedMinutes / uniqueDays) : 0;
@@ -3339,11 +3386,11 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
           .text('T A S K F L O W', M.left, 14, { characterSpacing: 2 });
         doc.opacity(1);
         doc.fontSize(18).fillColor(C.white)
-          .text('Performance Report', M.left, 28);
+          .text(t.title, M.left, 28);
         doc.fontSize(11).fillColor(C.textLight)
           .text(`${monthName} ${year}`, M.left, 52);
         doc.fontSize(7).fillColor(C.textLight).opacity(0.5)
-          .text(`Generated ${new Date().toISOString().slice(0, 10)}`, M.left, 68);
+          .text(`${t.generated} ${new Date().toISOString().slice(0, 10)}`, M.left, 68);
         doc.opacity(1);
       } else {
         doc.fontSize(7).fillColor(C.primaryLight).opacity(0.6)
@@ -3352,7 +3399,7 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
         doc.fontSize(12).fillColor(C.white)
           .text(`${req.user.name} — ${monthName} ${year}`, M.left, 38);
         doc.fontSize(8).fillColor(C.textLight)
-          .text('Performance Report (continued)', M.left, 56);
+          .text(`${t.title} (${t.continued})`, M.left, 56);
       }
     };
 
@@ -3363,9 +3410,9 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
       const fy = PAGE_H - 32;
       drawLine(M.left, fy, PAGE_W - M.right, fy, C.border, 0.5);
       doc.fontSize(6.5).fillColor(C.textLight)
-        .text('TaskFlow — Confidential', M.left, fy + 6);
+        .text(`TaskFlow — ${t.confidential}`, M.left, fy + 6);
       doc.fontSize(6.5).fillColor(C.textLight)
-        .text(`Page ${pageNum} of ${totalPages}`, 0, fy + 6, { width: PAGE_W - M.right, align: 'right' });
+        .text(`${t.page} ${pageNum} ${t.of} ${totalPages}`, 0, fy + 6, { width: PAGE_W - M.right, align: 'right' });
     };
 
     // ══════════════════════════════════════════════════════════════
@@ -3375,25 +3422,25 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
     let y = HEADER_H + 16;
 
     // ── Section: Key Metrics (6 cards in 2 rows of 3) ──
-    doc.fontSize(8).fillColor(C.primary).text('KEY METRICS', M.left, y, { characterSpacing: 1.5 });
+    doc.fontSize(8).fillColor(C.primary).text(t.keyMetrics, M.left, y, { characterSpacing: 1.5 });
     y += 14;
     drawLine(M.left, y, M.left + 60, y, C.primary, 1.5);
     y += 8;
 
     const cW = (CONTENT_W - 16) / 3;
     const cH = 40;
-    drawStatCard(M.left, y, cW, cH, 'Total Hours', `${totalHours}h`, C.primary, C.primaryBg);
-    drawStatCard(M.left + cW + 8, y, cW, cH, 'Sessions', `${sessions.length}`, C.green, C.greenBg);
-    drawStatCard(M.left + (cW + 8) * 2, y, cW, cH, 'Days Worked', `${uniqueDays}`, C.blue, C.blueBg);
+    drawStatCard(M.left, y, cW, cH, t.totalHours, `${totalHours}h`, C.primary, C.primaryBg);
+    drawStatCard(M.left + cW + 8, y, cW, cH, t.sessions, `${sessions.length}`, C.green, C.greenBg);
+    drawStatCard(M.left + (cW + 8) * 2, y, cW, cH, t.daysWorked, `${uniqueDays}`, C.blue, C.blueBg);
     y += cH + 8;
 
-    drawStatCard(M.left, y, cW, cH, 'Avg / Day', fmtDuration(avgPerDay), C.cyan, C.blueBg);
-    drawStatCard(M.left + cW + 8, y, cW, cH, 'Total Breaks', fmtDuration(totalBreakMinutes), C.orange, C.orangeBg);
-    drawStatCard(M.left + (cW + 8) * 2, y, cW, cH, 'Longest Session', fmtDuration(longestSessionMins), C.red, C.redBg);
+    drawStatCard(M.left, y, cW, cH, t.avgDay, fmtDuration(avgPerDay), C.cyan, C.blueBg);
+    drawStatCard(M.left + cW + 8, y, cW, cH, t.totalBreaks, fmtDuration(totalBreakMinutes), C.orange, C.orangeBg);
+    drawStatCard(M.left + (cW + 8) * 2, y, cW, cH, t.longestSession, fmtDuration(longestSessionMins), C.red, C.redBg);
     y += cH + 16;
 
     // ── Section: Performance & Contribution ──
-    doc.fontSize(8).fillColor(C.primary).text('PERFORMANCE & CONTRIBUTION', M.left, y, { characterSpacing: 1.5 });
+    doc.fontSize(8).fillColor(C.primary).text(t.perfContrib, M.left, y, { characterSpacing: 1.5 });
     y += 14;
     drawLine(M.left, y, M.left + 120, y, C.primary, 1.5);
     y += 10;
@@ -3418,23 +3465,23 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
     doc.fontSize(16).fillColor(C.dark)
       .text(`${contributionPct}%`, donutCx - 22, donutCy - 10, { width: 44, align: 'center' });
     doc.fontSize(6).fillColor(C.textSecondary)
-      .text('CONTRIB.', donutCx - 22, donutCy + 8, { width: 44, align: 'center' });
+      .text(t.contrib, donutCx - 22, donutCy + 8, { width: 44, align: 'center' });
 
     // Stats next to donut
     const sx = M.left + 110;
-    doc.fontSize(7).fillColor(C.textSecondary).text('SCHEDULE', sx, y + 14);
-    doc.fontSize(8.5).fillColor(C.dark).text(`Earliest In: ${fmtHourDec(earliestIn)}`, sx, y + 26);
-    doc.fontSize(8.5).fillColor(C.dark).text(`Latest Out: ${fmtHourDec(latestOut)}`, sx, y + 40);
-    doc.fontSize(7).fillColor(C.textSecondary).text('EFFICIENCY', sx, y + 60);
+    doc.fontSize(7).fillColor(C.textSecondary).text(t.schedule, sx, y + 14);
+    doc.fontSize(8.5).fillColor(C.dark).text(`${t.earliestIn}: ${fmtHourDec(earliestIn)}`, sx, y + 26);
+    doc.fontSize(8.5).fillColor(C.dark).text(`${t.latestOut}: ${fmtHourDec(latestOut)}`, sx, y + 40);
+    doc.fontSize(7).fillColor(C.textSecondary).text(t.efficiency, sx, y + 60);
     const netEfficiency = totalWorkedMinutes + totalBreakMinutes > 0
       ? Math.round((totalWorkedMinutes / (totalWorkedMinutes + totalBreakMinutes)) * 100) : 0;
-    doc.fontSize(8.5).fillColor(C.dark).text(`Net Efficiency: ${netEfficiency}%`, sx, y + 72);
-    doc.fontSize(8.5).fillColor(C.dark).text(`Break Ratio: ${100 - netEfficiency}%`, sx, y + 86);
+    doc.fontSize(8.5).fillColor(C.dark).text(`${t.netEfficiency}: ${netEfficiency}%`, sx, y + 72);
+    doc.fontSize(8.5).fillColor(C.dark).text(`${t.breakRatio}: ${100 - netEfficiency}%`, sx, y + 86);
 
     // Right: task stats panel
     roundedRect(M.left + panelW + 12, y, panelW, 110, 6, C.bg);
     const tx = M.left + panelW + 24;
-    doc.fontSize(7).fillColor(C.textSecondary).text('TASK OVERVIEW', tx, y + 14);
+    doc.fontSize(7).fillColor(C.textSecondary).text(t.taskOverview, tx, y + 14);
 
     // Task progress bar
     const barX = tx;
@@ -3451,29 +3498,29 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
       if (irW > 0) doc.save(), doc.rect(barX + doneW + ipW, barY, irW, barH).fill(C.orange), doc.restore();
     }
 
-    doc.fontSize(8.5).fillColor(C.dark).text(`Total Tasks: ${totalTasks}`, tx, barY + 16);
-    doc.fontSize(8).fillColor(C.green).text(`${completedTasks} Done`, tx, barY + 30);
-    doc.fontSize(8).fillColor(C.blue).text(`${inProgressTasks} In Progress`, tx + 55, barY + 30);
-    doc.fontSize(8).fillColor(C.orange).text(`${inReviewTasks} Review`, tx + 130, barY + 30);
-    doc.fontSize(8.5).fillColor(C.dark).text(`Completion Rate: ${taskCompletionRate}%`, tx, barY + 48);
+    doc.fontSize(8.5).fillColor(C.dark).text(`${t.totalTasks}: ${totalTasks}`, tx, barY + 16);
+    doc.fontSize(8).fillColor(C.green).text(`${completedTasks} ${t.done}`, tx, barY + 30);
+    doc.fontSize(8).fillColor(C.blue).text(`${inProgressTasks} ${t.inProgress}`, tx + 55, barY + 30);
+    doc.fontSize(8).fillColor(C.orange).text(`${inReviewTasks} ${t.review}`, tx + 130, barY + 30);
+    doc.fontSize(8.5).fillColor(C.dark).text(`${t.completionRate}: ${taskCompletionRate}%`, tx, barY + 48);
     // Small completion indicator
     roundedRect(tx + 120, barY + 46, 40, 12, 4, taskCompletionRate >= 75 ? C.greenBg : taskCompletionRate >= 50 ? C.orangeBg : C.redBg);
     doc.fontSize(7).fillColor(taskCompletionRate >= 75 ? C.green : taskCompletionRate >= 50 ? C.orange : C.red)
-      .text(taskCompletionRate >= 75 ? 'GREAT' : taskCompletionRate >= 50 ? 'OK' : 'LOW',
+      .text(taskCompletionRate >= 75 ? t.great : taskCompletionRate >= 50 ? t.ok : t.low,
         tx + 120, barY + 48, { width: 40, align: 'center' });
 
     y += 120;
 
     // ── Section: Location Breakdown ──
-    doc.fontSize(8).fillColor(C.primary).text('LOCATION BREAKDOWN', M.left, y, { characterSpacing: 1.5 });
+    doc.fontSize(8).fillColor(C.primary).text(t.locBreakdown, M.left, y, { characterSpacing: 1.5 });
     y += 14;
     drawLine(M.left, y, M.left + 90, y, C.primary, 1.5);
     y += 8;
 
     const locData = [
-      { key: 'office', label: 'Office', color: C.blue, bg: C.blueBg, count: locCounts.office, mins: locMinutes.office },
-      { key: 'home', label: 'Home Office', color: C.green, bg: C.greenBg, count: locCounts.home, mins: locMinutes.home },
-      { key: 'field', label: 'On The Go', color: C.orange, bg: C.orangeBg, count: locCounts.field, mins: locMinutes.field },
+      { key: 'office', label: t.loc.office, color: C.blue, bg: C.blueBg, count: locCounts.office, mins: locMinutes.office },
+      { key: 'home', label: t.loc.home, color: C.green, bg: C.greenBg, count: locCounts.home, mins: locMinutes.home },
+      { key: 'field', label: t.loc.field, color: C.orange, bg: C.orangeBg, count: locCounts.field, mins: locMinutes.field },
     ];
     const locBarW = CONTENT_W;
     for (const loc of locData) {
@@ -3481,7 +3528,7 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
       roundedRect(M.left, y, locBarW, 22, 4, loc.bg);
       roundedRect(M.left, y, 3, 22, 2, loc.color);
       doc.fontSize(7.5).fillColor(C.dark).text(loc.label, M.left + 12, y + 6);
-      doc.fontSize(7).fillColor(C.textSecondary).text(`${loc.count} sessions`, M.left + 100, y + 7);
+      doc.fontSize(7).fillColor(C.textSecondary).text(`${loc.count} ${t.sessionsPl}`, M.left + 100, y + 7);
       doc.fontSize(7).fillColor(C.textSecondary).text(fmtDuration(loc.mins), M.left + 180, y + 7);
       // Mini bar
       const miniBarW = 150;
@@ -3495,7 +3542,7 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
 
     // ── Section: Daily Hours Bar Chart ──
     if (sessions.length > 0) {
-      doc.fontSize(8).fillColor(C.primary).text('DAILY HOURS', M.left, y, { characterSpacing: 1.5 });
+      doc.fontSize(8).fillColor(C.primary).text(t.dailyHours, M.left, y, { characterSpacing: 1.5 });
       y += 14;
       drawLine(M.left, y, M.left + 60, y, C.primary, 1.5);
       y += 8;
@@ -3532,7 +3579,7 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
       drawPageHeader(false);
       y = HEADER_H + 16;
 
-      doc.fontSize(8).fillColor(C.primary).text('SESSION LOG', M.left, y, { characterSpacing: 1.5 });
+      doc.fontSize(8).fillColor(C.primary).text(t.sessionLog, M.left, y, { characterSpacing: 1.5 });
       y += 14;
       drawLine(M.left, y, M.left + 60, y, C.primary, 1.5);
       y += 8;
@@ -3552,12 +3599,12 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
       const drawTableHeader = () => {
         roundedRect(M.left, y, CONTENT_W, 20, 4, C.dark);
         doc.fontSize(6.5).fillColor(C.white);
-        doc.text('DATE', colX.date + 8, y + 6, { width: 100 });
-        doc.text('LOCATION', colX.location + 4, y + 6, { width: 96 });
-        doc.text('IN', colX.clockIn + 4, y + 6, { width: 60 });
-        doc.text('OUT', colX.clockOut + 4, y + 6, { width: 65 });
-        doc.text('WORKED', colX.worked + 4, y + 6, { width: 66 });
-        doc.text('BREAKS', colX.breaks + 4, y + 6, { width: 46 });
+        doc.text(t.date, colX.date + 8, y + 6, { width: 100 });
+        doc.text(t.location, colX.location + 4, y + 6, { width: 96 });
+        doc.text(t.inCol, colX.clockIn + 4, y + 6, { width: 60 });
+        doc.text(t.outCol, colX.clockOut + 4, y + 6, { width: 65 });
+        doc.text(t.worked, colX.worked + 4, y + 6, { width: 66 });
+        doc.text(t.breaks, colX.breaks + 4, y + 6, { width: 46 });
         doc.text('%', colX.pct + 4, y + 6, { width: 30 });
         y += 22;
       };
@@ -3569,7 +3616,7 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
           doc.addPage();
           drawPageHeader(false);
           y = HEADER_H + 16;
-          doc.fontSize(7).fillColor(C.textSecondary).text('SESSION LOG (continued)', M.left, y);
+          doc.fontSize(7).fillColor(C.textSecondary).text(`${t.sessionLog} (${t.continued})`, M.left, y);
           y += 14;
           drawTableHeader();
         }
@@ -3588,7 +3635,7 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
         doc.fontSize(7.5).fillColor(C.dark).text(fmtTime(s.clockIn), colX.clockIn + 4, ty, { width: 60 });
         const isActive = !s.clockOut;
         doc.fontSize(7.5).fillColor(isActive ? C.green : C.dark)
-          .text(isActive ? 'Active' : fmtTime(s.clockOut), colX.clockOut + 4, ty, { width: 65 });
+          .text(isActive ? t.active : fmtTime(s.clockOut), colX.clockOut + 4, ty, { width: 65 });
         doc.fontSize(7.5).fillColor(C.primary).text(fmtDuration(worked), colX.worked + 4, ty, { width: 66 });
         doc.fontSize(7).fillColor(brk > 0 ? C.orange : C.textLight)
           .text(brk > 0 ? fmtDuration(brk) : '—', colX.breaks + 4, ty, { width: 46 });
@@ -3601,7 +3648,7 @@ app.get('/api/time/report', authMiddleware, async (req, res) => {
       y += 4;
       roundedRect(M.left, y, CONTENT_W, 24, 4, C.primaryBg);
       roundedRect(M.left, y, 3, 24, 2, C.primary);
-      doc.fontSize(7.5).fillColor(C.textSecondary).text('TOTALS', colX.date + 10, y + 7);
+      doc.fontSize(7.5).fillColor(C.textSecondary).text(t.totals, colX.date + 10, y + 7);
       doc.fontSize(8).fillColor(C.primary).text(fmtDuration(totalWorkedMinutes), colX.worked + 4, y + 7, { width: 66 });
       doc.fontSize(7.5).fillColor(C.orange).text(fmtDuration(totalBreakMinutes), colX.breaks + 4, y + 7, { width: 46 });
       doc.fontSize(7.5).fillColor(C.textSecondary).text('100%', colX.pct + 4, y + 7, { width: 30 });
@@ -3750,6 +3797,96 @@ app.get('/api/admin/timelog', adminAuth, async (req, res) => {
   try {
     const timelog = await storage.read('timelog.json');
     res.json(timelog);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Admin: add time entry for a user
+app.post('/api/admin/timelog', adminAuth, async (req, res) => {
+  try {
+    const { userId, date, clockIn, clockOut, location } = req.body;
+    if (!userId || !date || !clockIn || !clockOut) {
+      return res.status(400).json({ error: 'userId, date, clockIn, clockOut required' });
+    }
+    const validLocations = ['office', 'home', 'field'];
+    const loc = validLocations.includes(location) ? location : 'office';
+    const users = await storage.read('users.json');
+    const user = users.find(u => u.id === userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const ciDate = new Date(clockIn);
+    const coDate = new Date(clockOut);
+    if (isNaN(ciDate.getTime()) || isNaN(coDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid clockIn or clockOut date' });
+    }
+    if (coDate <= ciDate) {
+      return res.status(400).json({ error: 'clockOut must be after clockIn' });
+    }
+    const totalWorked = Math.round((coDate - ciDate) / 60000);
+
+    const entry = {
+      id: crypto.randomUUID(),
+      userId,
+      userName: user.username,
+      date,
+      clockIn: ciDate.toISOString(),
+      clockOut: coDate.toISOString(),
+      location: loc,
+      status: 'offline',
+      currentTask: null,
+      breaks: [],
+      totalWorked,
+      lastHeartbeat: coDate.toISOString(),
+      addedByAdmin: true
+    };
+    const timelog = await storage.read('timelog.json');
+    timelog.push(entry);
+    await storage.write('timelog.json', timelog);
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Admin: bulk import timelog entries
+app.post('/api/admin/timelog/import', adminAuth, async (req, res) => {
+  try {
+    const { entries } = req.body;
+    if (!Array.isArray(entries) || entries.length === 0) {
+      return res.status(400).json({ error: 'entries array required' });
+    }
+    const users = await storage.read('users.json');
+    const timelog = await storage.read('timelog.json');
+    const added = [];
+    for (const e of entries) {
+      if (!e.userId || !e.date || !e.clockIn || !e.clockOut) continue;
+      const user = users.find(u => u.id === e.userId);
+      if (!user) continue;
+      const ciDate = new Date(e.clockIn);
+      const coDate = new Date(e.clockOut);
+      if (isNaN(ciDate.getTime()) || isNaN(coDate.getTime()) || coDate <= ciDate) continue;
+      const totalWorked = Math.round((coDate - ciDate) / 60000);
+      const entry = {
+        id: crypto.randomUUID(),
+        userId: e.userId,
+        userName: user.username,
+        date: e.date,
+        clockIn: ciDate.toISOString(),
+        clockOut: coDate.toISOString(),
+        location: ['office', 'home', 'field'].includes(e.location) ? e.location : 'office',
+        status: 'offline',
+        currentTask: null,
+        breaks: [],
+        totalWorked,
+        lastHeartbeat: coDate.toISOString(),
+        addedByAdmin: true
+      };
+      timelog.push(entry);
+      added.push(entry);
+    }
+    await storage.write('timelog.json', timelog);
+    res.json({ imported: added.length, entries: added });
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }

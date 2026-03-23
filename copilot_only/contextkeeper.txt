@@ -1,5 +1,5 @@
 # TaskFlow Context Keeper
-# Last updated: 2026-03-18
+# Last updated: 2026-03-19
 
 ## Project Structure
 - server.js: ~3400+ lines, single Express server with inline routers
@@ -18,14 +18,18 @@
 7. Basic Reminders: periodic checkDeadlineReminders (15min), deadline_reminder notifications at 24h/48h before deadline
 8. i18n: ~50 new keys in en.json/de.json for all features
 
-## PDF v3 Report (COMPLETED)
-- Location: server.js lines 2856-3365 — GET /api/time/report
+## PDF v3 Report (COMPLETED) — with i18n
+- Location: server.js GET /api/time/report
 - Features: avatar initials circle (top-right), contribution donut, task stats panel, location breakdown bars, daily hours chart, full session log table (page 2), compact A4 print-ready
-- Loads: timelog, tasks, users, teams for full statistics
-- Stats: total hours, sessions, days, avg/day, breaks, longest session, contribution %, net efficiency, task completion rate, earliest in, latest out
-- Task panel: stacked progress bar (done/in-progress/review), total/done/ip/review counts, completion rate badge
-- Location breakdown: office/home/field with mini bars and percentages
-- Avatar: uses user.avatarConfig.backgroundColor or defaults to #A29BFE, shows initials
+- i18n: Full EN/DE support via `lang` query param. All strings use `t.xxx` from inline i18n object
+- Frontend passes `&lang=${I18n.currentLang}` from downloadTimeReport()
+
+## Admin Timelog Management (COMPLETED)
+- POST /api/admin/timelog: Add single time entry (userId, date, clockIn, clockOut, location)
+- POST /api/admin/timelog/import: Bulk import entries array (validates each, skips invalid)
+- Admin UI: "Add Time Entry" button + modal (user picker, date, clock in/out, location)
+- Admin UI: "Import JSON" button + modal (file upload, parses JSON array)
+- Entries marked with addedByAdmin: true
 
 ## Key Line References (server.js)
 - Auth middleware: 87-100
