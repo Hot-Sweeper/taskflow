@@ -1851,6 +1851,51 @@ function canUserReviewTask(task, userId) {
   return task.createdBy === userId || getTaskOperatorIds(task).includes(userId);
 }
 
+function startOfLocalDayMs(dateLike) {
+  const d = new Date(dateLike || Date.now());
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function taskDoneAtMs(task) {
+  const src = task?.completedAt || task?.doneAt || task?.updatedAt || task?.createdAt;
+  const ms = src ? new Date(src).getTime() : NaN;
+  return Number.isFinite(ms) ? ms : NaN;
+}
+
+async function autoArchiveCompletedTasksForFlow(flowId) {
+  const tasks = await storage.read('tasks.json');
+  const nowIso = new Date().toISOString();
+  const todayStart = startOfLocalDayMs(nowIso);
+  const archivedNow = [];
+  let changed = false;
+
+  for (const task of tasks) {
+    if (task.flowId !== flowId) continue;
+    if (task.archived) continue;
+    if (task.status !== 'done') continue;
+
+    const doneMs = taskDoneAtMs(task);
+    if (!Number.isFinite(doneMs)) continue;
+    if (doneMs >= todayStart) continue;
+
+    task.archived = true;
+    task.archivedAt = nowIso;
+    if (!task.completedAt) task.completedAt = new Date(doneMs).toISOString();
+    task.updatedAt = nowIso;
+    changed = true;
+    archivedNow.push({ ...task });
+  }
+
+  if (!changed) return { changed: false, archivedNow: [] };
+
+  await storage.write('tasks.json', tasks);
+  for (const task of archivedNow) {
+    await broadcastToFlow(flowId, { type: 'task:updated', payload: task });
+  }
+  return { changed: true, archivedNow };
+}
+
 // ═══════════════════════════════════════════════════════════════
 // STALE TASK DETECTION
 // ═══════════════════════════════════════════════════════════════
@@ -1889,8 +1934,19 @@ function enrichTasksWithStale(tasks, thresholds) {
 // Get tasks for a flow
 app.get('/api/flows/:flowId/tasks', authMiddleware, flowMemberMiddleware, async (req, res) => {
   try {
+    await autoArchiveCompletedTasksForFlow(req.params.flowId);
+
     const tasks = await storage.read('tasks.json');
     let filtered = tasks.filter(t => t.flowId === req.params.flowId);
+
+    const archivedMode = (req.query.archived || '').toString();
+    if (archivedMode === 'only') {
+      filtered = filtered.filter(t => !!t.archived);
+    } else if (archivedMode !== 'include') {
+      // Default behavior: active tasks only.
+      filtered = filtered.filter(t => !t.archived);
+    }
+
     if (req.query.assignedTo) {
       filtered = filtered.filter(t => getTaskAssigneeIds(t).includes(req.query.assignedTo));
     }
@@ -1973,6 +2029,9 @@ app.post('/api/flows/:flowId/tasks', authMiddleware, flowMemberMiddleware, async
       files: [],
       recurrenceRule: recurrenceRule || null,
       recurrenceSeriesId: recurrenceRule ? crypto.randomUUID() : null,
+      archived: false,
+      archivedAt: null,
+      completedAt: null,
       lastActivityAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -2034,6 +2093,14 @@ app.put('/api/flows/:flowId/tasks/:id', authMiddleware, flowMemberMiddleware, as
     if (req.body.status !== undefined && req.body.status !== oldStatus) {
       if (!Array.isArray(tasks[idx].statusLog)) tasks[idx].statusLog = [];
       tasks[idx].statusLog.push({ from: oldStatus, to: req.body.status, at: _now, by: req.user.userId });
+
+      if (req.body.status === 'done') {
+        tasks[idx].completedAt = _now;
+      } else {
+        // A reopened task should return from archive if it was archived earlier.
+        tasks[idx].archived = false;
+        tasks[idx].archivedAt = null;
+      }
     }
     if (req.body.progress !== undefined) {
       const newProgress = Math.max(0, Math.min(100, parseInt(req.body.progress, 10) || 0));
@@ -2231,6 +2298,28 @@ app.delete('/api/flows/:flowId/tasks/:id', authMiddleware, flowMemberMiddleware,
     await storage.write('tasks.json', tasks);
     await broadcastToFlow(req.params.flowId, { type: 'task:deleted', payload: { id: req.params.id } });
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Unarchive a task (keeps status as-is, typically done)
+app.post('/api/flows/:flowId/tasks/:id/unarchive', authMiddleware, flowMemberMiddleware, async (req, res) => {
+  try {
+    const tasks = await storage.read('tasks.json');
+    const idx = tasks.findIndex(t => t.id === req.params.id && t.flowId === req.params.flowId);
+    if (idx === -1) return res.status(404).json({ error: 'Task not found' });
+
+    tasks[idx].archived = false;
+    tasks[idx].archivedAt = null;
+    tasks[idx].updatedAt = new Date().toISOString();
+    if (tasks[idx].status === 'done' && !tasks[idx].completedAt) {
+      tasks[idx].completedAt = tasks[idx].updatedAt;
+    }
+
+    await storage.write('tasks.json', tasks);
+    await broadcastToFlow(req.params.flowId, { type: 'task:updated', payload: tasks[idx] });
+    res.json(tasks[idx]);
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }

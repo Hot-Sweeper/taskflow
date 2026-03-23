@@ -85,8 +85,11 @@ const API = {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
     return this.get(`/api/flows/${flowId}/tasks` + qs);
   },
+  getArchivedTasks(flowId) { return this.getTasks(flowId, { archived: 'only' }); },
+  getAllTasks(flowId) { return this.getTasks(flowId, { archived: 'include' }); },
   createTask(flowId, task) { return this.post(`/api/flows/${flowId}/tasks`, task); },
   updateTask(flowId, id, data) { return this.put(`/api/flows/${flowId}/tasks/${id}`, data); },
+  unarchiveTask(flowId, id) { return this.post(`/api/flows/${flowId}/tasks/${id}/unarchive`); },
   deleteTask(flowId, id) { return this.del(`/api/flows/${flowId}/tasks/${id}`); },
   addNote(flowId, taskId, formData) { return this.upload(`/api/flows/${flowId}/tasks/${taskId}/notes`, formData); },
   uploadFiles(flowId, taskId, formData) { return this.upload(`/api/flows/${flowId}/tasks/${taskId}/files`, formData); },

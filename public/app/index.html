@@ -537,6 +537,75 @@ a { color: var(--accent); text-decoration: none; }
   animation: tabEnter 0.22s ease-out;
 }
 
+/* Desktop-only Archive + Stats tabs */
+.archive-list,
+.stats-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.archive-item {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.archive-main { min-width: 0; }
+.archive-title { font-size: 14px; font-weight: 700; }
+.archive-meta { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.archive-action-btn {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--accent-dim);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.stats-card {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  border-radius: 10px;
+  padding: 12px;
+}
+.stats-card .label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px; }
+.stats-card .value { font-size: 24px; font-weight: 800; margin-top: 4px; }
+.stats-meter {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  border-radius: 10px;
+  padding: 12px;
+}
+.stats-meter-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-input);
+  overflow: hidden;
+  margin-top: 8px;
+}
+.stats-meter-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 65%, #fff));
+}
+
 /* ═══ BOTTOM NAV ═══ */
 .bottom-nav {
   height: var(--nav-height); display: flex; border-top: 1px solid var(--border);
@@ -557,6 +626,13 @@ a { color: var(--accent); text-decoration: none; }
   display: none; align-items: center; justify-content: center; padding: 0 4px;
 }
 .nav-item .nav-badge.visible { display: flex; }
+
+@media (max-width: 768px) {
+  #tabArchive,
+  #tabStats {
+    display: none !important;
+  }
+}
 
 /* ═══ TASKS TAB ═══ */
 .tasks-toolbar {
@@ -2954,6 +3030,12 @@ a { color: var(--accent); text-decoration: none; }
       <button class="sidebar-nav-item active" data-tab="tabTasks" onclick="switchTab('tabTasks')">
         <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></span> <span data-i18n="nav.tasks">Tasks</span>
       </button>
+      <button class="sidebar-nav-item" data-tab="tabArchive" onclick="switchTab('tabArchive')">
+        <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></span> <span data-i18n="nav.archive">Archive</span>
+      </button>
+      <button class="sidebar-nav-item" data-tab="tabStats" onclick="switchTab('tabStats')">
+        <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> <span data-i18n="nav.stats">Statistics</span>
+      </button>
       <button class="sidebar-nav-item" data-tab="tabPeople" onclick="switchTab('tabPeople')">
         <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span> <span data-i18n="nav.team">Team</span>
       </button>
@@ -3094,6 +3176,20 @@ a { color: var(--accent); text-decoration: none; }
         </div>
       </div>
     </div>
+  </div>
+
+  <div class="tab-content" id="tabArchive">
+    <div class="tab-header">
+      <h3 data-i18n="nav.archive">Archive</h3>
+    </div>
+    <div class="archive-list" id="archiveList"></div>
+  </div>
+
+  <div class="tab-content" id="tabStats">
+    <div class="tab-header">
+      <h3 data-i18n="nav.stats">Statistics</h3>
+    </div>
+    <div class="stats-wrap" id="statsWrap"></div>
   </div>
 
   <div class="tab-content" id="tabPeople">
@@ -3447,6 +3543,7 @@ let currentFlow = null;      // full flow object
 let flows = [];
 let members = [];            // current flow members
 let tasks = [];              // current flow tasks
+let archivedTasks = [];      // current flow archived tasks
 let conversations = [];
 let currentChatUserId = null;
 let chatMessages = [];
@@ -3701,7 +3798,7 @@ function showScreen(id) {
 
 // ═══ DEEP LINKING (hash-based) ═══
 // Hash format: #flow/{flowId}[/{tab}][/task/{taskId}]
-const TAB_MAP = { tasks: 'tabTasks', people: 'tabPeople', time: 'tabTime', chat: 'tabChat', more: 'tabMore' };
+const TAB_MAP = { tasks: 'tabTasks', archive: 'tabArchive', stats: 'tabStats', people: 'tabPeople', time: 'tabTime', chat: 'tabChat', more: 'tabMore' };
 const TAB_REVERSE = Object.fromEntries(Object.entries(TAB_MAP).map(([k,v]) => [v, k]));
 
 function updateHash() {
@@ -4067,13 +4164,15 @@ async function enterFlow(flow, restoreTab, restoreTaskId) {
 
   // Load data
   try {
-    [tasks, members] = await Promise.all([
+    [tasks, members, archivedTasks] = await Promise.all([
       API.getTasks(flow.id),
-      API.getMembers(flow.id)
+      API.getMembers(flow.id),
+      API.getArchivedTasks(flow.id)
     ]);
   } catch (err) {
     tasks = [];
     members = [];
+    archivedTasks = [];
   }
 
   // Reset sub-flow filter on entering new flow
@@ -4087,6 +4186,8 @@ async function enterFlow(flow, restoreTab, restoreTaskId) {
   loadTimerStatus();
   renderTimeTab();
   renderMore();
+  renderArchiveTab();
+  renderStatsTab();
 
   // Deep link: open task from URL hash
   const deepTaskId = restoreTaskId || null;
@@ -4118,6 +4219,9 @@ function goToFlowPicker() {
 // TAB NAVIGATION
 // ═══════════════════════════════════════════════════════════════
 function switchTab(tabId) {
+  if (isMobile() && (tabId === 'tabArchive' || tabId === 'tabStats')) {
+    tabId = 'tabTasks';
+  }
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
 
@@ -4149,6 +4253,20 @@ function switchTab(tabId) {
     loadNotifications();
   }
 
+  if (tabId === 'tabArchive') {
+    renderArchiveTab();
+    loadArchivedTasks().then(() => {
+      if (document.getElementById('tabArchive')?.classList.contains('active')) renderArchiveTab();
+    });
+  }
+
+  if (tabId === 'tabStats') {
+    renderStatsTab();
+    loadArchivedTasks().then(() => {
+      if (document.getElementById('tabStats')?.classList.contains('active')) renderStatsTab();
+    });
+  }
+
   // Update URL hash
   updateHash();
 }
@@ -4161,10 +4279,14 @@ function renderTasks() {
   else renderList();
   renderFilterChips();
   updateReviewBadge();
+  if (document.getElementById('tabStats')?.classList.contains('active')) {
+    renderStatsTab();
+  }
 }
 
 function getFilteredTasks() {
   let filtered = tasks;
+  filtered = filtered.filter(t => !t.archived);
   if (currentFilter !== 'all') filtered = filtered.filter(t => t.status === currentFilter);
   // Sub-flow filter
   if (currentSubFlow !== 'all') {
@@ -4186,6 +4308,134 @@ function getFilteredTasks() {
     });
   }
   return filtered;
+}
+
+async function loadArchivedTasks() {
+  if (!currentFlow) return [];
+  try {
+    archivedTasks = await API.getArchivedTasks(currentFlow.id);
+  } catch {
+    archivedTasks = [];
+  }
+  return archivedTasks;
+}
+
+function formatArchiveDate(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleString();
+}
+
+function renderArchiveTab() {
+  const container = document.getElementById('archiveList');
+  if (!container) return;
+
+  const rows = [...(archivedTasks || [])]
+    .sort((a, b) => new Date(b.archivedAt || b.updatedAt || 0) - new Date(a.archivedAt || a.updatedAt || 0));
+
+  if (!rows.length) {
+    container.innerHTML = `<div class="empty-state"><span class="empty-icon">${icon('archive', 30)}</span><span class="empty-text" data-i18n="archive.empty">No archived tasks</span></div>`;
+    I18n.translateDOM();
+    return;
+  }
+
+  container.innerHTML = rows.map(t => `
+    <div class="archive-item">
+      <div class="archive-main">
+        <div class="archive-title">${esc(t.title || '')}</div>
+        <div class="archive-meta">${esc(I18n.t('task.status.done'))} · ${esc(I18n.t('archive.archivedAt') || 'Archived')} ${esc(formatArchiveDate(t.archivedAt || t.updatedAt))}</div>
+      </div>
+      <button class="archive-action-btn" onclick="unarchiveTaskFromArchive('${t.id}')" data-i18n="archive.unarchive">Unarchive</button>
+    </div>
+  `).join('');
+  I18n.translateDOM();
+}
+
+function getAllFlowTasksForStats() {
+  const map = new Map();
+  for (const t of tasks || []) map.set(t.id, t);
+  for (const t of archivedTasks || []) map.set(t.id, t);
+  return [...map.values()];
+}
+
+function startOfToday() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function startOfWeekMonday() {
+  const d = new Date();
+  const day = d.getDay();
+  const delta = day === 0 ? 6 : day - 1;
+  d.setDate(d.getDate() - delta);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function renderStatsTab() {
+  const container = document.getElementById('statsWrap');
+  if (!container) return;
+
+  const all = getAllFlowTasksForStats();
+  if (!all.length) {
+    container.innerHTML = `<div class="empty-state"><span class="empty-icon">${icon('chart', 30)}</span><span class="empty-text" data-i18n="stats.empty">No statistics yet</span></div>`;
+    I18n.translateDOM();
+    return;
+  }
+
+  const total = all.length;
+  const completed = all.filter(t => t.status === 'done').length;
+  const archived = all.filter(t => !!t.archived).length;
+  const open = all.filter(t => t.status !== 'done' && !t.archived).length;
+  const rate = total ? Math.round((completed / total) * 100) : 0;
+
+  const todayStart = startOfToday();
+  const weekStart = startOfWeekMonday();
+  const doneToday = all.filter(t => {
+    if (t.status !== 'done') return false;
+    const ms = new Date(t.completedAt || t.updatedAt || t.createdAt || 0).getTime();
+    return Number.isFinite(ms) && ms >= todayStart;
+  }).length;
+  const doneThisWeek = all.filter(t => {
+    if (t.status !== 'done') return false;
+    const ms = new Date(t.completedAt || t.updatedAt || t.createdAt || 0).getTime();
+    return Number.isFinite(ms) && ms >= weekStart;
+  }).length;
+
+  container.innerHTML = `
+    <div class="stats-grid">
+      <div class="stats-card"><div class="label" data-i18n="stats.totalTasks">Total tasks</div><div class="value">${total}</div></div>
+      <div class="stats-card"><div class="label" data-i18n="stats.completedTasks">Completed</div><div class="value">${completed}</div></div>
+      <div class="stats-card"><div class="label" data-i18n="stats.openTasks">Open</div><div class="value">${open}</div></div>
+      <div class="stats-card"><div class="label" data-i18n="stats.archivedTasks">Archived</div><div class="value">${archived}</div></div>
+      <div class="stats-card"><div class="label" data-i18n="stats.doneToday">Done today</div><div class="value">${doneToday}</div></div>
+      <div class="stats-card"><div class="label" data-i18n="stats.doneWeek">Done this week</div><div class="value">${doneThisWeek}</div></div>
+    </div>
+    <div class="stats-meter">
+      <div class="label" data-i18n="stats.completionRate">Completion rate</div>
+      <div class="value">${rate}%</div>
+      <div class="stats-meter-track"><div class="stats-meter-fill" style="width:${rate}%"></div></div>
+    </div>
+  `;
+  I18n.translateDOM();
+}
+
+async function unarchiveTaskFromArchive(taskId) {
+  if (!currentFlow || !taskId) return;
+  try {
+    const updated = await API.unarchiveTask(currentFlow.id, taskId);
+    archivedTasks = archivedTasks.filter(t => t.id !== taskId);
+    const idx = tasks.findIndex(t => t.id === updated.id);
+    if (idx >= 0) tasks[idx] = updated;
+    else tasks.push(updated);
+    renderArchiveTab();
+    renderTasks();
+    renderStatsTab();
+  } catch (err) {
+    toast(err.message);
+  }
 }
 
 function updateReviewBadge() {
@@ -9209,32 +9459,53 @@ function setupWSListeners() {
   WS.on('task:created', (msg) => {
     const task = msg.payload;
     if (currentFlow && task.flowId === currentFlow.id) {
-      if (!tasks.find(t => t.id === task.id)) {
-        tasks.push(task);
-        renderTasks();
+      if (task.archived) {
+        if (!archivedTasks.find(t => t.id === task.id)) archivedTasks.push(task);
+      } else {
+        if (!tasks.find(t => t.id === task.id)) tasks.push(task);
       }
+      renderTasks();
+      if (document.getElementById('tabArchive')?.classList.contains('active')) renderArchiveTab();
+      if (document.getElementById('tabStats')?.classList.contains('active')) renderStatsTab();
     }
   });
 
   WS.on('task:updated', (msg) => {
     const updated = msg.payload;
     if (currentFlow && updated.flowId === currentFlow.id) {
-      const idx = tasks.findIndex(t => t.id === updated.id);
-      if (idx !== -1) {
-        const prev = tasks[idx];
-        const merged = { ...prev, ...updated };
-        // Keep client-side progress logs if backend payload does not include them yet.
-        if ((!Array.isArray(updated.progressLog) || updated.progressLog.length === 0)
-          && Array.isArray(prev.progressLog) && prev.progressLog.length > 0) {
-          merged.progressLog = prev.progressLog;
+      const activeIdx = tasks.findIndex(t => t.id === updated.id);
+      const archiveIdx = archivedTasks.findIndex(t => t.id === updated.id);
+
+      if (updated.archived) {
+        if (activeIdx !== -1) tasks.splice(activeIdx, 1);
+        if (archiveIdx !== -1) archivedTasks[archiveIdx] = { ...archivedTasks[archiveIdx], ...updated };
+        else archivedTasks.push(updated);
+      } else {
+        if (archiveIdx !== -1) archivedTasks.splice(archiveIdx, 1);
+        if (activeIdx !== -1) {
+          const prev = tasks[activeIdx];
+          const merged = { ...prev, ...updated };
+          // Keep client-side progress logs if backend payload does not include them yet.
+          if ((!Array.isArray(updated.progressLog) || updated.progressLog.length === 0)
+            && Array.isArray(prev.progressLog) && prev.progressLog.length > 0) {
+            merged.progressLog = prev.progressLog;
+          }
+          tasks[activeIdx] = merged;
+        } else {
+          tasks.push(updated);
         }
-        tasks[idx] = merged;
       }
+
       renderTasks();
+      if (document.getElementById('tabArchive')?.classList.contains('active')) renderArchiveTab();
+      if (document.getElementById('tabStats')?.classList.contains('active')) renderStatsTab();
+
       // Skip re-rendering detail panel when this is our own save echo — prevents
       // deadline unfocus, slider bounce animations, and input disruption.
-      if (currentTaskId === updated.id && idx !== -1 && _selfSaveTaskId !== updated.id) {
-        renderDetail(tasks[idx]);
+      if (currentTaskId === updated.id && _selfSaveTaskId !== updated.id) {
+        const detailTask = tasks.find(t => t.id === updated.id) || archivedTasks.find(t => t.id === updated.id);
+        if (detailTask) renderDetail(detailTask);
+        else closeDetail();
       }
 
       // Keep creator notifications current even if a specific notification event was missed.
@@ -9247,7 +9518,10 @@ function setupWSListeners() {
   WS.on('task:deleted', (msg) => {
     if (currentFlow) {
       tasks = tasks.filter(t => t.id !== msg.payload.id);
+      archivedTasks = archivedTasks.filter(t => t.id !== msg.payload.id);
       renderTasks();
+      if (document.getElementById('tabArchive')?.classList.contains('active')) renderArchiveTab();
+      if (document.getElementById('tabStats')?.classList.contains('active')) renderStatsTab();
       if (currentTaskId === msg.payload.id) closeDetail();
     }
   });
