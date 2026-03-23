@@ -2587,6 +2587,38 @@ a { color: var(--accent); text-decoration: none; }
 .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
 .btn-sm-danger:hover { border-color: var(--red); color: var(--red); }
 
+/* ═══ API KEYS ═══ */
+.apikey-list { display: flex; flex-direction: column; gap: 8px; }
+.apikey-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  border-radius: var(--radius-xs); background: var(--bg-input); border: 1px solid var(--border);
+}
+.apikey-row.revoked { opacity: 0.4; }
+.apikey-info { flex: 1; min-width: 0; }
+.apikey-name { font-size: 13px; font-weight: 600; }
+.apikey-preview { font-size: 11px; font-family: monospace; color: var(--text-secondary); }
+.apikey-meta { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
+.apikey-new-box {
+  margin: 12px 0; padding: 14px; border-radius: var(--radius-sm);
+  background: var(--accent-dim); border: 1px solid var(--accent);
+}
+.apikey-new-box .apikey-full-key {
+  font-family: monospace; font-size: 12px; word-break: break-all;
+  padding: 8px; background: var(--bg); border-radius: var(--radius-xs);
+  margin: 8px 0; border: 1px solid var(--border); user-select: all;
+  cursor: pointer;
+}
+.apikey-new-box .apikey-warning {
+  font-size: 11px; color: var(--red); font-weight: 600; margin-top: 6px;
+}
+.apikey-create-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.apikey-create-row input {
+  flex: 1; padding: 8px 12px; border-radius: var(--radius-xs);
+  border: 1px solid var(--border); background: var(--bg-input); color: var(--text);
+  outline: none; font-size: 13px;
+}
+.apikey-create-row input:focus { border-color: var(--border-focus); }
+
 /* ═══ EMPTY STATES ═══ */
 .empty-state {
   display: flex; flex-direction: column; align-items: center;
@@ -3138,6 +3170,10 @@ a { color: var(--accent); text-decoration: none; }
           <span class="more-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span>
           <span class="more-label" data-i18n="flow.settings">Flow Settings</span>
         </div>
+        <div class="more-item" onclick="openApiKeysPanel()">
+          <span class="more-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.78 7.78 5.5 5.5 0 017.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></span>
+          <span class="more-label" data-i18n="apikeys.title">API Keys</span>
+        </div>
       </div>
       <div class="more-section">
         <div class="more-item" onclick="doLogout()" style="color:var(--red)">
@@ -3152,6 +3188,13 @@ a { color: var(--accent); text-decoration: none; }
         <div class="chat-name" data-i18n="flow.settings">Flow Settings</div>
       </div>
       <div class="settings-body" id="settingsBody"></div>
+    </div>
+    <div class="settings-panel" id="apiKeysPanel">
+      <div class="chat-header">
+        <button class="back-btn" onclick="closeApiKeysPanel()">←</button>
+        <div class="chat-name" data-i18n="apikeys.title">API Keys</div>
+      </div>
+      <div class="settings-body" id="apiKeysBody"></div>
     </div>
   </div>
 
@@ -8327,6 +8370,111 @@ function openFlowSettings() {
 function closeFlowSettings() {
   document.getElementById('settingsPanel').classList.remove('active');
   document.getElementById('moreMenu').style.display = '';
+}
+
+// ═══ API KEY MANAGEMENT ═══
+let lastCreatedApiKey = null;
+
+async function openApiKeysPanel() {
+  document.getElementById('moreMenu').style.display = 'none';
+  document.getElementById('apiKeysPanel').classList.add('active');
+  lastCreatedApiKey = null;
+  await renderApiKeys();
+}
+
+function closeApiKeysPanel() {
+  document.getElementById('apiKeysPanel').classList.remove('active');
+  document.getElementById('moreMenu').style.display = '';
+  lastCreatedApiKey = null;
+}
+
+async function renderApiKeys() {
+  const body = document.getElementById('apiKeysBody');
+  let keys = [];
+  try { keys = await API.getApiKeys(); } catch (err) { toast(err.message); }
+
+  const activeKeys = keys.filter(k => !k.revoked);
+  const revokedKeys = keys.filter(k => k.revoked);
+
+  body.innerHTML = `
+    <div class="settings-section">
+      <h3>${I18n.t('apikeys.create') || 'Create API Key'}</h3>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">${I18n.t('apikeys.description') || 'API keys let agents and integrations act as you with the same permissions.'}</p>
+      <div class="apikey-create-row">
+        <input id="apiKeyNameInput" type="text" placeholder="${I18n.t('apikeys.namePlaceholder') || 'Key name (e.g. My Agent)'}" maxlength="50">
+        <button class="btn-save" onclick="createApiKey()" style="white-space:nowrap;padding:8px 16px;font-size:13px">${icon('plus', 14)} ${I18n.t('common.create') || 'Create'}</button>
+      </div>
+      ${lastCreatedApiKey ? `
+      <div class="apikey-new-box">
+        <div style="font-size:12px;font-weight:600">${I18n.t('apikeys.created') || 'Key created!'}</div>
+        <div class="apikey-full-key" onclick="copyApiKey(this)" title="${I18n.t('common.clickToCopy') || 'Click to copy'}">${esc(lastCreatedApiKey)}</div>
+        <button class="copy-btn" onclick="copyApiKey()" style="font-size:11px;margin-bottom:4px">${icon('copy', 12)} ${I18n.t('common.copy') || 'Copy'}</button>
+        <div class="apikey-warning">${I18n.t('apikeys.copyWarning') || 'Copy this key now — it won\'t be shown again!'}</div>
+      </div>
+      ` : ''}
+    </div>
+    <div class="settings-section">
+      <h3>${I18n.t('apikeys.active') || 'Active Keys'} (${activeKeys.length})</h3>
+      <div class="apikey-list">
+        ${activeKeys.length ? activeKeys.map(k => `
+          <div class="apikey-row">
+            <div class="apikey-info">
+              <div class="apikey-name">${esc(k.name)}</div>
+              <div class="apikey-preview">${esc(k.keyPreview)}</div>
+              <div class="apikey-meta">${I18n.t('apikeys.lastUsed') || 'Last used'}: ${k.lastUsedAt ? relativeTime(k.lastUsedAt) : (I18n.t('common.never') || 'Never')}</div>
+            </div>
+            <button class="btn-sm btn-sm-danger" onclick="revokeApiKey('${k.id}','${esc(k.name)}')" title="${I18n.t('apikeys.revoke') || 'Revoke'}">${icon('x', 14)}</button>
+          </div>
+        `).join('') : `<div style="font-size:13px;color:var(--text-secondary);padding:8px 0">${I18n.t('apikeys.noKeys') || 'No API keys yet'}</div>`}
+      </div>
+    </div>
+    ${revokedKeys.length ? `
+    <div class="settings-section">
+      <h3 style="color:var(--text-secondary)">${I18n.t('apikeys.revoked') || 'Revoked'} (${revokedKeys.length})</h3>
+      <div class="apikey-list">
+        ${revokedKeys.map(k => `
+          <div class="apikey-row revoked">
+            <div class="apikey-info">
+              <div class="apikey-name">${esc(k.name)}</div>
+              <div class="apikey-preview">${esc(k.keyPreview)}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+    <div class="settings-section">
+      <h3>${I18n.t('apikeys.mcpSection') || 'MCP Server'}</h3>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">${I18n.t('apikeys.mcpDescription') || 'Use the MCP server to connect AI agents (Claude, GPT, etc.) to your TaskFlow account.'}</p>
+      <div style="padding:10px;background:var(--bg-input);border-radius:var(--radius-xs);border:1px solid var(--border);font-family:monospace;font-size:11px;word-break:break-all;user-select:all;cursor:pointer" onclick="navigator.clipboard.writeText(this.textContent);toast('Copied!')">npx taskflow-mcp --url ${location.origin} --key YOUR_API_KEY</div>
+    </div>
+  `;
+}
+
+async function createApiKey() {
+  const input = document.getElementById('apiKeyNameInput');
+  const name = input?.value.trim();
+  if (!name) { toast(I18n.t('apikeys.nameRequired') || 'Key name is required'); return; }
+  try {
+    const result = await API.createApiKey(name);
+    lastCreatedApiKey = result.key;
+    input.value = '';
+    await renderApiKeys();
+  } catch (err) { toast(err.message); }
+}
+
+function copyApiKey() {
+  if (lastCreatedApiKey) {
+    navigator.clipboard.writeText(lastCreatedApiKey).then(() => toast(I18n.t('common.copied') || 'Copied!'));
+  }
+}
+
+async function revokeApiKey(keyId, keyName) {
+  if (!await appConfirm(`${I18n.t('apikeys.revokeConfirm') || 'Revoke API key'} "${keyName}"?`)) return;
+  try {
+    await API.revokeApiKey(keyId);
+    await renderApiKeys();
+    toast(I18n.t('apikeys.keyRevoked') || 'API key revoked');
+  } catch (err) { toast(err.message); }
 }
 
 // ═══ SUB-FLOW MANAGEMENT ═══

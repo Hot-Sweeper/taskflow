@@ -380,5 +380,26 @@
 
   "review.inbox": "Prüfung",
   "review.approved": "Aufgabe genehmigt",
-  "review.revisionSent": "Überarbeitung angefordert"
+  "review.revisionSent": "Überarbeitung angefordert",
+
+  "common.create": "Erstellen",
+  "common.never": "Nie",
+  "common.clickToCopy": "Zum Kopieren klicken",
+
+  "apikeys.title": "API-Schlüssel",
+  "apikeys.create": "API-Schlüssel erstellen",
+  "apikeys.description": "API-Schlüssel ermöglichen Agenten und Integrationen, in deinem Namen mit denselben Berechtigungen zu handeln.",
+  "apikeys.namePlaceholder": "Schlüsselname (z. B. Mein Agent)",
+  "apikeys.created": "Schlüssel erstellt!",
+  "apikeys.copyWarning": "Kopiere diesen Schlüssel jetzt — er wird nicht erneut angezeigt!",
+  "apikeys.active": "Aktive Schlüssel",
+  "apikeys.lastUsed": "Zuletzt verwendet",
+  "apikeys.noKeys": "Noch keine API-Schlüssel",
+  "apikeys.revoke": "Widerrufen",
+  "apikeys.revokeConfirm": "API-Schlüssel widerrufen",
+  "apikeys.keyRevoked": "API-Schlüssel widerrufen",
+  "apikeys.revoked": "Widerrufen",
+  "apikeys.mcpSection": "MCP-Server",
+  "apikeys.mcpDescription": "Verwende den MCP-Server, um KI-Agenten (Claude, GPT, etc.) mit deinem TaskFlow-Konto zu verbinden.",
+  "apikeys.nameRequired": "Schlüsselname ist erforderlich"
 }

@@ -79,13 +79,33 @@ app.use('/boss', express.static(path.join(__dirname, 'public', 'boss')));
 app.use('/worker', express.static(path.join(__dirname, 'public', 'worker')));
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
-// Auth middleware
-function authMiddleware(req, res, next) {
+// Auth middleware — supports session tokens AND API keys (tfk_ prefix)
+async function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Authentication required' });
   }
   const token = header.slice(7);
+
+  // API key auth (tfk_ prefix)
+  if (token.startsWith('tfk_')) {
+    try {
+      const apiKeys = await storage.read('apikeys.json');
+      const key = apiKeys.find(k => k.key === token && !k.revoked);
+      if (!key) return res.status(401).json({ error: 'Invalid or revoked API key' });
+      // Update last used timestamp (fire-and-forget)
+      key.lastUsedAt = new Date().toISOString();
+      storage.write('apikeys.json', apiKeys).catch(() => {});
+      req.user = { userId: key.userId, name: key.userName };
+      req.token = token;
+      req.isApiKey = true;
+      return next();
+    } catch {
+      return res.status(401).json({ error: 'Invalid API key' });
+    }
+  }
+
+  // Session token auth
   const session = sessions.get(token);
   if (!session) {
     return res.status(401).json({ error: 'Invalid or expired token' });
@@ -478,6 +498,86 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
     res.json({ id: user.id, name: user.name, avatarUrl: avatarUrlFromUser(user) });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// API KEY MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+
+// Generate a secure API key with tfk_ prefix
+function generateApiKey() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = 'tfk_';
+  for (let i = 0; i < 48; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+// List user's API keys (redacted)
+app.get('/api/auth/api-keys', authMiddleware, async (req, res) => {
+  try {
+    const apiKeys = await storage.read('apikeys.json');
+    const userKeys = apiKeys
+      .filter(k => k.userId === req.user.userId)
+      .map(k => ({
+        id: k.id,
+        name: k.name,
+        keyPreview: k.key.slice(0, 8) + '...' + k.key.slice(-4),
+        createdAt: k.createdAt,
+        lastUsedAt: k.lastUsedAt,
+        revoked: k.revoked
+      }));
+    res.json(userKeys);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create a new API key
+app.post('/api/auth/api-keys', authMiddleware, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Key name is required' });
+    }
+    const apiKeys = await storage.read('apikeys.json');
+    const activeKeys = apiKeys.filter(k => k.userId === req.user.userId && !k.revoked);
+    if (activeKeys.length >= 10) {
+      return res.status(400).json({ error: 'Maximum 10 active API keys per user' });
+    }
+    const key = generateApiKey();
+    const entry = {
+      id: crypto.randomUUID(),
+      userId: req.user.userId,
+      userName: req.user.name,
+      name: name.trim().slice(0, 50),
+      key,
+      createdAt: new Date().toISOString(),
+      lastUsedAt: null,
+      revoked: false
+    };
+    apiKeys.push(entry);
+    await storage.write('apikeys.json', apiKeys);
+    // Return full key ONLY on creation — never shown again
+    res.status(201).json({ id: entry.id, name: entry.name, key, createdAt: entry.createdAt });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Revoke an API key
+app.delete('/api/auth/api-keys/:keyId', authMiddleware, async (req, res) => {
+  try {
+    const apiKeys = await storage.read('apikeys.json');
+    const key = apiKeys.find(k => k.id === req.params.keyId && k.userId === req.user.userId);
+    if (!key) return res.status(404).json({ error: 'API key not found' });
+    key.revoked = true;
+    await storage.write('apikeys.json', apiKeys);
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }

@@ -48,6 +48,11 @@ const API = {
   logout() { return this.post('/api/auth/logout'); },
   me() { return this.get('/api/auth/me'); },
 
+  // ── API Keys ──
+  getApiKeys() { return this.get('/api/auth/api-keys'); },
+  createApiKey(name) { return this.post('/api/auth/api-keys', { name }); },
+  revokeApiKey(keyId) { return this.del(`/api/auth/api-keys/${keyId}`); },
+
   // ── Avatar ──
   uploadAvatar(formData) { return this.upload('/api/users/me/avatar', formData); },
   getAvatarConfig() { return this.get('/api/users/me/avatar-config'); },

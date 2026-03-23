@@ -1,0 +1,193 @@
+# TaskFlow Context Keeper
+# Last updated: 2026-03-18
+
+## Project Structure
+- server.js: ~3400+ lines, single Express server with inline routers
+- storage.js: ~55 lines, JSON file I/O with atomic writes, config defaults include staleThresholds + reminderHours
+- public/app/index.html: ~7700+ lines, main app portal (Kanban + calendar + chat + notifications + blackout + bulk + templates + recurrence + review)
+- public/shared/api.js: ~140 lines, REST + WS client (methods: get/post/put/del/upload + template CRUD)
+- public/shared/i18n/en.json & de.json: ~345+ lines each
+
+## Phase 1 QOL Features (COMPLETED)
+1. Stale Engine: server-side computeStaleStatus + enrichTasksWithStale + periodic checker (5min)
+2. Stale Frontend: card badge (.stale-tag), detail chip, notification handling (task_stale)
+3. Calendar Deadline Layer: deadline dots (priority-colored), overdue marker on today, clickable cells
+4. Calendar Filters: assignee/priority/status dropdowns + stale checkbox + clear button
+5. Day Detail Timeline: openDayDetail() modal — time worked, deadlines, activity timeline
+6. Blackout/Availability: server API (GET/POST/DELETE /api/users/me/availability), flow-wide view, calendar overlay (striped pattern), manage modal
+7. Basic Reminders: periodic checkDeadlineReminders (15min), deadline_reminder notifications at 24h/48h before deadline
+8. i18n: ~50 new keys in en.json/de.json for all features
+
+## PDF v3 Report (COMPLETED)
+- Location: server.js lines 2856-3365 — GET /api/time/report
+- Features: avatar initials circle (top-right), contribution donut, task stats panel, location breakdown bars, daily hours chart, full session log table (page 2), compact A4 print-ready
+- Loads: timelog, tasks, users, teams for full statistics
+- Stats: total hours, sessions, days, avg/day, breaks, longest session, contribution %, net efficiency, task completion rate, earliest in, latest out
+- Task panel: stacked progress bar (done/in-progress/review), total/done/ip/review counts, completion rate badge
+- Location breakdown: office/home/field with mini bars and percentages
+- Avatar: uses user.avatarConfig.backgroundColor or defaults to #A29BFE, shows initials
+
+## Key Line References (server.js)
+- Auth middleware: 87-100
+- flowMemberMiddleware: 106
+- WebSocket system: 243-345
+- avatarUrlFromUser: 229
+- Availability API routes: ~730-810 (after avatar routes, before flow routes)
+- Stale detection helpers: ~1400 (computeStaleStatus, enrichTasksWithStale)
+- Task routes: ~1438-1750
+- Bulk update endpoint: POST /api/flows/:flowId/tasks/bulk (after task routes)
+- Template CRUD routes: GET/POST/PUT/DELETE /api/flows/:flowId/templates + POST .../templates/:id/use
+- PDF report route: 2856-3365 — GET /api/time/report (v3 with stats)
+- Recurrence helpers: computeNextOccurrence, shouldCreateOccurrence, checkRecurringTasks
+- Notification system: ~1900 (createNotification)
+- Periodic stale checker: ~2848 (checkStaleTasks, every 5min)
+- Periodic deadline reminders: ~2905 (checkDeadlineReminders, every 15min)
+- Periodic recurrence checker: checkRecurringTasks (every 10min, initial delay 40s)
+- Server start: ~3200
+
+## Key Line References (app/index.html)
+- Blackout CSS: after .cal-filter-clear (~line 1608)
+- Calendar filter bar HTML: ~line 2287
+- Blackout legend + manage button: below timeCalendarGrid (~line 2315)
+- renderTimeTab: ~line 5493 (fetches availability before render)
+- renderTimeCalendar: ~line 5551 (includes isBlackoutDay check)
+- openDayDetail: ~line 5660
+- Calendar filters JS: calFilters, applyCalFilters, clearCalFilters, getCalFilteredTasks
+- Blackout JS: fetchAvailability, isBlackoutDay, getBlackoutUsersForDay, openBlackoutModal, addBlackoutBlock, deleteBlackoutBlock (~line 5840)
+- Notification rendering: ~line 6593 (includes deadline_reminder + task_stale)
+- isActionNeededNotification: ~line 6630 (includes deadline_reminder)
+
+## Day Detail Timeline / Progress & Status Logging
+- Backend: PUT /api/flows/:flowId/tasks/:id (server.js ~line 1551)
+  - progressLog: accepts fromProgress from client body. Logs { from, to, at, by } if fromProgress !== newProgress
+  - statusLog: logs { from, to, at, by } when status changes
+- Frontend: saveDetail() sends data.fromProgress = prevProgress alongside progress
+- Frontend: openDayDetail() builds timeline from createdAt, updatedAt, statusLog, progressLog, notes
+  - Timeline sorts newest first (descending)
+  - Entry types: created, status, updated, note, progress
+  - Each entry shows priority dot + task title + action label + detail content
+  - Progress entries show change banner with from→to bar visualization
+  - Status entries show from→to colored badges
+- Server was restarted on 2026-03-16 (PID 20024) — progressLog/statusLog now being recorded
+- i18n keys: calendar.dayDetail.updated, calendar.dayDetail.progressChanged added
+
+## Data Model Notes
+- Tasks: lastActivityAt field (ISO string) — updated on status/progress/assignment changes and note additions
+- Tasks: recurrenceRule object — {type: daily|weekdays|weekly|monthly|custom, interval, endType: never|date|count, endDate, endCount}
+- Tasks: recurrenceSeriesId — UUID linking a recurring series, _recurrenceSpawned flag prevents double-spawn
+- Users: availabilityBlocks array (each: {id, from, to, reason, type, createdAt})
+- Config: staleThresholds (minutes per status), reminderHours (array of hours before deadline, default [24, 48])
+- Notification types: task_stale, deadline_reminder (in addition to existing types)
+- Templates stored in templates.json, auto-created on first read
+
+## API Methods (shared/api.js)
+- API.get(url), API.post(url, body), API.put(url, body), API.del(url), API.upload(url, formData)
+- API.getTemplates(flowId), API.createTemplate(flowId, data), API.updateTemplate(flowId, id, data), API.deleteTemplate(flowId, id), API.useTemplate(flowId, id, data)
+- Toast function: toast(msg) — not showToast
+- WS listeners: line 6200+
+
+## Task Data Model Fields
+id, flowId, subFlowId, title, description, priority, status, progress,
+category, assignedTo, assignedToList, operators, revisionRequested,
+createdBy, deadline, notes[], files[], createdAt, updatedAt,
+lastActivityAt, recurrenceRule, recurrenceSeriesId, _recurrenceSpawned
+
+## Template Data Model Fields
+id, flowId, name, title, description, priority, category,
+assignedToList, operators, checklist, createdBy, createdAt
+
+## User Data Model Fields
+id, name, avatar, password (bcrypt hash), createdAt, avatarConfig
+
+## API Key System (COMPLETED)
+- Auth: authMiddleware updated (async), checks tfk_ prefix → apikeys.json lookup, else → sessions Map
+- API key format: tfk_ + 48 random hex chars (crypto.randomBytes(24))
+- Storage: data/apikeys.json — [{id, userId, userName, name, key, createdAt, lastUsedAt, revoked}]
+- Max 10 active (non-revoked) keys per user
+- Endpoints: GET/POST/DELETE /api/auth/api-keys (after /api/auth/me)
+- Client methods in api.js: getApiKeys(), createApiKey(name), revokeApiKey(keyId)
+- UI: More menu → "API Keys" panel (apiKeysPanel) with create form, active/revoked lists, MCP instructions
+- JS functions: openApiKeysPanel, closeApiKeysPanel, renderApiKeys, createApiKey, copyApiKey, revokeApiKey
+- CSS: .apikey-list, .apikey-row, .apikey-info, .apikey-name, .apikey-preview, .apikey-meta, .apikey-new-box, .apikey-full-key, .apikey-warning, .apikey-create-row
+- i18n: apikeys.* keys in en.json/de.json + common.create, common.never, common.clickToCopy
+
+## MCP Server (COMPLETED)
+- File: mcp-server.js (~420 lines)
+- Protocol: MCP 2024-11-05, stdio transport (JSON-RPC 2.0 via readline)
+- Usage: node mcp-server.js --url <base_url> --key <tfk_key> (or env TASKFLOW_URL, TASKFLOW_API_KEY)
+- 30+ tools: get_current_user, list_flows, get_flow, create_flow, list_members, get_presence, list_tasks, create_task, update_task, delete_task, add_task_note, list_categories, create_category, list_conversations, get_messages, send_message, get_time_status, clock_in, clock_out, timer_play, timer_pause, get_time_sessions, get_daily_summary, list_templates, use_template, list_notifications, list_subflows, get_my_availability, set_availability_block, bulk_update_tasks
+- HTTP client with Bearer auth header, JSON request/response
+
+## Active Implementation: Phase 2 (QOL-CALENDAR-ROADMAP.md) — COMPLETED
+All Phase 2 features done:
+1. Bulk Actions: multi-select mode, floating action bar, bulk update endpoint
+2. Task Templates: CRUD API + menu UI + save/use/delete
+3. Recurring Tasks: recurrenceRule field, server scheduler (10min), auto-spawn next occurrence
+4. Review Inbox: review filter tab, badge count, quick approve/revise actions
+
+## Phase 2 QOL Features (COMPLETED)
+1. Bulk Actions: toggleBulkMode, floating bar with status/priority/assignee/category/deadline/review/note dropdowns, POST /api/flows/:flowId/tasks/bulk
+2. Task Templates: CRUD at /api/flows/:flowId/templates, 📋 menu in Quick Add Bar, saveAsTemplate/useTemplate/deleteTemplate
+3. Recurring Tasks: recurrenceRule field (daily/weekdays/weekly/monthly/custom), computeNextOccurrence, shouldCreateOccurrence, checkRecurringTasks (10min interval), 🔁 badge on cards, recurrence picker in detail panel
+4. Review Inbox: "Review" button in owner filter bar, filters in-review/needs-info/revision-requested tasks, updateReviewBadge count, quickReviewAction (approve→done, revise→todo)
+5. i18n: ~40 keys each in en.json/de.json (bulk.*, template.*, recurrence.*, review.*)
+
+## Phase 3 QOL Features: Calendar Enhancements (COMPLETED)
+1. Calendar Modes: Year/Month/Week/Day with mode switcher bar (calModeBar)
+   - calMode state: 'year'|'month'|'week'|'day', calWeekStart, calDayDate
+   - renderCalendarYear: 4×3 mini-month grid, color indicators for work/deadline/today/blackout
+   - renderCalendarWeek: 7-column grid for single week, larger cells
+   - renderCalendarDay: detailed single-day view with team members, deadlines, activity
+   - renderCalendarMonth: refactored to use buildDayCellHTML shared helper
+   - changeTimeMonth handles all 4 modes (year ±1yr, month ±1mo, week ±7d, day ±1d)
+2. Shared Calendar / Avatars on Days:
+   - flowTimeSessions: fetched via GET /api/flows/:flowId/time-sessions, returns all members' sessions grouped by user
+   - buildCalAvatarsHTML(dateStr): renders avatar circles on day cells (max 4 + overflow counter)
+   - Blackout users shown with red border + opacity on avatar
+   - Click avatar → openUserDaySummary(dateStr, userId)
+3. Daily Progress Delta Summary:
+   - buildProgressDeltas(dateStr, userId): client-side from progressLog/statusLog/notes
+   - Progress delta cards with before→after bar, badge, status changes
+   - Net progress score indicator (↑/↓/→ with +/-%)
+4. Tabbed Day Detail (openDayDetail):
+   - "My Summary" tab: progress deltas, deadlines, activity timeline
+   - "Others" tab: changes by other users on my tasks (with actor avatars)
+   - buildOthersUpdates(dateStr, userId): finds changes by non-self on involved tasks
+   - renderTimelineEntries: extracted helper for timeline rendering
+   - switchDayDetailTab(btn, tabId): tab switching logic
+5. User Day Summary Modal (openUserDaySummary):
+   - Shows another user's daily summary via GET /api/flows/:flowId/daily-summary
+   - Displays: avatar, name, date, time worked, progress deltas, sessions
+6. Backend APIs:
+   - GET /api/flows/:flowId/daily-summary?date=&userId= — per-user daily summary with progressDeltas, assignedTaskUpdates, totalWorkedMinutes, netProgressScore, sessions
+   - GET /api/flows/:flowId/time-sessions?month=&year= — all flow members' time sessions with avatarUrl
+7. i18n: 13 new keys in en.json/de.json (calendar.mode.*, calendar.teamToday, calendar.progressDelta, calendar.netProgress, calendar.summary.mine/others, etc.)
+
+## Key Line References (app/index.html) — Calendar Modes
+- Calendar mode CSS: ~line 1625 (after blackout CSS)
+- Cal mode bar HTML: above filter bar in timeCalendarGrid section
+- calMode/calWeekStart/calDayDate state: ~line 3042
+- renderTimeTab: ~line 6296 (fetches flowTimeSessions, updates title per mode)
+- renderTimeCalendar dispatcher: ~line 6376
+- renderCalendarMonth: ~line 6530
+- renderCalendarWeek: ~line 6555
+- renderCalendarDay: ~line 6590
+- renderCalendarYear: ~line 6650
+- buildCalAvatarsHTML: ~line 6580
+- openDayDetail (tabbed): ~line 6751
+- buildDayTimeline: ~line 6940
+- buildProgressDeltas: ~line 6983
+- buildOthersUpdates: ~line 7016
+- renderTimelineEntries: ~line 7064
+- switchDayDetailTab: ~line 7153
+- openUserDaySummary: ~line 7162
+
+## Conventions Discovered
+- Notification types: task_created, task_updated, task_assigned, task_needs_info, task_review_pending, task_revision_requested, task_approved, note_added, member_joined
+- WS events: {entity}:{action} format
+- IDs: crypto.randomUUID()
+- broadcastToFlow(flowId, data, excludeUserId)
+- broadcastToUser(userId, data)
+- Atomic writes via storage.write()
+- Front-end polling: notification poll every 15s
+- readArraySafe() helper for safe JSON read

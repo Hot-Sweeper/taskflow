@@ -380,5 +380,26 @@
 
   "review.inbox": "Review",
   "review.approved": "Task approved",
-  "review.revisionSent": "Revision requested"
+  "review.revisionSent": "Revision requested",
+
+  "common.create": "Create",
+  "common.never": "Never",
+  "common.clickToCopy": "Click to copy",
+
+  "apikeys.title": "API Keys",
+  "apikeys.create": "Create API Key",
+  "apikeys.description": "API keys let agents and integrations act as you with the same permissions.",
+  "apikeys.namePlaceholder": "Key name (e.g. My Agent)",
+  "apikeys.created": "Key created!",
+  "apikeys.copyWarning": "Copy this key now — it won't be shown again!",
+  "apikeys.active": "Active Keys",
+  "apikeys.lastUsed": "Last used",
+  "apikeys.noKeys": "No API keys yet",
+  "apikeys.revoke": "Revoke",
+  "apikeys.revokeConfirm": "Revoke API key",
+  "apikeys.keyRevoked": "API key revoked",
+  "apikeys.revoked": "Revoked",
+  "apikeys.mcpSection": "MCP Server",
+  "apikeys.mcpDescription": "Use the MCP server to connect AI agents (Claude, GPT, etc.) to your TaskFlow account.",
+  "apikeys.nameRequired": "Key name is required"
 }
