@@ -5693,6 +5693,10 @@ function renderDetail(task) {
   if (descEl) descEl.oninput = autoSave;
   const deadlineEl = document.getElementById('detailDeadline');
   if (deadlineEl) deadlineEl.onchange = () => saveDetail();
+  requestAnimationFrame(() => {
+    fitTaskChatToAvailableSpace();
+    setTimeout(fitTaskChatToAvailableSpace, 80);
+  });
   // progress is now handled by renderProgressSlider click/drag
 }
 
@@ -6005,12 +6009,44 @@ function scrollTaskChatToBottom() {
   setTimeout(doScroll, 80);
 }
 
+function fitTaskChatToAvailableSpace() {
+  const panel = document.getElementById('detailPanel');
+  const body = document.getElementById('detailBody');
+  const section = document.getElementById('taskChatSection');
+  const messages = document.getElementById('taskChatMessages');
+  if (!panel || !body || !section || !messages) return;
+
+  // Expanded chat mode already has its own full-height layout.
+  if (panel.classList.contains('chat-focus') || section.classList.contains('expanded')) {
+    messages.style.height = '';
+    messages.style.maxHeight = '';
+    return;
+  }
+
+  const bodyRect = body.getBoundingClientRect();
+  const sectionRect = section.getBoundingClientRect();
+  const availableSectionHeight = Math.floor(bodyRect.bottom - sectionRect.top);
+  if (!Number.isFinite(availableSectionHeight) || availableSectionHeight <= 0) return;
+
+  const headerH = section.querySelector('.task-chat-header')?.offsetHeight || 0;
+  const pendingH = section.querySelector('.chat-pending-files')?.offsetHeight || 0;
+  const inputH = section.querySelector('.chat-input-bar')?.offsetHeight || 0;
+  const sectionChrome = headerH + pendingH + inputH + 18;
+  const availableMessagesHeight = availableSectionHeight - sectionChrome;
+
+  // Fill free space when available, but keep a sane cap to avoid oversized message panes.
+  const targetHeight = Math.max(132, Math.min(availableMessagesHeight, 520));
+  messages.style.height = `${targetHeight}px`;
+  messages.style.maxHeight = `${targetHeight}px`;
+}
+
 function renderTaskChat(task) {
   const container = document.getElementById('taskChatMessages');
   if (!container) return;
   container.innerHTML = '';
   const notes = [...(task.notes || [])].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
   if (!notes.length) {
+    fitTaskChatToAvailableSpace();
     scrollTaskChatToBottom();
     return;
   }
@@ -6060,6 +6096,7 @@ function renderTaskChat(task) {
     `;
     container.appendChild(div);
   }
+  fitTaskChatToAvailableSpace();
   // Always show latest messages first on open/render.
   scrollTaskChatToBottom();
 }
@@ -6109,13 +6146,18 @@ function onTaskChatFilesSelected(input) {
 function renderTaskPendingFiles() {
   const container = document.getElementById('taskChatPendingFiles');
   if (!container) return;
-  if (!chatPendingFiles.length) { container.innerHTML = ''; return; }
+  if (!chatPendingFiles.length) {
+    container.innerHTML = '';
+    fitTaskChatToAvailableSpace();
+    return;
+  }
   container.innerHTML = chatPendingFiles.map((f, i) =>
     `<div class="chat-pending-file">
       ${icon('paperclip', 12)} ${esc(f.name)}
       <span class="remove-file" onclick="removePendingFile(${i})">✕</span>
     </div>`
   ).join('');
+  fitTaskChatToAvailableSpace();
 }
 
 function removePendingFile(idx) {
@@ -6126,6 +6168,7 @@ function removePendingFile(idx) {
 function autoResizeTaskChatInput(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  fitTaskChatToAvailableSpace();
   // Scroll input into view on mobile when keyboard opens
   if (window.innerWidth <= 768) {
     setTimeout(() => el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 100);
@@ -8954,6 +8997,7 @@ document.addEventListener('keydown', (e) => {
 
 window.addEventListener('resize', () => {
   applyPeopleGridLayout();
+  fitTaskChatToAvailableSpace();
 });
 
 function renderNotifications() {
