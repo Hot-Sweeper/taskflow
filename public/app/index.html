@@ -610,6 +610,34 @@ a { color: var(--accent); text-decoration: none; }
   flex-direction: column;
   gap: 14px;
 }
+.stats-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.stats-viewer-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--bg-input);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stats-select {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text);
+  font-size: 12px;
+  padding: 7px 10px;
+  min-width: 128px;
+}
 .stats-hero {
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -921,6 +949,13 @@ a { color: var(--accent); text-decoration: none; }
 }
 
 @media (max-width: 900px) {
+  .stats-toolbar {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .stats-viewer-chip {
+    max-width: 100%;
+  }
   .stats-hero {
     grid-template-columns: 1fr;
     text-align: center;
@@ -2192,6 +2227,7 @@ a { color: var(--accent); text-decoration: none; }
   transition: all 0.2s;
 }
 .profile-btn-chat { background: var(--accent); color: #fff; }
+.profile-btn-stats { background: color-mix(in srgb, var(--amber) 20%, var(--bg-input)); color: var(--text); }
 .profile-btn-tasks { background: var(--bg-input); color: var(--text); }
 .profile-task-section { padding: 0 16px 16px; }
 .profile-task-section h4 {
@@ -3721,6 +3757,12 @@ a { color: var(--accent); text-decoration: none; }
   <div class="tab-content" id="tabStats">
     <div class="tab-header">
       <h3 data-i18n="nav.stats">Statistics</h3>
+      <div class="tab-header-actions stats-toolbar">
+        <span class="stats-viewer-chip" id="statsViewerChip"></span>
+        <select id="statsRangeSelect" class="stats-select" onchange="onStatsRangeChange(this.value)"></select>
+        <select id="statsWeekdaySelect" class="stats-select" onchange="onStatsWeekdayChange(this.value)"></select>
+        <button id="statsViewerResetBtn" class="tab-header-icon-btn" onclick="resetStatsViewer()" data-i18n-title="stats.resetViewer" title="My statistics"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></button>
+      </div>
     </div>
     <div class="stats-wrap" id="statsWrap"></div>
   </div>
@@ -4109,6 +4151,9 @@ let calDayDate = null; // Date object for current day view
 let flowTimeSessions = []; // flow-wide time sessions for shared calendar
 let inviteAvatarConfig = null; // DiceBear config to attach to invite link
 let activeDragTaskId = null;
+let statsFocusUserId = null;
+let statsRangeMode = 'all';
+let statsWeekdayMode = 'all';
 
 // models.js already declares STATUS, STATUS_ORDER, STATUS_META, PRIORITY, PRIORITY_META, etc. at global scope
 
@@ -4949,14 +4994,14 @@ function getAllFlowTasksForStats() {
   return [...map.values()];
 }
 
-function startOfToday() {
-  const d = new Date();
+function startOfToday(baseDate) {
+  const d = baseDate ? new Date(baseDate) : new Date();
   d.setHours(0, 0, 0, 0);
   return d.getTime();
 }
 
-function startOfWeekMonday() {
-  const d = new Date();
+function startOfWeekMonday(baseDate) {
+  const d = baseDate ? new Date(baseDate) : new Date();
   const day = d.getDay();
   const delta = day === 0 ? 6 : day - 1;
   d.setDate(d.getDate() - delta);
@@ -4964,31 +5009,234 @@ function startOfWeekMonday() {
   return d.getTime();
 }
 
+function statsRangeOptions() {
+  return [
+    { value: 'all', label: I18n.t('stats.mode.allTime') },
+    { value: 'last-year', label: I18n.t('stats.mode.lastYear') },
+    { value: 'this-year', label: I18n.t('stats.mode.thisYear') },
+    { value: 'this-month', label: I18n.t('stats.mode.thisMonth') },
+    { value: 'this-week', label: I18n.t('stats.mode.thisWeek') },
+    { value: 'last-30d', label: I18n.t('stats.mode.last30Days') },
+    { value: 'today', label: I18n.t('stats.mode.today') }
+  ];
+}
+
+function statsWeekdayOptions() {
+  return [
+    { value: 'all', label: I18n.t('stats.weekday.all') },
+    { value: '1', label: I18n.t('stats.weekday.mon') },
+    { value: '2', label: I18n.t('stats.weekday.tue') },
+    { value: '3', label: I18n.t('stats.weekday.wed') },
+    { value: '4', label: I18n.t('stats.weekday.thu') },
+    { value: '5', label: I18n.t('stats.weekday.fri') },
+    { value: '6', label: I18n.t('stats.weekday.sat') },
+    { value: '0', label: I18n.t('stats.weekday.sun') }
+  ];
+}
+
+function getStatsPeriodBounds(mode) {
+  const now = new Date();
+  const nowMs = now.getTime();
+  const year = now.getFullYear();
+
+  if (mode === 'today') {
+    return { start: startOfToday(now), end: nowMs };
+  }
+
+  if (mode === 'this-week') {
+    return { start: startOfWeekMonday(now), end: nowMs };
+  }
+
+  if (mode === 'this-month') {
+    const d = new Date(year, now.getMonth(), 1);
+    d.setHours(0, 0, 0, 0);
+    return { start: d.getTime(), end: nowMs };
+  }
+
+  if (mode === 'this-year') {
+    const d = new Date(year, 0, 1);
+    d.setHours(0, 0, 0, 0);
+    return { start: d.getTime(), end: nowMs };
+  }
+
+  if (mode === 'last-year') {
+    const start = new Date(year - 1, 0, 1);
+    const end = new Date(year, 0, 1);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    return { start: start.getTime(), end: end.getTime() - 1 };
+  }
+
+  if (mode === 'last-30d') {
+    const start = new Date(nowMs - (29 * 86400000));
+    start.setHours(0, 0, 0, 0);
+    return { start: start.getTime(), end: nowMs };
+  }
+
+  return { start: null, end: null };
+}
+
+function statsInRange(ms, bounds) {
+  if (!Number.isFinite(ms)) return false;
+  if (bounds.start != null && ms < bounds.start) return false;
+  if (bounds.end != null && ms > bounds.end) return false;
+  return true;
+}
+
+function statsMatchesWeekday(ms) {
+  if (statsWeekdayMode === 'all') return true;
+  if (!Number.isFinite(ms)) return false;
+  return new Date(ms).getDay() === Number(statsWeekdayMode);
+}
+
+function statsPrettyFallback(code) {
+  return String(code || '').replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function statsStatusLabel(status) {
+  const key = STATUS_META[status]?.label;
+  if (!key) return statsPrettyFallback(status);
+  const text = I18n.t(key);
+  return text === key ? statsPrettyFallback(status) : text;
+}
+
+function statsPriorityLabel(priority) {
+  const key = PRIORITY_META[priority]?.label || `task.priority.${priority}`;
+  const text = I18n.t(key);
+  return text === key ? statsPrettyFallback(priority) : text;
+}
+
+function getStatsViewerId() {
+  return statsFocusUserId || currentUser?.id || null;
+}
+
+function getStatsViewerIdentity() {
+  const currentId = currentUser?.id || null;
+  let viewerId = getStatsViewerId();
+  let member = members.find(m => m.userId === viewerId) || null;
+
+  if (statsFocusUserId && !member && viewerId !== currentId) {
+    viewerId = currentId;
+    statsFocusUserId = null;
+    member = members.find(m => m.userId === viewerId) || null;
+  }
+
+  const isSelf = viewerId === currentId || !statsFocusUserId;
+  return {
+    viewerId,
+    member,
+    isSelf,
+    name: member?.userName || currentUser?.name || '',
+    avatarUrl: member?.avatarUrl || currentUser?.avatarUrl || ''
+  };
+}
+
+function renderStatsToolbar(viewerName, isSelf) {
+  const periodSelect = document.getElementById('statsRangeSelect');
+  const weekdaySelect = document.getElementById('statsWeekdaySelect');
+  const viewerChip = document.getElementById('statsViewerChip');
+  const resetBtn = document.getElementById('statsViewerResetBtn');
+
+  if (periodSelect) {
+    periodSelect.innerHTML = statsRangeOptions().map(option =>
+      `<option value="${option.value}"${option.value === statsRangeMode ? ' selected' : ''}>${esc(option.label)}</option>`
+    ).join('');
+  }
+
+  if (weekdaySelect) {
+    weekdaySelect.innerHTML = statsWeekdayOptions().map(option =>
+      `<option value="${option.value}"${option.value === statsWeekdayMode ? ' selected' : ''}>${esc(option.label)}</option>`
+    ).join('');
+  }
+
+  if (viewerChip) {
+    viewerChip.textContent = isSelf
+      ? I18n.t('stats.viewer.self')
+      : I18n.t('stats.viewer.member', { name: viewerName || '' });
+  }
+
+  if (resetBtn) {
+    resetBtn.style.display = isSelf ? 'none' : '';
+    resetBtn.title = I18n.t('stats.resetViewer');
+  }
+}
+
+function onStatsRangeChange(nextMode) {
+  statsRangeMode = nextMode || 'all';
+  renderStatsTab();
+}
+
+function onStatsWeekdayChange(nextWeekday) {
+  statsWeekdayMode = nextWeekday || 'all';
+  renderStatsTab();
+}
+
+function resetStatsViewer() {
+  statsFocusUserId = null;
+  renderStatsTab();
+}
+
+function openStatsForMember(userId) {
+  if (!userId) return;
+  statsFocusUserId = userId;
+  closePersonProfile();
+  switchTab('tabStats');
+}
+
 function renderStatsTab() {
   const container = document.getElementById('statsWrap');
   if (!container) return;
 
-  const all = getAllFlowTasksForStats();
+  const identity = getStatsViewerIdentity();
+  renderStatsToolbar(identity.name, identity.isSelf);
+
+  const flowTasks = getAllFlowTasksForStats();
+  if (!flowTasks.length) {
+    container.innerHTML = `<div class="empty-state"><span class="empty-icon">${icon('chart', 30)}</span><span class="empty-text" data-i18n="stats.empty">No statistics yet</span></div>`;
+    I18n.translateDOM();
+    return;
+  }
+
+  const viewerId = identity.viewerId;
+  const all = flowTasks.filter(t => t.createdBy === viewerId || taskAssigneeIds(t).includes(viewerId));
   if (!all.length) {
     container.innerHTML = `<div class="empty-state"><span class="empty-icon">${icon('chart', 30)}</span><span class="empty-text" data-i18n="stats.empty">No statistics yet</span></div>`;
     I18n.translateDOM();
     return;
   }
 
-  const total = all.length;
-  const active = all.filter(t => !t.archived);
-  const completed = active.filter(t => t.status === 'done').length;
-  const archived = all.filter(t => !!t.archived).length;
-  const open = active.filter(t => t.status !== 'done').length;
-  const rate = total ? Math.round((completed / total) * 100) : 0;
-
+  const bounds = getStatsPeriodBounds(statsRangeMode);
   const todayStart = startOfToday();
   const weekStart = startOfWeekMonday();
-  const now = Date.now();
-  const me = currentUser?.userId || null;
 
-  const createdByYou = all.filter(t => t.createdBy === me).length;
-  const assignedToYou = all.filter(t => taskAssigneeIds(t).includes(me)).length;
+  const scopeEventMs = (task) => new Date(task.completedAt || task.updatedAt || task.createdAt || 0).getTime();
+  const inScope = (ms) => statsInRange(ms, bounds) && statsMatchesWeekday(ms);
+  const inPeriodOnly = (ms) => statsInRange(ms, bounds);
+
+  const scoped = all.filter(task => inScope(scopeEventMs(task)));
+  const total = scoped.length;
+  const active = scoped.filter(t => !t.archived);
+  const completed = scoped.filter(t => t.status === 'done').length;
+  const archived = scoped.filter(t => !!t.archived).length;
+  const open = active.filter(t => t.status !== 'done').length;
+
+  const createdInScope = all.filter(t => {
+    const createdMs = new Date(t.createdAt || 0).getTime();
+    return inScope(createdMs);
+  }).length;
+
+  const completedInScope = all.filter(t => {
+    if (t.status !== 'done') return false;
+    const completedMs = new Date(t.completedAt || t.updatedAt || 0).getTime();
+    return inScope(completedMs);
+  }).length;
+
+  const rate = createdInScope > 0
+    ? Math.round((completedInScope / createdInScope) * 100)
+    : completedInScope * 100;
+
+  const createdByViewer = all.filter(t => t.createdBy === viewerId).length;
+  const assignedToViewer = all.filter(t => taskAssigneeIds(t).includes(viewerId)).length;
 
   const overdue = active.filter(t => {
     if (!t.deadline || t.status === 'done') return false;
@@ -4996,7 +5244,7 @@ function renderStatsTab() {
     return Number.isFinite(deadlineMs) && deadlineMs < todayStart;
   }).length;
 
-  const closeDurationsHours = all
+  const closeDurationsHours = scoped
     .filter(t => t.status === 'done')
     .map(t => {
       const createdMs = new Date(t.createdAt || 0).getTime();
@@ -5018,36 +5266,48 @@ function renderStatsTab() {
     const ms = new Date(t.completedAt || t.updatedAt || t.createdAt || 0).getTime();
     return Number.isFinite(ms) && ms >= todayStart;
   }).length;
+
   const doneThisWeek = all.filter(t => {
     if (t.status !== 'done') return false;
     const ms = new Date(t.completedAt || t.updatedAt || t.createdAt || 0).getTime();
     return Number.isFinite(ms) && ms >= weekStart;
   }).length;
 
+  const statusOrder = ['done', 'in-progress', 'in-review', 'needs-info', 'on-hold', 'todo'];
   const statusItems = [
-    { key: 'done', label: I18n.t('task.status.done'), color: '#22c55e', count: active.filter(t => t.status === 'done').length },
-    { key: 'in-progress', label: I18n.t('task.status.inProgress'), color: '#38bdf8', count: active.filter(t => t.status === 'in-progress').length },
-    { key: 'in-review', label: I18n.t('task.status.inReview'), color: '#a78bfa', count: active.filter(t => t.status === 'in-review').length },
-    { key: 'needs-info', label: I18n.t('task.status.needsInfo'), color: '#f97316', count: active.filter(t => t.status === 'needs-info').length },
-    { key: 'on-hold', label: I18n.t('task.status.onHold'), color: '#f59e0b', count: active.filter(t => t.status === 'on-hold').length },
-    { key: 'todo', label: I18n.t('task.status.todo'), color: '#94a3b8', count: active.filter(t => t.status === 'todo').length },
+    ...statusOrder.map((key) => ({
+      key,
+      label: statsStatusLabel(key),
+      color: STATUS_META[key]?.color || '#94a3b8',
+      count: active.filter(t => t.status === key).length
+    })),
     { key: 'archived', label: I18n.t('stats.archivedTasks'), color: '#64748b', count: archived }
   ];
   const statusMax = Math.max(1, ...statusItems.map(item => item.count));
 
-  const priorityOrder = ['urgent', 'high', 'medium', 'low'];
+  const priorityOrder = ['high', 'medium', 'low', 'urgent'];
   const priorityColors = {
-    urgent: '#ef4444',
+    urgent: '#dc2626',
     high: '#fb7185',
     medium: '#f59e0b',
     low: '#60a5fa'
   };
+  const priorityCounts = new Map();
+  for (const task of active) {
+    const key = task.priority || 'medium';
+    priorityCounts.set(key, (priorityCounts.get(key) || 0) + 1);
+  }
+  for (const key of priorityCounts.keys()) {
+    if (!priorityOrder.includes(key)) priorityOrder.push(key);
+  }
+
   const priorityItems = priorityOrder.map(key => ({
     key,
-    label: I18n.t(`task.priority.${key}`),
-    color: priorityColors[key],
-    count: active.filter(t => (t.priority || 'medium') === key).length
-  }));
+    label: statsPriorityLabel(key),
+    color: priorityColors[key] || '#9ca3af',
+    count: priorityCounts.get(key) || 0
+  })).filter(item => item.count > 0 || item.key === 'high' || item.key === 'medium' || item.key === 'low');
+
   const priorityTotalRaw = priorityItems.reduce((sum, item) => sum + item.count, 0);
   const priorityTotal = priorityTotalRaw || 1;
   let currentAngle = 0;
@@ -5062,38 +5322,52 @@ function renderStatsTab() {
     ? `conic-gradient(${slices.join(', ')})`
     : 'var(--bg-input)';
 
-  const dayBuckets = [];
-  for (let i = 6; i >= 0; i--) {
-    const dayStartDate = new Date(now);
-    dayStartDate.setDate(dayStartDate.getDate() - i);
-    dayStartDate.setHours(0, 0, 0, 0);
-    const dayStartMs = dayStartDate.getTime();
-    const dayEndMs = dayStartMs + 86400000;
-
-    const createdCount = all.filter(t => {
+  const weekdayDefs = [
+    { day: 1, key: 'stats.weekday.mon' },
+    { day: 2, key: 'stats.weekday.tue' },
+    { day: 3, key: 'stats.weekday.wed' },
+    { day: 4, key: 'stats.weekday.thu' },
+    { day: 5, key: 'stats.weekday.fri' },
+    { day: 6, key: 'stats.weekday.sat' },
+    { day: 0, key: 'stats.weekday.sun' }
+  ];
+  const dayBuckets = weekdayDefs.map(def => {
+    const created = all.filter(t => {
       const ms = new Date(t.createdAt || 0).getTime();
-      return Number.isFinite(ms) && ms >= dayStartMs && ms < dayEndMs;
+      return inPeriodOnly(ms) && Number.isFinite(ms) && new Date(ms).getDay() === def.day;
     }).length;
-
     const completedCount = all.filter(t => {
       if (t.status !== 'done') return false;
       const ms = new Date(t.completedAt || t.updatedAt || 0).getTime();
-      return Number.isFinite(ms) && ms >= dayStartMs && ms < dayEndMs;
+      return inPeriodOnly(ms) && Number.isFinite(ms) && new Date(ms).getDay() === def.day;
     }).length;
-
-    dayBuckets.push({
-      label: dayStartDate.toLocaleDateString(undefined, { weekday: 'short' }),
-      title: dayStartDate.toLocaleDateString(),
-      created: createdCount,
+    return {
+      label: I18n.t(def.key),
+      title: I18n.t(def.key),
+      created,
       completed: completedCount
-    });
-  }
+    };
+  });
   const weeklyMax = Math.max(1, ...dayBuckets.map(d => Math.max(d.created, d.completed)));
 
-  const avatarInitial = String(currentUser?.name || '?').trim().charAt(0).toUpperCase() || '?';
-  const avatarNode = currentUser?.avatarUrl
-    ? `<img class="stats-avatar" src="${esc(currentUser.avatarUrl)}" alt="${esc(currentUser?.name || '')}" loading="lazy">`
+  const avatarInitial = String(identity.name || '?').trim().charAt(0).toUpperCase() || '?';
+  const avatarNode = identity.avatarUrl
+    ? `<img class="stats-avatar" src="${esc(identity.avatarUrl)}" alt="${esc(identity.name || '')}" loading="lazy">`
     : `<div class="stats-avatar-fallback">${esc(avatarInitial)}</div>`;
+
+  const creatorLabel = identity.isSelf
+    ? I18n.t('stats.createdByYou')
+    : I18n.t('stats.createdByPerson', { name: identity.name || '' });
+  const assigneeLabel = identity.isSelf
+    ? I18n.t('stats.assignedToYou')
+    : I18n.t('stats.assignedToPerson', { name: identity.name || '' });
+
+  const subtitleText = I18n.t('stats.heroSubtitle', { flow: currentFlow?.name || '' });
+  const subtitle = subtitleText === 'stats.heroSubtitle'
+    ? `Flow insight for ${currentFlow?.name || ''}`
+    : subtitleText;
+
+  const modeLabel = statsRangeOptions().find(option => option.value === statsRangeMode)?.label || '';
 
   container.innerHTML = `
     <div class="stats-epic">
@@ -5101,8 +5375,8 @@ function renderStatsTab() {
         <div class="stats-avatar-wrap">${avatarNode}</div>
         <div class="stats-hero-copy">
           <div class="stats-hero-topline">${icon('rocket', 12)} <span data-i18n="stats.heroTopline">Performance Cockpit</span></div>
-          <div class="stats-hero-title">${esc(currentUser?.name || '')}</div>
-          <div class="stats-hero-subtitle">${esc(I18n.t('stats.heroSubtitle', { flow: currentFlow?.name || '' }) || `Flow insight for ${currentFlow?.name || ''}`)}</div>
+          <div class="stats-hero-title">${esc(identity.name || '')}</div>
+          <div class="stats-hero-subtitle">${esc(subtitle)}${modeLabel ? ` · ${esc(modeLabel)}` : ''}</div>
           <div class="stats-hero-kpi-row">
             <div class="stats-hero-kpi">
               <div class="k-label" data-i18n="stats.totalTasks">Total tasks</div>
@@ -5123,21 +5397,21 @@ function renderStatsTab() {
       <section class="stats-kpi-grid">
         <article class="stats-kpi-card">
           <span class="stats-kpi-icon">${icon('clipboard', 14)}</span>
-          <div class="stats-kpi-label" data-i18n="stats.createdByYou">Created by you</div>
-          <div class="stats-kpi-value">${createdByYou}</div>
-          <div class="stats-kpi-meta">${Math.round((createdByYou / Math.max(1, total)) * 100)}%</div>
+          <div class="stats-kpi-label">${esc(creatorLabel)}</div>
+          <div class="stats-kpi-value">${createdByViewer}</div>
+          <div class="stats-kpi-meta">${Math.round((createdByViewer / Math.max(1, all.length)) * 100)}%</div>
         </article>
         <article class="stats-kpi-card">
           <span class="stats-kpi-icon">${icon('users', 14)}</span>
-          <div class="stats-kpi-label" data-i18n="stats.assignedToYou">Assigned to you</div>
-          <div class="stats-kpi-value">${assignedToYou}</div>
-          <div class="stats-kpi-meta">${Math.round((assignedToYou / Math.max(1, total)) * 100)}%</div>
+          <div class="stats-kpi-label">${esc(assigneeLabel)}</div>
+          <div class="stats-kpi-value">${assignedToViewer}</div>
+          <div class="stats-kpi-meta">${Math.round((assignedToViewer / Math.max(1, all.length)) * 100)}%</div>
         </article>
         <article class="stats-kpi-card">
           <span class="stats-kpi-icon">${icon('check-circle', 14)}</span>
           <div class="stats-kpi-label" data-i18n="stats.completionRate">Completion rate</div>
           <div class="stats-kpi-value">${rate}%</div>
-          <div class="stats-kpi-meta">${completed}/${total}</div>
+          <div class="stats-kpi-meta">${completedInScope}/${createdInScope}</div>
         </article>
         <article class="stats-kpi-card">
           <span class="stats-kpi-icon">${icon('alert-triangle', 14)}</span>
@@ -5171,8 +5445,8 @@ function renderStatsTab() {
 
         <article class="stats-panel">
           <div class="stats-panel-head">
-            <div class="stats-panel-title" data-i18n="stats.weeklyVelocity">Weekly velocity</div>
-            <span class="stats-panel-chip">7d</span>
+            <div class="stats-panel-title" data-i18n="stats.weekdayActivity">Weekday activity</div>
+            <span class="stats-panel-chip">${esc(modeLabel || I18n.t('stats.mode.allTime'))}</span>
           </div>
           <div class="stats-velocity-chart">
             ${dayBuckets.map(day => {
@@ -5221,16 +5495,16 @@ function renderStatsTab() {
               <div class="tile-value">${doneToday}</div>
             </div>
             <div class="stats-performance-tile">
-              <div class="tile-label" data-i18n="stats.doneWeek">Done this week</div>
-              <div class="tile-value">${doneThisWeek}</div>
+              <div class="tile-label" data-i18n="stats.doneInScope">Done in period</div>
+              <div class="tile-value">${completedInScope}</div>
             </div>
             <div class="stats-performance-tile">
               <div class="tile-label" data-i18n="stats.avgCloseTime">Avg close time</div>
               <div class="tile-value">${avgCloseText}</div>
             </div>
             <div class="stats-performance-tile">
-              <div class="tile-label" data-i18n="stats.openTasks">Open</div>
-              <div class="tile-value">${open}</div>
+              <div class="tile-label" data-i18n="stats.createdInScope">Created in period</div>
+              <div class="tile-value">${createdInScope}</div>
             </div>
           </div>
         </article>
@@ -7768,6 +8042,9 @@ function openPersonProfile(member, presence) {
     <div class="profile-actions">
       <button class="profile-btn profile-btn-chat" onclick="openChatWithMember('${member.userId}')">
         ${icon('message-circle', 16)} ${I18n.t('nav.chat')}
+      </button>
+      <button class="profile-btn profile-btn-stats" onclick="openStatsForMember('${member.userId}')">
+        ${icon('chart', 16)} ${I18n.t('nav.stats')}
       </button>
     </div>
     <div class="profile-task-section">
