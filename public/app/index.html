@@ -1176,11 +1176,18 @@ a { color: var(--accent); text-decoration: none; }
   text-align: center;
 }
 .office-actor-bob {
-  animation: officeBob 1.05s ease-in-out infinite;
+  transition: transform 0.3s ease;
 }
-.office-actor.state-break .office-actor-bob { animation-duration: 1.65s; }
-.office-actor.state-offline .office-actor-bob,
-.office-actor.state-remote .office-actor-bob { animation-duration: 2.1s; }
+.office-actor.is-walking .office-actor-bob {
+  animation: officeBob 0.5s ease-in-out infinite;
+}
+.office-actor:not(.is-walking) .office-actor-bob {
+  animation: officeIdle 2.8s ease-in-out infinite;
+}
+.office-actor.face-left .office-actor-bob {
+  transform: scaleX(-1);
+}
+.office-actor.state-offline .office-actor-bob { animation: none; }
 .office-actor-head {
   position: relative;
   z-index: 2;
@@ -1197,13 +1204,6 @@ a { color: var(--accent); text-decoration: none; }
   display: block;
   background: transparent;
 }
-.office-actor-shadow {
-  width: 30px;
-  height: 7px;
-  margin: 2px auto 0;
-  border-radius: 999px;
-  background: rgba(0,0,0,0.18);
-}
 .office-actor-body {
   position: relative;
   z-index: 1;
@@ -1211,6 +1211,13 @@ a { color: var(--accent); text-decoration: none; }
   width: 48px;
   height: 52px;
   margin: -22px auto 0;
+}
+.office-actor-shadow {
+  width: 32px;
+  height: 6px;
+  margin: -2px auto 0;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.16);
 }
 .office-actor-body * {
   stroke: #3e3537;
@@ -1229,68 +1236,34 @@ a { color: var(--accent); text-decoration: none; }
 .office-actor-body .body-pant-r { fill: #4a5568; }
 .office-actor-body .body-shoe-l,
 .office-actor-body .body-shoe-r { fill: #2d3748; }
-.office-actor-body .body-arm-group-l {
+/* walk: arms swing + legs stride */
+.office-actor.is-walking .body-arm-group-l {
   transform-origin: 7px 10px;
-  animation: officeArmSwing 1.05s ease-in-out infinite alternate;
+  animation: officeArmSwing 0.5s ease-in-out infinite alternate;
 }
-.office-actor-body .body-arm-group-r {
+.office-actor.is-walking .body-arm-group-r {
   transform-origin: 29px 10px;
-  animation: officeArmSwing 1.05s ease-in-out infinite alternate-reverse;
+  animation: officeArmSwing 0.5s ease-in-out infinite alternate-reverse;
 }
-.office-actor-body .body-leg-group-l {
+.office-actor.is-walking .body-leg-group-l {
   transform-origin: 14px 26px;
-  animation: officeStride 1.05s ease-in-out infinite alternate;
+  animation: officeStride 0.5s ease-in-out infinite alternate;
 }
-.office-actor-body .body-leg-group-r {
+.office-actor.is-walking .body-leg-group-r {
   transform-origin: 22px 26px;
-  animation: officeStride 1.05s ease-in-out infinite alternate-reverse;
+  animation: officeStride 0.5s ease-in-out infinite alternate-reverse;
 }
-.office-actor.state-break .body-arm-group-l,
-.office-actor.state-break .body-arm-group-r { animation-duration: 1.65s; }
-.office-actor.state-break .body-leg-group-l,
-.office-actor.state-break .body-leg-group-r { animation-duration: 1.65s; }
-.office-actor.state-working .body-arm-group-l { animation: none; transform: rotate(5deg); }
-.office-actor.state-working .body-arm-group-r { animation: none; transform: rotate(-5deg); }
-.office-actor.state-working .body-leg-group-l,
-.office-actor.state-working .body-leg-group-r { animation: none; }
+/* idle: no limb movement */
+.office-actor:not(.is-walking) .body-arm-group-l,
+.office-actor:not(.is-walking) .body-arm-group-r,
+.office-actor:not(.is-walking) .body-leg-group-l,
+.office-actor:not(.is-walking) .body-leg-group-r { animation: none; }
+/* working: arms resting */
+.office-actor.state-working .body-arm-group-l { transform-origin: 7px 10px; transform: rotate(5deg); }
+.office-actor.state-working .body-arm-group-r { transform-origin: 29px 10px; transform: rotate(-5deg); }
 .office-actor.state-offline .office-actor-body { opacity: 0.5; }
-.office-actor.state-offline .body-arm-group-l,
-.office-actor.state-offline .body-arm-group-r,
-.office-actor.state-offline .body-leg-group-l,
-.office-actor.state-offline .body-leg-group-r { animation: none; }
-.office-actor-name {
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.15;
-  color: var(--text);
-  max-width: 110px;
-  display: inline-block;
-  padding: 2px 7px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(6, 11, 23, 0.48);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.office-actor-job {
-  margin-top: 2px;
-  font-size: 10px;
-  line-height: 1.1;
-  color: var(--text-secondary);
-  display: inline-block;
-  max-width: 110px;
-  padding: 1px 5px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.05);
-  background: rgba(4, 9, 18, 0.4);
-  text-transform: uppercase;
-  letter-spacing: 0.35px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+.office-actor-name { display: none; }
+.office-actor-job { display: none; }
 .office-legend {
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -1344,16 +1317,20 @@ a { color: var(--accent); text-decoration: none; }
 }
 
 @keyframes officeStride {
-  from { transform: rotate(-3deg); }
-  to { transform: rotate(3deg); }
+  from { transform: rotate(-5deg); }
+  to { transform: rotate(5deg); }
 }
 @keyframes officeArmSwing {
-  from { transform: rotate(-6deg); }
-  to { transform: rotate(6deg); }
+  from { transform: rotate(-10deg); }
+  to { transform: rotate(10deg); }
 }
 @keyframes officeBob {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-1.5px); }
+  50% { transform: translateY(-2px); }
+}
+@keyframes officeIdle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
 }
 
 @media (max-width: 1120px) {
@@ -9271,28 +9248,37 @@ function officeSyncActors(snapshots, deskCount) {
           </svg>
           <div class="office-actor-shadow"></div>
         </div>
-        <div class="office-actor-name"></div>
-        <div class="office-actor-job"></div>
       `;
+      node._prevX = null;
       layer.appendChild(node);
     }
 
     const point = targets.get(s.userId) || { x: 50, y: 50 };
     const meta = OFFICE_JOB_SYSTEM[s.job] || OFFICE_JOB_SYSTEM.member;
-    node.className = `office-actor state-${s.state} job-${s.job}`;
     const lx = layer.offsetWidth * point.x / 100;
     const ly = layer.offsetHeight * point.y / 100;
-    node.style.transform = `translate(${lx - 36}px, ${ly - 60}px)`;
+    const tx = lx - 36;
+    const ty = ly - 60;
+
+    // Detect movement for walk vs idle
+    const isWalking = node._prevX !== null && (Math.abs(lx - node._prevX) > 1 || Math.abs(ly - node._prevY) > 1);
+    const dir = (node._prevX !== null && lx < node._prevX) ? 'left' : 'right';
+    node._prevX = lx;
+    node._prevY = ly;
+
+    // Build class list
+    let cls = `office-actor state-${s.state} job-${s.job}`;
+    if (isWalking) cls += ' is-walking';
+    if (dir === 'left') cls += ' face-left';
+    node.className = cls;
+
+    node.style.transform = `translate(${tx}px, ${ty}px)`;
     node.style.setProperty('--job-color', meta.color);
     node.style.setProperty('--shirt-color', s.shirtColor);
     node.style.setProperty('--skin-color', s.skinColor);
 
     const img = node.querySelector('.office-actor-head img');
     if (img && img.src !== s.avatarHeadUrl) img.src = s.avatarHeadUrl;
-    const name = node.querySelector('.office-actor-name');
-    if (name) name.textContent = s.userName;
-    const job = node.querySelector('.office-actor-job');
-    if (job) job.textContent = `${s.jobLabel} · ${s.stateLabel}`;
   }
 
   for (const child of Array.from(layer.children)) {
