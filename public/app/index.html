@@ -1201,73 +1201,61 @@ a { color: var(--accent); text-decoration: none; }
   border-radius: 999px;
   background: rgba(0,0,0,0.28);
 }
-.office-actor-figure {
-  position: relative;
-  width: 30px;
-  margin: 1px auto 0;
-}
-.office-actor-neck {
-  width: 6px;
-  height: 4px;
+.office-actor-body {
+  display: block;
+  width: 34px;
+  height: 42px;
   margin: -2px auto 0;
-  border-radius: 3px;
-  background: #f2c7a5;
 }
-.office-actor-torso {
-  width: 18px;
-  height: 14px;
-  margin: 1px auto 0;
-  border-radius: 8px 8px 6px 6px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--job-color, var(--accent)) 88%, #fff), color-mix(in srgb, var(--job-color, var(--accent)) 60%, #0b1120));
+.office-actor-body .body-neck,
+.office-actor-body .body-arm-l,
+.office-actor-body .body-arm-r,
+.office-actor-body .body-hand-l,
+.office-actor-body .body-hand-r { fill: var(--skin-color, #f2d3b1); }
+.office-actor-body .body-shirt { fill: var(--shirt-color, #6ea8d9); }
+.office-actor-body .body-sleeve-l,
+.office-actor-body .body-sleeve-r { fill: var(--shirt-color, #6ea8d9); opacity: 0.85; }
+.office-actor-body .body-pant-l,
+.office-actor-body .body-pant-r { fill: #4a5568; }
+.office-actor-body .body-shoe-l,
+.office-actor-body .body-shoe-r { fill: #2d3748; }
+.office-actor-body .body-arm-l,
+.office-actor-body .body-hand-l,
+.office-actor-body .body-sleeve-l {
+  transform-origin: 5px 8px;
+  animation: officeArmSwing 0.5s ease-in-out infinite alternate;
 }
-.office-actor-arms {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 28px;
-  display: flex;
-  justify-content: space-between;
-  padding: 0 3px;
+.office-actor-body .body-arm-r,
+.office-actor-body .body-hand-r,
+.office-actor-body .body-sleeve-r {
+  transform-origin: 31px 8px;
+  animation: officeArmSwing 0.5s ease-in-out infinite alternate;
+  animation-delay: 0.2s;
 }
-.office-actor-arm {
-  width: 4px;
-  height: 10px;
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--job-color, var(--accent)) 58%, #10172a);
-  transform-origin: top center;
-  animation: officeArmSwing 0.42s ease-in-out infinite alternate;
+.office-actor-body .body-pant-l,
+.office-actor-body .body-shoe-l {
+  transform-origin: 13.5px 24px;
+  animation: officeStride 0.4s ease-in-out infinite alternate;
 }
-.office-actor-arm.right {
-  animation-delay: 0.18s;
+.office-actor-body .body-pant-r,
+.office-actor-body .body-shoe-r {
+  transform-origin: 22.5px 24px;
+  animation: officeStride 0.4s ease-in-out infinite alternate;
+  animation-delay: 0.2s;
 }
-.office-actor-hips {
-  width: 15px;
-  height: 4px;
-  margin: 1px auto 0;
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--job-color, var(--accent)) 50%, #0c1321);
-}
-.office-actor-legs {
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-  margin-top: 1px;
-}
-.office-actor-leg {
-  width: 5px;
-  height: 11px;
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--job-color, var(--accent)) 46%, #08101f);
-  transform-origin: top center;
-  animation: officeStride 0.36s ease-in-out infinite alternate;
-}
-.office-actor-leg.right { animation-delay: 0.18s; }
-.office-actor.state-break .office-actor-arm {
-  animation-duration: 0.75s;
-  transform: rotate(20deg);
-}
-.office-actor.state-working .office-actor-arm.left { transform: rotate(8deg); }
-.office-actor.state-working .office-actor-arm.right { transform: rotate(-8deg); }
+.office-actor.state-break .body-arm-l,
+.office-actor.state-break .body-hand-l,
+.office-actor.state-break .body-sleeve-l { animation-duration: 0.9s; }
+.office-actor.state-break .body-arm-r,
+.office-actor.state-break .body-hand-r,
+.office-actor.state-break .body-sleeve-r { animation-duration: 0.9s; }
+.office-actor.state-working .body-arm-l,
+.office-actor.state-working .body-hand-l,
+.office-actor.state-working .body-sleeve-l { animation: none; transform: rotate(6deg); }
+.office-actor.state-working .body-arm-r,
+.office-actor.state-working .body-hand-r,
+.office-actor.state-working .body-sleeve-r { animation: none; transform: rotate(-6deg); }
+.office-actor.state-offline .office-actor-body { opacity: 0.5; }
 .office-actor-name {
   margin-top: 4px;
   font-size: 10px;
@@ -1354,12 +1342,12 @@ a { color: var(--accent); text-decoration: none; }
 }
 
 @keyframes officeStride {
-  from { transform: translateY(-1px); }
-  to { transform: translateY(1px); }
+  from { transform: rotate(-4deg); }
+  to { transform: rotate(4deg); }
 }
 @keyframes officeArmSwing {
-  from { transform: rotate(-12deg); }
-  to { transform: rotate(12deg); }
+  from { transform: rotate(-8deg); }
+  to { transform: rotate(8deg); }
 }
 @keyframes officeBob {
   0%, 100% { transform: translateY(0); }
@@ -8989,6 +8977,25 @@ function officeHeadUrl(member) {
   return officeNormalizeHeadUrl(`https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(seed)}`, seed);
 }
 
+function officeExtractColors(member) {
+  const BG_COLORS = ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf', 'c8e6c9', 'bbdefb', 'f8bbd0', 'ffe0b2', 'e1bee7'];
+  const SKIN_COLORS = ['f2d3b1', 'ecad80', '9e5622', '763900', 'd4a574', 'c68642', 'e0ac69', 'f1c27d'];
+  const seed = String(member?.userName || member?.userId || 'member');
+  const hash = officeHashInt(seed);
+  let shirtHex = BG_COLORS[hash % BG_COLORS.length];
+  let skinHex = SKIN_COLORS[Math.abs(hash >> 4) % SKIN_COLORS.length];
+  try {
+    const url = new URL(String(member?.avatarUrl || ''));
+    if (url.hostname.includes('dicebear.com')) {
+      const bg = url.searchParams.get('backgroundColor');
+      if (bg && bg !== 'transparent' && /^[a-fA-F0-9]{6}$/.test(bg)) shirtHex = bg;
+      const sk = url.searchParams.get('skinColor');
+      if (sk && /^[a-fA-F0-9]{6}$/.test(sk)) skinHex = sk;
+    }
+  } catch {}
+  return { shirtColor: '#' + shirtHex, skinColor: '#' + skinHex };
+}
+
 function officeRoleToJob(role, isOwner) {
   if (isOwner) return 'manager';
   const txt = String(role || '').toLowerCase();
@@ -9052,6 +9059,7 @@ function officeBuildSnapshots() {
       role: member.role || I18n.t('team.member'),
       isOwner: !!member.isOwner,
       avatarHeadUrl: officeHeadUrl(member),
+      ...officeExtractColors(member),
       job,
       jobLabel: I18n.t(OFFICE_JOB_SYSTEM[job].labelKey),
       state,
@@ -9233,15 +9241,22 @@ function officeSyncActors(snapshots, deskCount) {
       node.dataset.userId = s.userId;
       node.innerHTML = `
         <div class="office-actor-bob">
+          <div class="office-actor-head"><img alt="" loading="lazy"></div>
+          <svg class="office-actor-body" viewBox="0 0 36 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect class="body-neck" x="14" y="0" width="8" height="5" rx="4"/>
+            <rect class="body-shirt" x="7" y="4" width="22" height="19" rx="5"/>
+            <rect class="body-sleeve-l" x="2" y="5" width="7" height="9" rx="3.5"/>
+            <rect class="body-arm-l" x="2" y="12" width="6" height="10" rx="3"/>
+            <circle class="body-hand-l" cx="5" cy="23" r="3"/>
+            <rect class="body-sleeve-r" x="27" y="5" width="7" height="9" rx="3.5"/>
+            <rect class="body-arm-r" x="28" y="12" width="6" height="10" rx="3"/>
+            <circle class="body-hand-r" cx="31" cy="23" r="3"/>
+            <rect class="body-pant-l" x="10" y="22" width="7" height="14" rx="3.5"/>
+            <rect class="body-pant-r" x="19" y="22" width="7" height="14" rx="3.5"/>
+            <ellipse class="body-shoe-l" cx="13.5" cy="37.5" rx="5" ry="3"/>
+            <ellipse class="body-shoe-r" cx="22.5" cy="37.5" rx="5" ry="3"/>
+          </svg>
           <div class="office-actor-shadow"></div>
-          <div class="office-actor-figure">
-            <div class="office-actor-head"><img alt="" loading="lazy"></div>
-            <div class="office-actor-neck"></div>
-            <div class="office-actor-torso"></div>
-            <div class="office-actor-arms"><span class="office-actor-arm left"></span><span class="office-actor-arm right"></span></div>
-            <div class="office-actor-hips"></div>
-            <div class="office-actor-legs"><span class="office-actor-leg left"></span><span class="office-actor-leg right"></span></div>
-          </div>
         </div>
         <div class="office-actor-name"></div>
         <div class="office-actor-job"></div>
@@ -9255,6 +9270,8 @@ function officeSyncActors(snapshots, deskCount) {
     node.style.left = `${point.x}%`;
     node.style.top = `${point.y}%`;
     node.style.setProperty('--job-color', meta.color);
+    node.style.setProperty('--shirt-color', s.shirtColor);
+    node.style.setProperty('--skin-color', s.skinColor);
 
     const img = node.querySelector('.office-actor-head img');
     if (img && img.src !== s.avatarHeadUrl) img.src = s.avatarHeadUrl;
