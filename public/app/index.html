@@ -1169,8 +1169,9 @@ a { color: var(--accent); text-decoration: none; }
 }
 .office-actor {
   position: absolute;
-  transform: translate(-50%, -50%);
-  transition: left 1.9s linear, top 1.9s linear;
+  left: 0; top: 0;
+  will-change: transform;
+  transition: transform 2s ease-in-out;
   pointer-events: none;
   text-align: center;
 }
@@ -1183,10 +1184,10 @@ a { color: var(--accent); text-decoration: none; }
 .office-actor-head {
   position: relative;
   z-index: 2;
-  width: 52px;
-  height: 52px;
+  width: 72px;
+  height: 72px;
   margin: 0 auto;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.22));
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.25));
   background: transparent;
 }
 .office-actor-head img {
@@ -1207,9 +1208,9 @@ a { color: var(--accent); text-decoration: none; }
   position: relative;
   z-index: 1;
   display: block;
-  width: 52px;
-  height: 60px;
-  margin: -18px auto 0;
+  width: 48px;
+  height: 52px;
+  margin: -22px auto 0;
 }
 .office-actor-body * {
   stroke: #3e3537;
@@ -9279,8 +9280,9 @@ function officeSyncActors(snapshots, deskCount) {
     const point = targets.get(s.userId) || { x: 50, y: 50 };
     const meta = OFFICE_JOB_SYSTEM[s.job] || OFFICE_JOB_SYSTEM.member;
     node.className = `office-actor state-${s.state} job-${s.job}`;
-    node.style.left = `${point.x}%`;
-    node.style.top = `${point.y}%`;
+    const lx = layer.offsetWidth * point.x / 100;
+    const ly = layer.offsetHeight * point.y / 100;
+    node.style.transform = `translate(${lx - 36}px, ${ly - 60}px)`;
     node.style.setProperty('--job-color', meta.color);
     node.style.setProperty('--shirt-color', s.shirtColor);
     node.style.setProperty('--skin-color', s.skinColor);
