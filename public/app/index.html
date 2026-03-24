@@ -5180,6 +5180,17 @@ function openStatsForMember(userId) {
   if (!userId) return;
   statsFocusUserId = userId;
   closePersonProfile();
+  if (isMobile()) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    const statsTab = document.getElementById('tabStats');
+    if (statsTab) statsTab.classList.add('active');
+    document.querySelectorAll('.bottom-nav .nav-item').forEach(n => {
+      n.classList.toggle('active', n.dataset.tab === 'tabStats');
+    });
+    renderStatsTab();
+    updateHash();
+    return;
+  }
   switchTab('tabStats');
 }
 
