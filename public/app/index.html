@@ -605,6 +605,330 @@ a { color: var(--accent); text-decoration: none; }
   border-radius: 999px;
   background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 65%, #fff));
 }
+.stats-epic {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.stats-hero {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  background:
+    radial-gradient(130% 100% at 10% 0%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 52%),
+    radial-gradient(120% 120% at 100% 100%, color-mix(in srgb, var(--amber) 17%, transparent), transparent 58%),
+    linear-gradient(140deg, color-mix(in srgb, var(--bg-card) 90%, var(--accent) 10%), var(--bg-card));
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: center;
+  overflow: hidden;
+}
+.stats-avatar-wrap {
+  width: 112px;
+  height: 112px;
+  position: relative;
+  border-radius: 50%;
+  padding: 4px;
+  background: conic-gradient(from 30deg, var(--accent), color-mix(in srgb, var(--accent) 65%, #fff), var(--amber), var(--accent));
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--accent) 32%, transparent);
+}
+.stats-avatar-wrap::after {
+  content: '';
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent);
+  opacity: 0.5;
+}
+.stats-avatar,
+.stats-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--bg-card);
+  background: var(--bg-card);
+}
+.stats-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-card));
+}
+.stats-hero-copy { min-width: 0; }
+.stats-hero-topline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary);
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+.stats-hero-title {
+  margin-top: 8px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.stats-hero-subtitle {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.stats-hero-kpi-row {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.stats-hero-kpi {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg-card) 90%, var(--accent) 10%);
+  padding: 8px 10px;
+}
+.stats-hero-kpi .k-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.45px;
+}
+.stats-hero-kpi .k-value {
+  font-size: 18px;
+  line-height: 1.15;
+  margin-top: 4px;
+  font-weight: 800;
+}
+.stats-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.stats-kpi-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 98px;
+}
+.stats-kpi-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+}
+.stats-kpi-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-secondary);
+}
+.stats-kpi-value {
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 800;
+}
+.stats-kpi-meta {
+  margin-top: auto;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.stats-panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.stats-panel {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+  padding: 12px;
+}
+.stats-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.stats-panel-title {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.45px;
+}
+.stats-panel-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  padding: 3px 8px;
+}
+.stats-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stats-status-row {
+  display: grid;
+  grid-template-columns: 78px 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+.stats-status-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.stats-status-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+.stats-status-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 65%, #fff), var(--accent));
+}
+.stats-status-count {
+  font-size: 12px;
+  font-weight: 700;
+}
+.stats-velocity-chart {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  align-items: end;
+  height: 140px;
+  margin-top: 4px;
+}
+.stats-day-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.stats-day-bars {
+  width: 100%;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 4px;
+  height: 106px;
+  padding: 0 2px;
+}
+.stats-day-bar {
+  width: 9px;
+  border-radius: 6px 6px 2px 2px;
+  min-height: 3px;
+}
+.stats-day-bar.created {
+  background: color-mix(in srgb, var(--amber) 88%, #fff);
+}
+.stats-day-bar.completed {
+  background: color-mix(in srgb, var(--accent) 80%, #fff);
+}
+.stats-day-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+.stats-priority-layout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+}
+.stats-priority-donut {
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  position: relative;
+  border: 1px solid var(--border);
+}
+.stats-priority-donut::after {
+  content: '';
+  position: absolute;
+  inset: 22px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+.stats-priority-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.stats-priority-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.stats-priority-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.stats-priority-name { color: var(--text-secondary); }
+.stats-priority-val { margin-left: auto; font-weight: 700; }
+.stats-performance-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.stats-performance-tile {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-input);
+  padding: 10px;
+}
+.stats-performance-tile .tile-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.45px;
+}
+.stats-performance-tile .tile-value {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+@media (max-width: 1120px) {
+  .stats-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stats-panels { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 900px) {
+  .stats-hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+    justify-items: center;
+  }
+  .stats-hero-copy { width: 100%; }
+  .stats-hero-kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 /* ═══ BOTTOM NAV ═══ */
 .bottom-nav {
@@ -4652,13 +4976,43 @@ function renderStatsTab() {
   }
 
   const total = all.length;
-  const completed = all.filter(t => t.status === 'done').length;
+  const active = all.filter(t => !t.archived);
+  const completed = active.filter(t => t.status === 'done').length;
   const archived = all.filter(t => !!t.archived).length;
-  const open = all.filter(t => t.status !== 'done' && !t.archived).length;
+  const open = active.filter(t => t.status !== 'done').length;
   const rate = total ? Math.round((completed / total) * 100) : 0;
 
   const todayStart = startOfToday();
   const weekStart = startOfWeekMonday();
+  const now = Date.now();
+  const me = currentUser?.userId || null;
+
+  const createdByYou = all.filter(t => t.createdBy === me).length;
+  const assignedToYou = all.filter(t => taskAssigneeIds(t).includes(me)).length;
+
+  const overdue = active.filter(t => {
+    if (!t.deadline || t.status === 'done') return false;
+    const deadlineMs = new Date(t.deadline).getTime();
+    return Number.isFinite(deadlineMs) && deadlineMs < todayStart;
+  }).length;
+
+  const closeDurationsHours = all
+    .filter(t => t.status === 'done')
+    .map(t => {
+      const createdMs = new Date(t.createdAt || 0).getTime();
+      const closedMs = new Date(t.completedAt || t.updatedAt || 0).getTime();
+      if (!Number.isFinite(createdMs) || !Number.isFinite(closedMs) || closedMs < createdMs) return null;
+      return (closedMs - createdMs) / 3600000;
+    })
+    .filter(v => Number.isFinite(v));
+
+  const avgCloseHours = closeDurationsHours.length
+    ? (closeDurationsHours.reduce((sum, v) => sum + v, 0) / closeDurationsHours.length)
+    : 0;
+  const avgCloseText = avgCloseHours >= 24
+    ? `${(avgCloseHours / 24).toFixed(1)}d`
+    : `${avgCloseHours.toFixed(1)}h`;
+
   const doneToday = all.filter(t => {
     if (t.status !== 'done') return false;
     const ms = new Date(t.completedAt || t.updatedAt || t.createdAt || 0).getTime();
@@ -4670,19 +5024,217 @@ function renderStatsTab() {
     return Number.isFinite(ms) && ms >= weekStart;
   }).length;
 
+  const statusItems = [
+    { key: 'done', label: I18n.t('task.status.done'), color: '#22c55e', count: active.filter(t => t.status === 'done').length },
+    { key: 'in-progress', label: I18n.t('task.status.inProgress'), color: '#38bdf8', count: active.filter(t => t.status === 'in-progress').length },
+    { key: 'in-review', label: I18n.t('task.status.inReview'), color: '#a78bfa', count: active.filter(t => t.status === 'in-review').length },
+    { key: 'needs-info', label: I18n.t('task.status.needsInfo'), color: '#f97316', count: active.filter(t => t.status === 'needs-info').length },
+    { key: 'on-hold', label: I18n.t('task.status.onHold'), color: '#f59e0b', count: active.filter(t => t.status === 'on-hold').length },
+    { key: 'todo', label: I18n.t('task.status.todo'), color: '#94a3b8', count: active.filter(t => t.status === 'todo').length },
+    { key: 'archived', label: I18n.t('stats.archivedTasks'), color: '#64748b', count: archived }
+  ];
+  const statusMax = Math.max(1, ...statusItems.map(item => item.count));
+
+  const priorityOrder = ['urgent', 'high', 'medium', 'low'];
+  const priorityColors = {
+    urgent: '#ef4444',
+    high: '#fb7185',
+    medium: '#f59e0b',
+    low: '#60a5fa'
+  };
+  const priorityItems = priorityOrder.map(key => ({
+    key,
+    label: I18n.t(`task.priority.${key}`),
+    color: priorityColors[key],
+    count: active.filter(t => (t.priority || 'medium') === key).length
+  }));
+  const priorityTotalRaw = priorityItems.reduce((sum, item) => sum + item.count, 0);
+  const priorityTotal = priorityTotalRaw || 1;
+  let currentAngle = 0;
+  const slices = [];
+  for (const item of priorityItems) {
+    const angle = (item.count / priorityTotal) * 360;
+    const nextAngle = currentAngle + angle;
+    slices.push(`${item.color} ${currentAngle}deg ${nextAngle}deg`);
+    currentAngle = nextAngle;
+  }
+  const donutBackground = priorityTotalRaw
+    ? `conic-gradient(${slices.join(', ')})`
+    : 'var(--bg-input)';
+
+  const dayBuckets = [];
+  for (let i = 6; i >= 0; i--) {
+    const dayStartDate = new Date(now);
+    dayStartDate.setDate(dayStartDate.getDate() - i);
+    dayStartDate.setHours(0, 0, 0, 0);
+    const dayStartMs = dayStartDate.getTime();
+    const dayEndMs = dayStartMs + 86400000;
+
+    const createdCount = all.filter(t => {
+      const ms = new Date(t.createdAt || 0).getTime();
+      return Number.isFinite(ms) && ms >= dayStartMs && ms < dayEndMs;
+    }).length;
+
+    const completedCount = all.filter(t => {
+      if (t.status !== 'done') return false;
+      const ms = new Date(t.completedAt || t.updatedAt || 0).getTime();
+      return Number.isFinite(ms) && ms >= dayStartMs && ms < dayEndMs;
+    }).length;
+
+    dayBuckets.push({
+      label: dayStartDate.toLocaleDateString(undefined, { weekday: 'short' }),
+      title: dayStartDate.toLocaleDateString(),
+      created: createdCount,
+      completed: completedCount
+    });
+  }
+  const weeklyMax = Math.max(1, ...dayBuckets.map(d => Math.max(d.created, d.completed)));
+
+  const avatarInitial = String(currentUser?.name || '?').trim().charAt(0).toUpperCase() || '?';
+  const avatarNode = currentUser?.avatarUrl
+    ? `<img class="stats-avatar" src="${esc(currentUser.avatarUrl)}" alt="${esc(currentUser?.name || '')}" loading="lazy">`
+    : `<div class="stats-avatar-fallback">${esc(avatarInitial)}</div>`;
+
   container.innerHTML = `
-    <div class="stats-grid">
-      <div class="stats-card"><div class="label" data-i18n="stats.totalTasks">Total tasks</div><div class="value">${total}</div></div>
-      <div class="stats-card"><div class="label" data-i18n="stats.completedTasks">Completed</div><div class="value">${completed}</div></div>
-      <div class="stats-card"><div class="label" data-i18n="stats.openTasks">Open</div><div class="value">${open}</div></div>
-      <div class="stats-card"><div class="label" data-i18n="stats.archivedTasks">Archived</div><div class="value">${archived}</div></div>
-      <div class="stats-card"><div class="label" data-i18n="stats.doneToday">Done today</div><div class="value">${doneToday}</div></div>
-      <div class="stats-card"><div class="label" data-i18n="stats.doneWeek">Done this week</div><div class="value">${doneThisWeek}</div></div>
-    </div>
-    <div class="stats-meter">
-      <div class="label" data-i18n="stats.completionRate">Completion rate</div>
-      <div class="value">${rate}%</div>
-      <div class="stats-meter-track"><div class="stats-meter-fill" style="width:${rate}%"></div></div>
+    <div class="stats-epic">
+      <section class="stats-hero">
+        <div class="stats-avatar-wrap">${avatarNode}</div>
+        <div class="stats-hero-copy">
+          <div class="stats-hero-topline">${icon('rocket', 12)} <span data-i18n="stats.heroTopline">Performance Cockpit</span></div>
+          <div class="stats-hero-title">${esc(currentUser?.name || '')}</div>
+          <div class="stats-hero-subtitle">${esc(I18n.t('stats.heroSubtitle', { flow: currentFlow?.name || '' }) || `Flow insight for ${currentFlow?.name || ''}`)}</div>
+          <div class="stats-hero-kpi-row">
+            <div class="stats-hero-kpi">
+              <div class="k-label" data-i18n="stats.totalTasks">Total tasks</div>
+              <div class="k-value">${total}</div>
+            </div>
+            <div class="stats-hero-kpi">
+              <div class="k-label" data-i18n="stats.completedTasks">Completed</div>
+              <div class="k-value">${completed}</div>
+            </div>
+            <div class="stats-hero-kpi">
+              <div class="k-label" data-i18n="stats.openTasks">Open</div>
+              <div class="k-value">${open}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats-kpi-grid">
+        <article class="stats-kpi-card">
+          <span class="stats-kpi-icon">${icon('clipboard', 14)}</span>
+          <div class="stats-kpi-label" data-i18n="stats.createdByYou">Created by you</div>
+          <div class="stats-kpi-value">${createdByYou}</div>
+          <div class="stats-kpi-meta">${Math.round((createdByYou / Math.max(1, total)) * 100)}%</div>
+        </article>
+        <article class="stats-kpi-card">
+          <span class="stats-kpi-icon">${icon('users', 14)}</span>
+          <div class="stats-kpi-label" data-i18n="stats.assignedToYou">Assigned to you</div>
+          <div class="stats-kpi-value">${assignedToYou}</div>
+          <div class="stats-kpi-meta">${Math.round((assignedToYou / Math.max(1, total)) * 100)}%</div>
+        </article>
+        <article class="stats-kpi-card">
+          <span class="stats-kpi-icon">${icon('check-circle', 14)}</span>
+          <div class="stats-kpi-label" data-i18n="stats.completionRate">Completion rate</div>
+          <div class="stats-kpi-value">${rate}%</div>
+          <div class="stats-kpi-meta">${completed}/${total}</div>
+        </article>
+        <article class="stats-kpi-card">
+          <span class="stats-kpi-icon">${icon('alert-triangle', 14)}</span>
+          <div class="stats-kpi-label" data-i18n="stats.overdueTasks">Overdue tasks</div>
+          <div class="stats-kpi-value">${overdue}</div>
+          <div class="stats-kpi-meta">${esc(I18n.t('stats.archivedTasks') || 'Archived')}: ${archived}</div>
+        </article>
+      </section>
+
+      <section class="stats-panels">
+        <article class="stats-panel">
+          <div class="stats-panel-head">
+            <div class="stats-panel-title" data-i18n="stats.statusMix">Status distribution</div>
+            <span class="stats-panel-chip">${total}</span>
+          </div>
+          <div class="stats-status-list">
+            ${statusItems.map(item => {
+              const percent = Math.round((item.count / statusMax) * 100);
+              return `
+                <div class="stats-status-row">
+                  <div class="stats-status-label">${esc(item.label)}</div>
+                  <div class="stats-status-track">
+                    <div class="stats-status-fill" style="width:${percent}%;background:${item.color}"></div>
+                  </div>
+                  <div class="stats-status-count">${item.count}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </article>
+
+        <article class="stats-panel">
+          <div class="stats-panel-head">
+            <div class="stats-panel-title" data-i18n="stats.weeklyVelocity">Weekly velocity</div>
+            <span class="stats-panel-chip">7d</span>
+          </div>
+          <div class="stats-velocity-chart">
+            ${dayBuckets.map(day => {
+              const createdHeight = Math.max(3, Math.round((day.created / weeklyMax) * 100));
+              const completedHeight = Math.max(3, Math.round((day.completed / weeklyMax) * 100));
+              return `
+                <div class="stats-day-col" title="${esc(day.title)}">
+                  <div class="stats-day-bars">
+                    <div class="stats-day-bar created" style="height:${createdHeight}%" title="${esc(I18n.t('stats.createdLine') || 'Created')}: ${day.created}"></div>
+                    <div class="stats-day-bar completed" style="height:${completedHeight}%" title="${esc(I18n.t('stats.completedLine') || 'Completed')}: ${day.completed}"></div>
+                  </div>
+                  <div class="stats-day-label">${esc(day.label)}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </article>
+
+        <article class="stats-panel">
+          <div class="stats-panel-head">
+            <div class="stats-panel-title" data-i18n="stats.priorityMix">Priority split</div>
+            <span class="stats-panel-chip">${priorityTotalRaw}</span>
+          </div>
+          <div class="stats-priority-layout">
+            <div class="stats-priority-donut" style="background:${donutBackground}"></div>
+            <div class="stats-priority-legend">
+              ${priorityItems.map(item => `
+                <div class="stats-priority-item">
+                  <span class="stats-priority-dot" style="background:${item.color}"></span>
+                  <span class="stats-priority-name">${esc(item.label)}</span>
+                  <span class="stats-priority-val">${item.count}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </article>
+
+        <article class="stats-panel">
+          <div class="stats-panel-head">
+            <div class="stats-panel-title" data-i18n="stats.performance">Performance</div>
+            <span class="stats-panel-chip">${rate}%</span>
+          </div>
+          <div class="stats-performance-grid">
+            <div class="stats-performance-tile">
+              <div class="tile-label" data-i18n="stats.doneToday">Done today</div>
+              <div class="tile-value">${doneToday}</div>
+            </div>
+            <div class="stats-performance-tile">
+              <div class="tile-label" data-i18n="stats.doneWeek">Done this week</div>
+              <div class="tile-value">${doneThisWeek}</div>
+            </div>
+            <div class="stats-performance-tile">
+              <div class="tile-label" data-i18n="stats.avgCloseTime">Avg close time</div>
+              <div class="tile-value">${avgCloseText}</div>
+            </div>
+            <div class="stats-performance-tile">
+              <div class="tile-label" data-i18n="stats.openTasks">Open</div>
+              <div class="tile-value">${open}</div>
+            </div>
+          </div>
+        </article>
+      </section>
     </div>
   `;
   I18n.translateDOM();
