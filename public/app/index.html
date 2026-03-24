@@ -1181,22 +1181,16 @@ a { color: var(--accent); text-decoration: none; }
 .office-actor.state-offline .office-actor-bob,
 .office-actor.state-remote .office-actor-bob { animation-duration: 2.1s; }
 .office-actor-head {
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
-  overflow: hidden;
+  width: 34px;
+  height: 34px;
   margin: 0 auto;
-  clip-path: circle(50% at 50% 50%);
-  filter: drop-shadow(0 3px 5px rgba(0,0,0,0.28));
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.22));
   background: transparent;
 }
 .office-actor-head img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: 50% 18%;
-  transform: scale(1.95);
-  transform-origin: center 20%;
+  object-fit: contain;
   display: block;
   background: transparent;
 }
