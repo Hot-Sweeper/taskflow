@@ -1082,7 +1082,7 @@ a { color: var(--accent); text-decoration: none; }
 }
 .office-world {
   position: relative;
-  min-height: 460px;
+  min-height: 620px;
   border: 1px solid var(--border);
   border-radius: 14px;
   overflow: hidden;
@@ -1116,13 +1116,13 @@ a { color: var(--accent); text-decoration: none; }
 }
 .office-zone-label {
   position: absolute;
-  top: 6px;
-  left: 8px;
+  top: 8px;
+  left: 10px;
   z-index: 1;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.42px;
+  letter-spacing: 0.5px;
   color: var(--text-secondary);
 }
 .office-zone.manager { left: 6%; top: 8%; width: 22%; height: 24%; background: color-mix(in srgb, var(--amber) 15%, transparent); }
@@ -1146,7 +1146,7 @@ a { color: var(--accent); text-decoration: none; }
 }
 .office-desk {
   position: relative;
-  min-height: 28px;
+  min-height: 36px;
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
   background:
@@ -1181,8 +1181,10 @@ a { color: var(--accent); text-decoration: none; }
 .office-actor.state-offline .office-actor-bob,
 .office-actor.state-remote .office-actor-bob { animation-duration: 2.1s; }
 .office-actor-head {
-  width: 34px;
-  height: 34px;
+  position: relative;
+  z-index: 2;
+  width: 48px;
+  height: 48px;
   margin: 0 auto;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.22));
   background: transparent;
@@ -1195,17 +1197,23 @@ a { color: var(--accent); text-decoration: none; }
   background: transparent;
 }
 .office-actor-shadow {
-  width: 18px;
-  height: 5px;
-  margin: 0 auto;
+  width: 26px;
+  height: 6px;
+  margin: 2px auto 0;
   border-radius: 999px;
-  background: rgba(0,0,0,0.28);
+  background: rgba(0,0,0,0.22);
 }
 .office-actor-body {
+  position: relative;
+  z-index: 1;
   display: block;
-  width: 34px;
-  height: 42px;
-  margin: -2px auto 0;
+  width: 48px;
+  height: 56px;
+  margin: -8px auto 0;
+}
+.office-actor-body * {
+  stroke: #3e3537;
+  stroke-width: 0.7;
 }
 .office-actor-body .body-neck,
 .office-actor-body .body-arm-l,
@@ -1258,13 +1266,13 @@ a { color: var(--accent); text-decoration: none; }
 .office-actor.state-offline .office-actor-body { opacity: 0.5; }
 .office-actor-name {
   margin-top: 4px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   line-height: 1.15;
   color: var(--text);
-  max-width: 92px;
+  max-width: 110px;
   display: inline-block;
-  padding: 1px 5px;
+  padding: 2px 7px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(6, 11, 23, 0.48);
@@ -1274,7 +1282,7 @@ a { color: var(--accent); text-decoration: none; }
 }
 .office-actor-job {
   margin-top: 2px;
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.1;
   color: var(--text-secondary);
   display: inline-block;
@@ -9243,18 +9251,21 @@ function officeSyncActors(snapshots, deskCount) {
         <div class="office-actor-bob">
           <div class="office-actor-head"><img alt="" loading="lazy"></div>
           <svg class="office-actor-body" viewBox="0 0 36 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect class="body-neck" x="14" y="0" width="8" height="5" rx="4"/>
-            <rect class="body-shirt" x="7" y="4" width="22" height="19" rx="5"/>
-            <rect class="body-sleeve-l" x="2" y="5" width="7" height="9" rx="3.5"/>
-            <rect class="body-arm-l" x="2" y="12" width="6" height="10" rx="3"/>
-            <circle class="body-hand-l" cx="5" cy="23" r="3"/>
-            <rect class="body-sleeve-r" x="27" y="5" width="7" height="9" rx="3.5"/>
-            <rect class="body-arm-r" x="28" y="12" width="6" height="10" rx="3"/>
-            <circle class="body-hand-r" cx="31" cy="23" r="3"/>
+            <!-- legs behind torso -->
             <rect class="body-pant-l" x="10" y="22" width="7" height="14" rx="3.5"/>
             <rect class="body-pant-r" x="19" y="22" width="7" height="14" rx="3.5"/>
-            <ellipse class="body-shoe-l" cx="13.5" cy="37.5" rx="5" ry="3"/>
-            <ellipse class="body-shoe-r" cx="22.5" cy="37.5" rx="5" ry="3"/>
+            <ellipse class="body-shoe-l" cx="13.5" cy="37" rx="4.5" ry="2.8"/>
+            <ellipse class="body-shoe-r" cx="22.5" cy="37" rx="4.5" ry="2.8"/>
+            <!-- arms behind torso -->
+            <rect class="body-arm-l" x="1" y="12" width="6" height="10" rx="3"/>
+            <circle class="body-hand-l" cx="4" cy="23" r="2.8"/>
+            <rect class="body-arm-r" x="29" y="12" width="6" height="10" rx="3"/>
+            <circle class="body-hand-r" cx="32" cy="23" r="2.8"/>
+            <!-- torso on top -->
+            <rect class="body-neck" x="14" y="0" width="8" height="6" rx="4"/>
+            <rect class="body-shirt" x="6" y="4" width="24" height="20" rx="5"/>
+            <rect class="body-sleeve-l" x="1" y="5" width="8" height="10" rx="4"/>
+            <rect class="body-sleeve-r" x="27" y="5" width="8" height="10" rx="4"/>
           </svg>
           <div class="office-actor-shadow"></div>
         </div>
