@@ -10,6 +10,7 @@
 <script src="/shared/models.js"></script>
 <script src="/shared/api.js"></script>
 <script src="/shared/i18n.js"></script>
+<script src="/shared/tilemap.js"></script>
 <style>
 /* ═══ DESIGN TOKENS ═══ */
 :root {
@@ -1089,6 +1090,24 @@ a { color: var(--accent); text-decoration: none; }
   background:
     radial-gradient(80% 120% at 50% -12%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 60%),
     linear-gradient(160deg, color-mix(in srgb, var(--bg-secondary) 86%, #0b111f), color-mix(in srgb, var(--bg) 86%, #070b14));
+}
+.office-tilemap-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  z-index: 0;
+  pointer-events: none;
+}
+.office-world.has-tilemap .office-texture,
+.office-world.has-tilemap .office-zone,
+.office-world.has-tilemap .office-desks {
+  display: none;
+}
+.office-world.has-tilemap {
+  background: #1a1a2e;
 }
 .office-texture {
   position: absolute;
@@ -9019,7 +9038,12 @@ function officeResolveZone(snapshot) {
   return 'desks';
 }
 
+let _officeTilemapData = null;
+let _officeTilemapZones = null;
+let _officeTilemapKey = '';
+
 function officeZoneRects() {
+  if (_officeTilemapZones) return _officeTilemapZones;
   return {
     manager: { x: 6, y: 8, w: 22, h: 24 },
     desks: { x: 30, y: 8, w: 40, h: 58 },
@@ -9093,6 +9117,7 @@ function officeComputeStats(snapshots) {
 
 function officeBuildWorldHtml(deskCount, snapshots) {
   const stats = officeComputeStats(snapshots);
+  const hasTilemap = !!_officeTilemapData;
   return `
     <div class="office-toolbar">
       <div class="office-chip"><div class="office-chip-label" data-i18n="office.working">Working</div><div class="office-chip-value" id="officeCountWorking">${stats.working}</div></div>
@@ -9101,7 +9126,8 @@ function officeBuildWorldHtml(deskCount, snapshots) {
       <div class="office-chip"><div class="office-chip-label" data-i18n="office.remote">Remote/Field</div><div class="office-chip-value" id="officeCountRemote">${stats.remote}</div></div>
     </div>
 
-    <div class="office-world">
+    <div class="office-world${hasTilemap ? ' has-tilemap' : ''}">
+      ${hasTilemap ? '<canvas id="officeTilemapCanvas" class="office-tilemap-canvas"></canvas>' : ''}
       <div class="office-texture"></div>
       <div class="office-zone manager"><div class="office-zone-label" data-i18n="office.map.manager">Manager Office</div></div>
       <div class="office-zone desks"><div class="office-zone-label" data-i18n="office.map.desks">Work Desks</div></div>
@@ -9335,13 +9361,35 @@ async function renderOfficeTab(forceFresh = false) {
 
     const snapshots = officeBuildSnapshots();
     const deskCount = Math.max(4, Math.ceil(Math.max(1, snapshots.length) * 1.35));
-    const renderedDesks = Number(wrap.dataset.desks || '0');
 
-    if (!wrap.dataset.ready || renderedDesks !== deskCount) {
+    // Generate tilemap if available and personnel changed
+    if (typeof OfficeTilemap !== 'undefined') {
+      OfficeTilemap.initTiles();
+      const mgrCount = Math.max(1, snapshots.filter(s => s.job === 'manager').length);
+      const wrkCount = Math.max(2, snapshots.filter(s => s.job !== 'manager').length);
+      const tmKey = `${mgrCount}:${wrkCount}`;
+      if (tmKey !== _officeTilemapKey) {
+        _officeTilemapData = OfficeTilemap.generate(mgrCount, wrkCount);
+        _officeTilemapZones = _officeTilemapData.zones;
+        _officeTilemapKey = tmKey;
+      }
+    }
+
+    const renderedDesks = Number(wrap.dataset.desks || '0');
+    const renderedTmKey = wrap.dataset.tmkey || '';
+
+    if (!wrap.dataset.ready || renderedDesks !== deskCount || renderedTmKey !== _officeTilemapKey) {
       wrap.innerHTML = officeBuildWorldHtml(deskCount, snapshots);
       wrap.dataset.ready = '1';
       wrap.dataset.desks = String(deskCount);
+      wrap.dataset.tmkey = _officeTilemapKey;
       I18n.translateDOM();
+    }
+
+    // Render tilemap to canvas
+    const tmCanvas = document.getElementById('officeTilemapCanvas');
+    if (tmCanvas && _officeTilemapData) {
+      OfficeTilemap.render(tmCanvas, _officeTilemapData);
     }
 
     officeRenderLegend(snapshots);

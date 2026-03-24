@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFlow Office Tilemap — Preview</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  min-height: 100vh;
+}
+.header {
+  background: #16213e;
+  border-bottom: 1px solid #0f3460;
+  padding: 16px 24px;
+  display: flex; align-items: center; gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+}
+.header h1 { font-size: 20px; color: #e94560; }
+.header span { color: #888; font-size: 13px; }
+
+.layout {
+  display: flex;
+  height: calc(100vh - 57px);
+}
+
+/* ─── Tile Palette ─── */
+.palette {
+  width: 280px;
+  background: #16213e;
+  border-right: 1px solid #0f3460;
+  overflow-y: auto;
+  padding: 12px;
+  flex-shrink: 0;
+}
+.palette h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #e94560;
+  margin: 12px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #0f3460;
+}
+.palette h2:first-child { margin-top: 0; }
+.tile-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.tile-slot {
+  width: 48px; height: 48px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  image-rendering: pixelated;
+  position: relative;
+  background: #111;
+  transition: border-color 0.15s;
+}
+.tile-slot:hover { border-color: #e94560; }
+.tile-slot.selected { border-color: #e94560; box-shadow: 0 0 8px rgba(233,69,96,0.5); }
+.tile-slot canvas {
+  width: 100%; height: 100%;
+  image-rendering: pixelated;
+}
+.tile-slot .tile-name {
+  position: absolute;
+  bottom: -1px; left: 0; right: 0;
+  font-size: 7px;
+  text-align: center;
+  background: rgba(0,0,0,0.85);
+  color: #ccc;
+  padding: 1px;
+  pointer-events: none;
+  border-radius: 0 0 2px 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Canvas Area ─── */
+.canvas-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.toolbar {
+  background: #16213e;
+  border-bottom: 1px solid #0f3460;
+  padding: 8px 16px;
+  display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap;
+}
+.toolbar label { font-size: 12px; color: #aaa; }
+.toolbar select, .toolbar input[type="number"] {
+  background: #1a1a2e;
+  border: 1px solid #0f3460;
+  color: #e0e0e0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.toolbar button {
+  background: #0f3460;
+  border: none;
+  color: #e0e0e0;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s;
+}
+.toolbar button:hover { background: #e94560; }
+.toolbar button.active { background: #e94560; }
+.toolbar .sep { width: 1px; height: 24px; background: #0f3460; }
+
+.map-container {
+  flex: 1;
+  overflow: auto;
+  background: #111;
+  cursor: crosshair;
+}
+#mapCanvas {
+  image-rendering: pixelated;
+  display: block;
+}
+
+/* ─── Info Panel ─── */
+.info-bar {
+  background: #16213e;
+  border-top: 1px solid #0f3460;
+  padding: 6px 16px;
+  font-size: 11px;
+  color: #888;
+  display: flex; gap: 24px;
+}
+
+/* ─── Export Popup ─── */
+.export-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.export-overlay.show { display: flex; }
+.export-box {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 700px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: auto;
+}
+.export-box h3 { color: #e94560; margin-bottom: 12px; }
+.export-box pre {
+  background: #111;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+  color: #8f8;
+}
+.export-box button {
+  margin-top: 12px;
+  background: #e94560;
+  border: none;
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+/* ─── Generator Panel ─── */
+.generator-panel {
+  background: linear-gradient(135deg, #16213e 0%, #1a1a3e 100%);
+  border-bottom: 1px solid #0f3460;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.generator-panel .gen-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e94560;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.gen-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 52, 96, 0.5);
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(233, 69, 96, 0.15);
+}
+.gen-group label {
+  font-size: 12px;
+  color: #aaa;
+  white-space: nowrap;
+  min-width: 60px;
+}
+.gen-group .slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gen-group input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 120px;
+  height: 6px;
+  border-radius: 3px;
+  background: #0f3460;
+  outline: none;
+  cursor: pointer;
+}
+.gen-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #e94560;
+  border: 2px solid #fff;
+  box-shadow: 0 0 8px rgba(233, 69, 96, 0.5);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.gen-group input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 14px rgba(233, 69, 96, 0.7);
+}
+.gen-group input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #e94560;
+  border: 2px solid #fff;
+  box-shadow: 0 0 8px rgba(233, 69, 96, 0.5);
+  cursor: pointer;
+}
+.gen-count {
+  background: #0f3460;
+  color: #e94560;
+  font-weight: 700;
+  font-size: 16px;
+  min-width: 32px;
+  text-align: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.gen-btn {
+  background: linear-gradient(135deg, #e94560, #c73e54);
+  border: none;
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 12px rgba(233, 69, 96, 0.3);
+  white-space: nowrap;
+}
+.gen-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(233, 69, 96, 0.45);
+}
+.gen-btn:active {
+  transform: translateY(0);
+}
+.gen-stats {
+  font-size: 11px;
+  color: #666;
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+}
+.gen-stats span {
+  background: rgba(15, 52, 96, 0.4);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏢 TaskFlow Office Tilemap</h1>
+  <span>Pixel Art Tile Designer — 16×16 base tiles</span>
+</div>
+
+<div class="layout">
+  <!-- Palette -->
+  <div class="palette" id="palette"></div>
+
+  <!-- Canvas -->
+  <div class="canvas-area">
+    <div class="toolbar">
+      <label>Map:</label>
+      <input type="number" id="mapW" value="20" min="5" max="60" style="width:50px" title="Width">
+      <span style="color:#666">×</span>
+      <input type="number" id="mapH" value="14" min="5" max="40" style="width:50px" title="Height">
+      <button onclick="resizeMap()">Resize</button>
+      <div class="sep"></div>
+
+      <label>Zoom:</label>
+      <select id="zoomSel" onchange="setZoom(+this.value)">
+        <option value="1">1×</option>
+        <option value="2" selected>2×</option>
+        <option value="3">3×</option>
+        <option value="4">4×</option>
+      </select>
+      <div class="sep"></div>
+
+      <label>Layer:</label>
+      <select id="layerSel">
+        <option value="0">Floor</option>
+        <option value="1" selected>Walls & Objects</option>
+        <option value="2">Overlay</option>
+      </select>
+      <div class="sep"></div>
+
+      <button id="btnDraw" class="active" onclick="setTool('draw')">🖌 Draw</button>
+      <button id="btnErase" onclick="setTool('erase')">🧹 Erase</button>
+      <button id="btnFill" onclick="setTool('fill')">🪣 Fill</button>
+      <div class="sep"></div>
+      <button onclick="clearMap()">🗑 Clear</button>
+      <button onclick="exportJSON()">📦 Export JSON</button>
+    </div>
+
+    <!-- Generator Panel -->
+    <div class="generator-panel">
+      <div class="gen-title">🏢 Office Generator</div>
+      <div class="gen-group">
+        <label>👔 Managers</label>
+        <div class="slider-wrap">
+          <input type="range" id="sliderManagers" min="1" max="8" value="1" title="Number of managers" oninput="updateSliderDisplay()">
+          <span class="gen-count" id="countManagers">1</span>
+        </div>
+      </div>
+      <div class="gen-group">
+        <label>👷 Workers</label>
+        <div class="slider-wrap">
+          <input type="range" id="sliderWorkers" min="2" max="40" value="6" title="Number of workers" oninput="updateSliderDisplay()">
+          <span class="gen-count" id="countWorkers">6</span>
+        </div>
+      </div>
+      <button class="gen-btn" onclick="generateFromSliders()">⚡ Generate Office</button>
+      <div class="gen-stats" id="genStats"></div>
+    </div>
+
+    <div class="map-container" id="mapContainer">
+      <canvas id="mapCanvas"></canvas>
+    </div>
+
+    <div class="info-bar">
+      <span id="infoPos">Pos: —</span>
+      <span id="infoTile">Tile: —</span>
+      <span id="infoLayer">Layer: Walls & Objects</span>
+      <span>LMB=Place RMB=Erase</span>
+    </div>
+  </div>
+</div>
+
+<div class="export-overlay" id="exportOverlay" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="export-box">
+    <h3>Tilemap JSON</h3>
+    <pre id="exportCode"></pre>
+    <button onclick="copyExport()">📋 Copy to Clipboard</button>
+    <button onclick="document.getElementById('exportOverlay').classList.remove('show')">Close</button>
+  </div>
+</div>
+
+<script>
+// ──────────────────────────────────────────────────
+//  TILE DEFINITIONS — Each tile is drawn on a 16×16 canvas
+// ──────────────────────────────────────────────────
+const TILE_SIZE = 16;
+const TILES = {};
+
+// Helper: draw pixels from a compact string map
+function defineTile(id, name, category, drawFn) {
+  TILES[id] = { id, name, category, draw: drawFn, canvas: null };
+}
+
+function px(ctx, x, y, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, 1, 1);
+}
+function rect(ctx, x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, h);
+}
+function line(ctx, x1, y1, x2, y2, color) {
+  ctx.fillStyle = color;
+  if (x1 === x2) { for (let y = Math.min(y1,y2); y <= Math.max(y1,y2); y++) ctx.fillRect(x1, y, 1, 1); }
+  else { for (let x = Math.min(x1,x2); x <= Math.max(x1,x2); x++) ctx.fillRect(x, y1, 1, 1); }
+}
+
+// ═══════════════ FLOORS ═══════════════
+
+defineTile('floor_wood', 'Wood Floor', 'Floors', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#8B6914');
+  // Wood grain lines
+  for (let y = 0; y < 16; y += 4) {
+    rect(ctx, 0, y, 16, 1, '#7A5C10');
+    rect(ctx, 0, y+2, 16, 1, '#9B7924');
+  }
+  // Plank seams
+  line(ctx, 5, 0, 5, 3, '#6B4F0A');
+  line(ctx, 11, 4, 11, 7, '#6B4F0A');
+  line(ctx, 3, 8, 3, 11, '#6B4F0A');
+  line(ctx, 9, 12, 9, 15, '#6B4F0A');
+  // Knots
+  px(ctx, 2, 1, '#6B4F0A');
+  px(ctx, 13, 6, '#6B4F0A');
+  px(ctx, 7, 10, '#6B4F0A');
+});
+
+defineTile('floor_wood_dark', 'Dark Wood', 'Floors', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#5C4033');
+  for (let y = 0; y < 16; y += 4) {
+    rect(ctx, 0, y, 16, 1, '#4A3228');
+    rect(ctx, 0, y+2, 16, 1, '#6E5040');
+  }
+  line(ctx, 7, 0, 7, 3, '#3E2A1E');
+  line(ctx, 13, 4, 13, 7, '#3E2A1E');
+  line(ctx, 4, 8, 4, 11, '#3E2A1E');
+  line(ctx, 10, 12, 10, 15, '#3E2A1E');
+});
+
+defineTile('floor_carpet_blue', 'Blue Carpet', 'Floors', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#2C4A7C');
+  // Texture noise
+  const noiseColors = ['#2A4876', '#2E4C80', '#304E84'];
+  for (let y = 0; y < 16; y += 2) {
+    for (let x = 0; x < 16; x += 2) {
+      px(ctx, x + (y%4 ? 1 : 0), y, noiseColors[(x+y)%3]);
+    }
+  }
+});
+
+defineTile('floor_carpet_red', 'Red Carpet', 'Floors', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#7C2C2C');
+  const noiseColors = ['#762A2A', '#802E2E', '#843030'];
+  for (let y = 0; y < 16; y += 2) {
+    for (let x = 0; x < 16; x += 2) {
+      px(ctx, x + (y%4 ? 1 : 0), y, noiseColors[(x+y)%3]);
+    }
+  }
+});
+
+defineTile('floor_carpet_green', 'Green Carpet', 'Floors', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#2C5C3A');
+  const nc = ['#2A5838', '#2E603C', '#306440'];
+  for (let y = 0; y < 16; y += 2) for (let x = 0; x < 16; x += 2) px(ctx, x+(y%4?1:0), y, nc[(x+y)%3]);
+});
+
+defineTile('floor_tile', 'Office Tile', 'Floors', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#C8C0B0');
+  // Grid lines
+  rect(ctx, 0, 0, 16, 1, '#B0A898');
+  rect(ctx, 0, 0, 1, 16, '#B0A898');
+  rect(ctx, 8, 0, 1, 16, '#B8B0A0');
+  rect(ctx, 0, 8, 16, 1, '#B8B0A0');
+  // Subtle speckle
+  px(ctx, 3, 3, '#D0C8B8'); px(ctx, 12, 5, '#D0C8B8');
+  px(ctx, 6, 11, '#BEB8A8'); px(ctx, 14, 13, '#BEB8A8');
+});
+
+defineTile('floor_concrete', 'Concrete', 'Floors', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#888888');
+  const nc = ['#848484', '#8C8C8C', '#808080'];
+  for (let y = 0; y < 16; y += 3) for (let x = 0; x < 16; x += 3) px(ctx, x, y, nc[(x*y)%3]);
+  px(ctx, 5, 7, '#707070'); px(ctx, 11, 3, '#707070');
+});
+
+defineTile('floor_checker', 'Checker Floor', 'Floors', (ctx) => {
+  for (let y = 0; y < 16; y += 8) {
+    for (let x = 0; x < 16; x += 8) {
+      rect(ctx, x, y, 8, 8, ((x+y)/8) % 2 === 0 ? '#D0D0D0' : '#404040');
+    }
+  }
+});
+
+// ═══════════════ WALLS ═══════════════
+
+defineTile('wall_top', 'Wall Top', 'Walls', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#C8C0B0'); // floor background
+  rect(ctx, 0, 0, 16, 6, '#505868');  // wall face
+  rect(ctx, 0, 6, 16, 2, '#404850');  // wall bottom edge / shadow
+  rect(ctx, 0, 0, 16, 1, '#606878');  // highlight
+  // Brick pattern
+  line(ctx, 0, 3, 15, 3, '#485060');
+  line(ctx, 4, 0, 4, 3, '#485060');
+  line(ctx, 12, 0, 12, 3, '#485060');
+  line(ctx, 8, 3, 8, 6, '#485060');
+});
+
+defineTile('wall_bottom', 'Wall Bottom', 'Walls', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#C8C0B0');
+  rect(ctx, 0, 10, 16, 6, '#505868');
+  rect(ctx, 0, 10, 16, 1, '#606878');
+  line(ctx, 0, 13, 15, 13, '#485060');
+  line(ctx, 4, 10, 4, 13, '#485060');
+  line(ctx, 12, 10, 12, 13, '#485060');
+  line(ctx, 8, 13, 8, 15, '#485060');
+});
+
+defineTile('wall_left', 'Wall Left', 'Walls', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#C8C0B0');
+  rect(ctx, 0, 0, 4, 16, '#505868');
+  rect(ctx, 4, 0, 2, 16, '#404850');
+  rect(ctx, 0, 0, 1, 16, '#606878');
+  line(ctx, 0, 4, 3, 4, '#485060');
+  line(ctx, 0, 8, 3, 8, '#485060');
+  line(ctx, 0, 12, 3, 12, '#485060');
+});
+
+defineTile('wall_right', 'Wall Right', 'Walls', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#C8C0B0');
+  rect(ctx, 12, 0, 4, 16, '#505868');
+  rect(ctx, 10, 0, 2, 16, '#404850');
+  rect(ctx, 15, 0, 1, 16, '#606878');
+  line(ctx, 12, 4, 15, 4, '#485060');
+  line(ctx, 12, 8, 15, 8, '#485060');
+  line(ctx, 12, 12, 15, 12, '#485060');
+});
+
+defineTile('wall_corner_tl', 'Corner TL', 'Walls', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#505868');
+  rect(ctx, 6, 8, 10, 8, '#C8C0B0');
+  rect(ctx, 0, 0, 16, 1, '#606878');
+  rect(ctx, 0, 0, 1, 16, '#606878');
+  rect(ctx, 4, 6, 2, 10, '#404850');
+  rect(ctx, 6, 6, 10, 2, '#404850');
+});
+
+defineTile('wall_corner_tr', 'Corner TR', 'Walls', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#505868');
+  rect(ctx, 0, 8, 10, 8, '#C8C0B0');
+  rect(ctx, 0, 0, 16, 1, '#606878');
+  rect(ctx, 15, 0, 1, 16, '#606878');
+  rect(ctx, 10, 6, 2, 10, '#404850');
+  rect(ctx, 0, 6, 10, 2, '#404850');
+});
+
+defineTile('wall_corner_bl', 'Corner BL', 'Walls', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#505868');
+  rect(ctx, 6, 0, 10, 8, '#C8C0B0');
+  rect(ctx, 0, 15, 16, 1, '#606878');
+  rect(ctx, 0, 0, 1, 16, '#606878');
+  rect(ctx, 4, 0, 2, 10, '#404850');
+  rect(ctx, 6, 8, 10, 2, '#404850');
+});
+
+defineTile('wall_corner_br', 'Corner BR', 'Walls', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#505868');
+  rect(ctx, 0, 0, 10, 8, '#C8C0B0');
+  rect(ctx, 15, 0, 1, 16, '#606878');
+  rect(ctx, 0, 15, 16, 1, '#606878');
+  rect(ctx, 10, 0, 2, 10, '#404850');
+  rect(ctx, 0, 8, 10, 2, '#404850');
+});
+
+defineTile('wall_h', 'Wall Horiz', 'Walls', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#505868');
+  rect(ctx, 0, 0, 16, 1, '#606878');
+  rect(ctx, 0, 15, 16, 1, '#404850');
+  line(ctx, 0, 5, 15, 5, '#485060');
+  line(ctx, 0, 10, 15, 10, '#485060');
+  line(ctx, 4, 0, 4, 5, '#485060');
+  line(ctx, 12, 5, 12, 10, '#485060');
+  line(ctx, 8, 10, 8, 15, '#485060');
+});
+
+defineTile('wall_v', 'Wall Vert', 'Walls', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#505868');
+  rect(ctx, 0, 0, 1, 16, '#606878');
+  rect(ctx, 15, 0, 1, 16, '#404850');
+  line(ctx, 0, 4, 15, 4, '#485060');
+  line(ctx, 0, 8, 15, 8, '#485060');
+  line(ctx, 0, 12, 15, 12, '#485060');
+});
+
+// ═══════════════ DOORS ═══════════════
+
+defineTile('door_h', 'Door Horiz', 'Doors', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#C8C0B0'); // floor
+  rect(ctx, 0, 0, 16, 2, '#505868');  // wall strip top
+  rect(ctx, 0, 6, 16, 2, '#404850');  // wall strip bottom
+  // Door frame
+  rect(ctx, 1, 2, 1, 4, '#6B4F0A');
+  rect(ctx, 14, 2, 1, 4, '#6B4F0A');
+  // Door (open)
+  rect(ctx, 2, 2, 12, 4, '#A0784C');
+  rect(ctx, 3, 3, 4, 2, '#B08858');
+  rect(ctx, 9, 3, 4, 2, '#B08858');
+  // Handle
+  px(ctx, 8, 4, '#D4A84C');
+});
+
+defineTile('door_v', 'Door Vert', 'Doors', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#C8C0B0');
+  rect(ctx, 0, 0, 2, 16, '#505868');
+  rect(ctx, 6, 0, 2, 16, '#404850');
+  rect(ctx, 2, 1, 4, 1, '#6B4F0A');
+  rect(ctx, 2, 14, 4, 1, '#6B4F0A');
+  rect(ctx, 2, 2, 4, 12, '#A0784C');
+  rect(ctx, 3, 3, 2, 4, '#B08858');
+  rect(ctx, 3, 9, 2, 4, '#B08858');
+  px(ctx, 4, 8, '#D4A84C');
+});
+
+defineTile('door_glass_h', 'Glass Door H', 'Doors', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#C8C0B0');
+  rect(ctx, 0, 0, 16, 2, '#505868');
+  rect(ctx, 0, 6, 16, 2, '#404850');
+  rect(ctx, 1, 2, 1, 4, '#808890');
+  rect(ctx, 14, 2, 1, 4, '#808890');
+  // Glass
+  rect(ctx, 2, 2, 12, 4, 'rgba(120,180,220,0.6)');
+  rect(ctx, 3, 3, 10, 2, 'rgba(160,210,240,0.5)');
+  // Shine
+  line(ctx, 4, 2, 6, 2, 'rgba(255,255,255,0.4)');
+});
+
+// ═══════════════ WINDOWS ═══════════════
+
+defineTile('window_h', 'Window Horiz', 'Doors', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#505868'); // wall
+  rect(ctx, 0, 0, 16, 1, '#606878');
+  // Window opening
+  rect(ctx, 2, 3, 12, 8, '#78B8DC');
+  rect(ctx, 2, 3, 12, 1, '#A0D0E8');
+  // Frame
+  rect(ctx, 1, 2, 14, 1, '#808890');
+  rect(ctx, 1, 11, 14, 1, '#808890');
+  rect(ctx, 1, 2, 1, 10, '#808890');
+  rect(ctx, 14, 2, 1, 10, '#808890');
+  // Cross dividers
+  rect(ctx, 7, 2, 2, 10, '#808890');
+  rect(ctx, 1, 7, 14, 1, '#808890');
+  // Sky
+  line(ctx, 5, 5, 5, 6, '#A8D8F0');
+  line(ctx, 10, 4, 11, 4, '#A8D8F0');
+});
+
+// ═══════════════ FURNITURE ═══════════════
+
+defineTile('desk_h', 'Desk Horiz', 'Furniture', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  // Desktop surface
+  rect(ctx, 0, 4, 16, 8, '#8B6914');
+  rect(ctx, 0, 4, 16, 1, '#9B7924');
+  rect(ctx, 0, 11, 16, 1, '#7A5C10');
+  // Legs
+  rect(ctx, 1, 12, 2, 4, '#6B4F0A');
+  rect(ctx, 13, 12, 2, 4, '#6B4F0A');
+  // Shadow
+  rect(ctx, 2, 12, 12, 1, 'rgba(0,0,0,0.15)');
+  // Drawer handle
+  rect(ctx, 7, 8, 2, 1, '#D4A84C');
+});
+
+defineTile('desk_v', 'Desk Vert', 'Furniture', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 4, 0, 8, 16, '#8B6914');
+  rect(ctx, 4, 0, 1, 16, '#9B7924');
+  rect(ctx, 11, 0, 1, 16, '#7A5C10');
+  rect(ctx, 12, 1, 4, 2, '#6B4F0A');
+  rect(ctx, 12, 13, 4, 2, '#6B4F0A');
+  rect(ctx, 8, 7, 1, 2, '#D4A84C');
+});
+
+defineTile('desk_corner', 'L-Desk Corner', 'Furniture', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 0, 4, 16, 8, '#8B6914');
+  rect(ctx, 4, 0, 8, 4, '#8B6914');
+  rect(ctx, 0, 4, 16, 1, '#9B7924');
+  rect(ctx, 4, 0, 1, 4, '#9B7924');
+  rect(ctx, 0, 11, 16, 1, '#7A5C10');
+  rect(ctx, 11, 0, 1, 4, '#7A5C10');
+  rect(ctx, 1, 12, 2, 4, '#6B4F0A');
+  rect(ctx, 13, 12, 2, 4, '#6B4F0A');
+});
+
+defineTile('chair_down', 'Chair (down)', 'Furniture', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  // Seat
+  rect(ctx, 4, 6, 8, 7, '#333');
+  rect(ctx, 5, 7, 6, 5, '#444');
+  // Backrest
+  rect(ctx, 4, 4, 8, 3, '#444');
+  rect(ctx, 5, 4, 6, 1, '#555');
+  // Wheels (5 points)
+  px(ctx, 4, 14, '#222'); px(ctx, 11, 14, '#222');
+  px(ctx, 7, 15, '#222'); px(ctx, 3, 13, '#222'); px(ctx, 12, 13, '#222');
+  // Center pole
+  rect(ctx, 7, 13, 2, 2, '#2A2A2A');
+});
+
+defineTile('chair_up', 'Chair (up)', 'Furniture', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 4, 4, 8, 7, '#333');
+  rect(ctx, 5, 5, 6, 5, '#444');
+  rect(ctx, 4, 10, 8, 3, '#444');
+  rect(ctx, 5, 12, 6, 1, '#555');
+  px(ctx, 4, 2, '#222'); px(ctx, 11, 2, '#222');
+  px(ctx, 7, 1, '#222'); px(ctx, 3, 3, '#222'); px(ctx, 12, 3, '#222');
+  rect(ctx, 7, 2, 2, 2, '#2A2A2A');
+});
+
+defineTile('chair_left', 'Chair (left)', 'Furniture', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 4, 4, 7, 8, '#333');
+  rect(ctx, 5, 5, 5, 6, '#444');
+  rect(ctx, 2, 4, 3, 8, '#444');
+  rect(ctx, 2, 5, 1, 6, '#555');
+  px(ctx, 12, 4, '#222'); px(ctx, 12, 11, '#222');
+  px(ctx, 13, 7, '#222');
+  rect(ctx, 11, 7, 2, 2, '#2A2A2A');
+});
+
+// ═══════════════ COMPUTERS ═══════════════
+
+defineTile('monitor', 'Monitor', 'Tech', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  // Screen
+  rect(ctx, 2, 2, 12, 8, '#222');
+  rect(ctx, 3, 3, 10, 6, '#4488AA');
+  // Screen content
+  rect(ctx, 4, 4, 8, 1, '#88CCEE');
+  rect(ctx, 4, 6, 5, 1, '#66AACC');
+  rect(ctx, 4, 7, 7, 1, '#66AACC');
+  // Stand
+  rect(ctx, 6, 10, 4, 2, '#333');
+  rect(ctx, 5, 12, 6, 1, '#333');
+  // Status LED
+  px(ctx, 7, 9, '#44FF44');
+});
+
+defineTile('laptop', 'Laptop', 'Tech', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  // Screen part (tilted)
+  rect(ctx, 2, 2, 12, 6, '#333');
+  rect(ctx, 3, 3, 10, 4, '#4488AA');
+  rect(ctx, 4, 4, 8, 1, '#88CCEE');
+  rect(ctx, 4, 5, 5, 1, '#66AACC');
+  // Keyboard base
+  rect(ctx, 1, 8, 14, 6, '#555');
+  rect(ctx, 2, 9, 12, 4, '#444');
+  // Keys
+  for (let ky = 0; ky < 3; ky++) {
+    for (let kx = 0; kx < 10; kx++) {
+      px(ctx, 3 + kx, 9 + ky, '#3A3A3A');
+    }
+  }
+  // Trackpad
+  rect(ctx, 6, 12, 4, 1, '#3A3A3A');
+});
+
+defineTile('keyboard', 'Keyboard', 'Tech', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 1, 5, 14, 6, '#555');
+  rect(ctx, 2, 6, 12, 4, '#444');
+  for (let ky = 0; ky < 3; ky++) {
+    for (let kx = 0; kx < 10; kx++) {
+      px(ctx, 3 + kx, 6 + ky, '#3A3A3A');
+    }
+  }
+  // Space bar
+  rect(ctx, 5, 9, 6, 1, '#3A3A3A');
+});
+
+defineTile('mouse', 'Mouse', 'Tech', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 6, 5, 4, 7, '#555');
+  rect(ctx, 7, 4, 2, 1, '#555');
+  rect(ctx, 7, 12, 2, 1, '#555');
+  // Buttons
+  rect(ctx, 6, 5, 2, 3, '#606060');
+  rect(ctx, 8, 5, 2, 3, '#505050');
+  // Scroll wheel
+  rect(ctx, 7, 6, 2, 1, '#444');
+  // Cable
+  line(ctx, 7, 4, 7, 2, '#444');
+});
+
+defineTile('printer', 'Printer', 'Tech', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 1, 5, 14, 8, '#D8D8D8');
+  rect(ctx, 2, 6, 12, 6, '#E8E8E8');
+  // Paper tray top
+  rect(ctx, 3, 3, 10, 3, '#F0F0F0');
+  rect(ctx, 4, 4, 8, 1, '#FFF');
+  // Output slot
+  rect(ctx, 3, 10, 10, 2, '#CCC');
+  rect(ctx, 5, 11, 6, 1, '#FFF'); // paper coming out
+  // Status lights
+  px(ctx, 3, 7, '#44FF44');
+  px(ctx, 5, 7, '#FFAA00');
+  // Button
+  rect(ctx, 11, 7, 2, 2, '#AAA');
+});
+
+defineTile('phone', 'Desk Phone', 'Tech', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  // Base
+  rect(ctx, 3, 6, 10, 7, '#333');
+  rect(ctx, 4, 7, 8, 5, '#444');
+  // Buttons (3x4 grid)
+  for (let by = 0; by < 3; by++) {
+    for (let bx = 0; bx < 3; bx++) {
+      px(ctx, 5 + bx*2, 8 + by*2, '#888');
+    }
+  }
+  // Handset
+  rect(ctx, 2, 3, 4, 3, '#222');
+  rect(ctx, 10, 3, 4, 3, '#222');
+  rect(ctx, 5, 2, 6, 2, '#222');
+  rect(ctx, 3, 4, 1, 1, '#333');
+  rect(ctx, 12, 4, 1, 1, '#333');
+  // Screen
+  rect(ctx, 5, 7, 6, 1, '#446644');
+});
+
+// ═══════════════ STORAGE ═══════════════
+
+defineTile('filing_cabinet', 'Filing Cabinet', 'Storage', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 2, 1, 12, 14, '#808890');
+  rect(ctx, 3, 2, 10, 3, '#707880');
+  rect(ctx, 3, 6, 10, 3, '#707880');
+  rect(ctx, 3, 10, 10, 4, '#707880');
+  // Handles
+  rect(ctx, 7, 3, 2, 1, '#A0A8B0');
+  rect(ctx, 7, 7, 2, 1, '#A0A8B0');
+  rect(ctx, 7, 11, 2, 1, '#A0A8B0');
+  // Top highlight
+  rect(ctx, 2, 1, 12, 1, '#909AA0');
+});
+
+defineTile('bookshelf', 'Bookshelf', 'Storage', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 1, 0, 14, 16, '#6B4F0A');
+  // Shelves
+  rect(ctx, 1, 5, 14, 1, '#5C4008');
+  rect(ctx, 1, 10, 14, 1, '#5C4008');
+  // Books top shelf
+  rect(ctx, 2, 1, 2, 4, '#CC3333');
+  rect(ctx, 4, 2, 2, 3, '#3366CC');
+  rect(ctx, 6, 1, 1, 4, '#33AA55');
+  rect(ctx, 7, 2, 2, 3, '#DDAA33');
+  rect(ctx, 10, 1, 3, 4, '#8844AA');
+  // Books middle shelf
+  rect(ctx, 2, 6, 3, 4, '#DD6633');
+  rect(ctx, 5, 7, 2, 3, '#4488CC');
+  rect(ctx, 8, 6, 2, 4, '#44AA88');
+  rect(ctx, 11, 7, 2, 3, '#AA3366');
+  // Books bottom shelf
+  rect(ctx, 2, 11, 2, 4, '#6688AA');
+  rect(ctx, 5, 11, 3, 4, '#AA8844');
+  rect(ctx, 9, 12, 2, 3, '#88AA44');
+  rect(ctx, 12, 11, 1, 4, '#CC6688');
+});
+
+defineTile('locker', 'Locker', 'Storage', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 2, 0, 12, 16, '#707880');
+  rect(ctx, 2, 0, 6, 16, '#788088');
+  rect(ctx, 8, 0, 6, 16, '#687078');
+  // Divider
+  rect(ctx, 7, 0, 2, 16, '#606870');
+  // Vents
+  for (let i = 0; i < 3; i++) { rect(ctx, 3, 2+i*2, 3, 1, '#606870'); rect(ctx, 10, 2+i*2, 3, 1, '#586068'); }
+  // Handles
+  rect(ctx, 6, 8, 1, 2, '#A0A8B0'); rect(ctx, 9, 8, 1, 2, '#A0A8B0');
+});
+
+// ═══════════════ OFFICE ITEMS ═══════════════
+
+defineTile('whiteboard', 'Whiteboard', 'Office Items', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 1, 2, 14, 11, '#EEEEF0');
+  rect(ctx, 1, 2, 14, 1, '#BBB');
+  rect(ctx, 1, 12, 14, 1, '#BBB');
+  rect(ctx, 1, 2, 1, 11, '#BBB');
+  rect(ctx, 14, 2, 1, 11, '#BBB');
+  // Writing
+  line(ctx, 3, 5, 11, 5, '#3366CC');
+  line(ctx, 3, 7, 9, 7, '#CC3333');
+  line(ctx, 3, 9, 12, 9, '#33AA55');
+  // Marker tray
+  rect(ctx, 3, 13, 10, 1, '#CCC');
+  rect(ctx, 4, 13, 2, 1, '#CC3333');
+  rect(ctx, 7, 13, 2, 1, '#3366CC');
+});
+
+defineTile('plant_small', 'Small Plant', 'Office Items', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  // Pot
+  rect(ctx, 5, 10, 6, 4, '#CC8844');
+  rect(ctx, 6, 14, 4, 2, '#BB7733');
+  rect(ctx, 5, 10, 6, 1, '#DDA055');
+  // Leaves
+  rect(ctx, 6, 5, 4, 5, '#44AA44');
+  rect(ctx, 4, 6, 2, 3, '#338833');
+  rect(ctx, 10, 6, 2, 3, '#338833');
+  rect(ctx, 7, 3, 2, 2, '#55BB55');
+  px(ctx, 5, 5, '#55BB55');
+  px(ctx, 10, 5, '#55BB55');
+});
+
+defineTile('plant_tall', 'Tall Plant', 'Office Items', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  // Pot
+  rect(ctx, 4, 11, 8, 4, '#CC8844');
+  rect(ctx, 5, 15, 6, 1, '#BB7733');
+  rect(ctx, 4, 11, 8, 1, '#DDA055');
+  // Trunk
+  rect(ctx, 7, 5, 2, 6, '#6B4F0A');
+  // Canopy
+  rect(ctx, 4, 1, 8, 6, '#338833');
+  rect(ctx, 3, 2, 2, 4, '#2A7728');
+  rect(ctx, 11, 2, 2, 4, '#2A7728');
+  rect(ctx, 5, 0, 6, 2, '#44AA44');
+  px(ctx, 6, 1, '#55BB55'); px(ctx, 9, 2, '#55BB55');
+  px(ctx, 4, 4, '#55BB55'); px(ctx, 11, 3, '#55BB55');
+});
+
+defineTile('water_cooler', 'Water Cooler', 'Office Items', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  // Base
+  rect(ctx, 4, 12, 8, 4, '#888');
+  rect(ctx, 5, 13, 6, 2, '#999');
+  // Body
+  rect(ctx, 5, 5, 6, 7, '#AAA');
+  rect(ctx, 5, 5, 6, 1, '#BBB');
+  // Water jug
+  rect(ctx, 6, 0, 4, 5, '#88BBDD');
+  rect(ctx, 7, 0, 2, 1, '#6699BB');
+  rect(ctx, 6, 0, 4, 1, '#AAD4EC');
+  // Tap
+  px(ctx, 5, 8, '#C0C0C0');
+  px(ctx, 5, 9, '#4488FF');
+});
+
+defineTile('coffee_machine', 'Coffee Machine', 'Office Items', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 3, 4, 10, 10, '#444');
+  rect(ctx, 3, 4, 10, 1, '#555');
+  // Top container
+  rect(ctx, 5, 1, 6, 3, '#333');
+  rect(ctx, 5, 1, 6, 1, '#444');
+  // Screen
+  rect(ctx, 5, 6, 4, 3, '#446644');
+  rect(ctx, 6, 7, 2, 1, '#66AA66');
+  // Spout
+  rect(ctx, 6, 10, 4, 1, '#555');
+  // Cup
+  rect(ctx, 6, 11, 4, 3, '#DDD');
+  rect(ctx, 7, 12, 2, 1, '#8B4513');
+  // Buttons
+  px(ctx, 11, 6, '#FF4444');
+  px(ctx, 11, 8, '#44FF44');
+});
+
+defineTile('trash_can', 'Trash Can', 'Office Items', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 4, 4, 8, 10, '#666');
+  rect(ctx, 5, 5, 6, 9, '#777');
+  rect(ctx, 3, 3, 10, 2, '#777');
+  rect(ctx, 3, 3, 10, 1, '#888');
+  // Rim
+  line(ctx, 5, 7, 5, 12, '#606060');
+  line(ctx, 8, 7, 8, 12, '#606060');
+  line(ctx, 10, 7, 10, 12, '#606060');
+});
+
+defineTile('clock', 'Wall Clock', 'Office Items', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  // Circle face
+  rect(ctx, 4, 4, 8, 8, '#FFF');
+  rect(ctx, 5, 3, 6, 1, '#FFF');
+  rect(ctx, 5, 12, 6, 1, '#FFF');
+  rect(ctx, 3, 5, 1, 6, '#FFF');
+  rect(ctx, 12, 5, 1, 6, '#FFF');
+  // Border
+  rect(ctx, 5, 3, 6, 1, '#222'); rect(ctx, 5, 12, 6, 1, '#222');
+  rect(ctx, 3, 5, 1, 6, '#222'); rect(ctx, 12, 5, 1, 6, '#222');
+  px(ctx, 4, 4, '#222'); px(ctx, 11, 4, '#222'); px(ctx, 4, 11, '#222'); px(ctx, 11, 11, '#222');
+  // Face
+  rect(ctx, 5, 4, 6, 8, '#FFF');
+  rect(ctx, 4, 5, 8, 6, '#FFF');
+  // Hour marks
+  px(ctx, 8, 4, '#333'); px(ctx, 11, 8, '#333');
+  px(ctx, 8, 11, '#333'); px(ctx, 4, 8, '#333');
+  // Hands
+  line(ctx, 8, 8, 8, 5, '#222'); // hour
+  line(ctx, 8, 8, 10, 6, '#CC3333'); // minute
+  px(ctx, 8, 8, '#222'); // center
+});
+
+defineTile('picture', 'Picture Frame', 'Office Items', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 2, 3, 12, 10, '#6B4F0A');
+  rect(ctx, 3, 4, 10, 8, '#88AACC');
+  // Landscape
+  rect(ctx, 3, 9, 10, 3, '#44AA44');
+  rect(ctx, 3, 8, 10, 2, '#78B8DC');
+  // Sun
+  rect(ctx, 10, 5, 2, 2, '#FFDD44');
+  // Mountains
+  rect(ctx, 4, 7, 3, 2, '#338833');
+  rect(ctx, 8, 8, 4, 1, '#338833');
+});
+
+// ═══════════════ PARTITION/CUBICLE ═══════════════
+
+defineTile('cubicle_h', 'Cubicle Wall H', 'Partitions', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 0, 5, 16, 6, '#909098');
+  rect(ctx, 0, 5, 16, 1, '#A0A0A8');
+  rect(ctx, 0, 10, 16, 1, '#808088');
+  // Fabric texture
+  for (let x = 0; x < 16; x += 3) px(ctx, x, 7, '#888890');
+  for (let x = 1; x < 16; x += 3) px(ctx, x, 8, '#989898');
+});
+
+defineTile('cubicle_v', 'Cubicle Wall V', 'Partitions', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 5, 0, 6, 16, '#909098');
+  rect(ctx, 5, 0, 1, 16, '#A0A0A8');
+  rect(ctx, 10, 0, 1, 16, '#808088');
+  for (let y = 0; y < 16; y += 3) px(ctx, 7, y, '#888890');
+  for (let y = 1; y < 16; y += 3) px(ctx, 8, y, '#989898');
+});
+
+defineTile('cubicle_corner', 'Cubicle Corner', 'Partitions', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 0, 5, 16, 6, '#909098');
+  rect(ctx, 5, 0, 6, 16, '#909098');
+  rect(ctx, 0, 5, 16, 1, '#A0A0A8');
+  rect(ctx, 5, 0, 1, 16, '#A0A0A8');
+  rect(ctx, 0, 10, 16, 1, '#808088');
+  rect(ctx, 10, 0, 1, 16, '#808088');
+});
+
+// ═══════════════ MISC ═══════════════
+
+defineTile('rug_center', 'Rug Center', 'Decor', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#7C3D3D');
+  rect(ctx, 1, 1, 14, 14, '#994444');
+  rect(ctx, 2, 2, 12, 12, '#AA5555');
+  // Pattern
+  rect(ctx, 4, 4, 8, 8, '#BB6666');
+  rect(ctx, 6, 6, 4, 4, '#994444');
+});
+
+defineTile('elevator', 'Elevator', 'Misc', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, '#606870');
+  // Doors
+  rect(ctx, 1, 1, 6, 14, '#808890');
+  rect(ctx, 9, 1, 6, 14, '#808890');
+  // Gap
+  rect(ctx, 7, 1, 2, 14, '#404850');
+  // Up/Down indicator
+  rect(ctx, 6, 0, 4, 1, '#333');
+  px(ctx, 7, 0, '#44FF44');
+  // Floor indicator
+  rect(ctx, 7, 15, 2, 1, '#333');
+});
+
+defineTile('stairs', 'Stairs', 'Misc', (ctx) => {
+  for (let i = 0; i < 8; i++) {
+    const shade = 80 + i * 15;
+    rect(ctx, 0, i*2, 16, 2, `rgb(${shade},${shade},${shade+10})`);
+    rect(ctx, 0, i*2, 16, 1, `rgb(${shade+20},${shade+20},${shade+25})`);
+  }
+});
+
+defineTile('ac_vent', 'AC Vent', 'Misc', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 2, 4, 12, 8, '#D0D0D0');
+  rect(ctx, 2, 4, 12, 1, '#E0E0E0');
+  for (let i = 0; i < 5; i++) {
+    rect(ctx, 3, 5 + i*2, 10, 1, '#BBB');
+  }
+});
+
+defineTile('ceiling_light', 'Ceiling Light', 'Misc', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 5, 5, 6, 6, 'rgba(255,255,200,0.3)');
+  rect(ctx, 4, 4, 8, 8, 'rgba(255,255,200,0.15)');
+  rect(ctx, 3, 3, 10, 10, 'rgba(255,255,200,0.08)');
+  rect(ctx, 6, 6, 4, 4, '#FFFFF0');
+  rect(ctx, 7, 7, 2, 2, '#FFFFDD');
+});
+
+defineTile('fire_extinguisher', 'Fire Extinguisher', 'Misc', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 6, 3, 4, 10, '#CC2222');
+  rect(ctx, 6, 3, 4, 1, '#DD3333');
+  rect(ctx, 7, 1, 2, 2, '#888');
+  rect(ctx, 5, 2, 2, 2, '#666');
+  rect(ctx, 7, 13, 2, 2, '#222');
+  // Label
+  rect(ctx, 7, 6, 2, 3, '#FFF');
+});
+
+defineTile('couch_top', 'Couch Top', 'Furniture', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 0, 3, 16, 10, '#4466AA');
+  rect(ctx, 0, 3, 16, 2, '#3355AA');
+  rect(ctx, 1, 5, 14, 7, '#5577BB');
+  rect(ctx, 0, 3, 2, 10, '#3355AA');
+  rect(ctx, 14, 3, 2, 10, '#3355AA');
+  // Cushion lines
+  rect(ctx, 7, 5, 2, 7, '#4466AA');
+});
+
+defineTile('table_round', 'Round Table', 'Furniture', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 4, 4, 8, 8, '#8B6914');
+  rect(ctx, 3, 5, 1, 6, '#8B6914');
+  rect(ctx, 12, 5, 1, 6, '#8B6914');
+  rect(ctx, 5, 3, 6, 1, '#8B6914');
+  rect(ctx, 5, 12, 6, 1, '#8B6914');
+  rect(ctx, 5, 4, 6, 8, '#9B7924');
+  rect(ctx, 4, 5, 8, 6, '#9B7924');
+  // Highlight
+  rect(ctx, 6, 5, 4, 3, '#AB8934');
+  // Leg shadow
+  px(ctx, 7, 13, '#6B4F0A'); px(ctx, 8, 13, '#6B4F0A');
+});
+
+defineTile('meeting_table', 'Meeting Table', 'Furniture', (ctx) => {
+  rect(ctx, 0, 0, 16, 16, 'transparent');
+  rect(ctx, 0, 2, 16, 12, '#6E5530');
+  rect(ctx, 1, 3, 14, 10, '#8B6914');
+  rect(ctx, 1, 3, 14, 1, '#9B7924');
+  // Edge highlight
+  rect(ctx, 0, 2, 16, 1, '#9B7924');
+  rect(ctx, 0, 13, 16, 1, '#5C4008');
+  // Center detail
+  rect(ctx, 5, 6, 6, 4, '#9B7924');
+});
+
+// ──────────────────────────────────────────────────
+//  RENDER ALL TILE CANVASES
+// ──────────────────────────────────────────────────
+
+function renderTile(tile) {
+  const c = document.createElement('canvas');
+  c.width = TILE_SIZE; c.height = TILE_SIZE;
+  const ctx = c.getContext('2d');
+  tile.draw(ctx);
+  tile.canvas = c;
+  return c;
+}
+
+// ──────────────────────────────────────────────────
+//  BUILD PALETTE UI
+// ──────────────────────────────────────────────────
+
+let selectedTile = 'floor_wood';
+let currentTool = 'draw';
+
+function buildPalette() {
+  const pal = document.getElementById('palette');
+  pal.innerHTML = '';
+  const categories = {};
+  for (const [id, tile] of Object.entries(TILES)) {
+    renderTile(tile);
+    if (!categories[tile.category]) categories[tile.category] = [];
+    categories[tile.category].push(tile);
+  }
+  for (const [cat, tiles] of Object.entries(categories)) {
+    const h = document.createElement('h2');
+    h.textContent = cat;
+    pal.appendChild(h);
+    const grid = document.createElement('div');
+    grid.className = 'tile-grid';
+    for (const tile of tiles) {
+      const slot = document.createElement('div');
+      slot.className = 'tile-slot' + (tile.id === selectedTile ? ' selected' : '');
+      slot.dataset.id = tile.id;
+      slot.appendChild(tile.canvas.cloneNode(true));
+      // Re-render into the clone
+      const cloneCtx = slot.querySelector('canvas').getContext('2d');
+      cloneCtx.drawImage(tile.canvas, 0, 0);
+      const label = document.createElement('div');
+      label.className = 'tile-name';
+      label.textContent = tile.name;
+      slot.appendChild(label);
+      slot.addEventListener('click', () => {
+        document.querySelectorAll('.tile-slot.selected').forEach(s => s.classList.remove('selected'));
+        slot.classList.add('selected');
+        selectedTile = tile.id;
+        currentTool = 'draw';
+        updateToolButtons();
+      });
+      grid.appendChild(slot);
+    }
+    pal.appendChild(grid);
+  }
+}
+
+// ──────────────────────────────────────────────────
+//  MAP STATE & RENDERING
+// ──────────────────────────────────────────────────
+
+let mapW = 20, mapH = 14;
+let zoom = 2;
+// 3 layers: floor, walls/objects, overlay
+let layers = [
+  Array(mapW * mapH).fill(null),
+  Array(mapW * mapH).fill(null),
+  Array(mapW * mapH).fill(null)
+];
+
+const mapCanvas = document.getElementById('mapCanvas');
+const mapCtx = mapCanvas.getContext('2d');
+
+function setZoom(z) {
+  zoom = z;
+  document.getElementById('zoomSel').value = z;
+  drawMap();
+}
+
+function resizeMap() {
+  const nw = Math.max(5, Math.min(60, +document.getElementById('mapW').value));
+  const nh = Math.max(5, Math.min(40, +document.getElementById('mapH').value));
+  const newLayers = [
+    Array(nw * nh).fill(null),
+    Array(nw * nh).fill(null),
+    Array(nw * nh).fill(null)
+  ];
+  for (let l = 0; l < 3; l++) {
+    for (let y = 0; y < Math.min(mapH, nh); y++) {
+      for (let x = 0; x < Math.min(mapW, nw); x++) {
+        newLayers[l][y * nw + x] = layers[l][y * mapW + x];
+      }
+    }
+  }
+  mapW = nw; mapH = nh;
+  layers = newLayers;
+  drawMap();
+}
+
+function drawMap() {
+  const pw = mapW * TILE_SIZE * zoom;
+  const ph = mapH * TILE_SIZE * zoom;
+  mapCanvas.width = pw;
+  mapCanvas.height = ph;
+  mapCtx.imageSmoothingEnabled = false;
+
+  // Dark background
+  mapCtx.fillStyle = '#222';
+  mapCtx.fillRect(0, 0, pw, ph);
+
+  // Draw grid
+  mapCtx.strokeStyle = 'rgba(255,255,255,0.06)';
+  mapCtx.lineWidth = 1;
+  for (let x = 0; x <= mapW; x++) {
+    mapCtx.beginPath();
+    mapCtx.moveTo(x * TILE_SIZE * zoom + 0.5, 0);
+    mapCtx.lineTo(x * TILE_SIZE * zoom + 0.5, ph);
+    mapCtx.stroke();
+  }
+  for (let y = 0; y <= mapH; y++) {
+    mapCtx.beginPath();
+    mapCtx.moveTo(0, y * TILE_SIZE * zoom + 0.5);
+    mapCtx.lineTo(pw, y * TILE_SIZE * zoom + 0.5);
+    mapCtx.stroke();
+  }
+
+  // Draw all layers
+  for (let l = 0; l < 3; l++) {
+    for (let y = 0; y < mapH; y++) {
+      for (let x = 0; x < mapW; x++) {
+        const tid = layers[l][y * mapW + x];
+        if (tid && TILES[tid]) {
+          mapCtx.drawImage(TILES[tid].canvas,
+            x * TILE_SIZE * zoom, y * TILE_SIZE * zoom,
+            TILE_SIZE * zoom, TILE_SIZE * zoom);
+        }
+      }
+    }
+  }
+}
+
+// ──────────────────────────────────────────────────
+//  INPUT HANDLING
+// ──────────────────────────────────────────────────
+
+let painting = false;
+let erasing = false;
+
+function getTileCoord(e) {
+  const r = mapCanvas.getBoundingClientRect();
+  const sx = (e.clientX - r.left) / (r.width / mapCanvas.width);
+  const sy = (e.clientY - r.top) / (r.height / mapCanvas.height);
+  const tx = Math.floor(sx / (TILE_SIZE * zoom));
+  const ty = Math.floor(sy / (TILE_SIZE * zoom));
+  return { tx, ty };
+}
+
+function placeTile(tx, ty, erase) {
+  if (tx < 0 || tx >= mapW || ty < 0 || ty >= mapH) return;
+  const layer = +document.getElementById('layerSel').value;
+  const idx = ty * mapW + tx;
+  if (erase || currentTool === 'erase') {
+    layers[layer][idx] = null;
+  } else if (currentTool === 'fill') {
+    floodFill(layer, tx, ty, layers[layer][idx], selectedTile);
+  } else {
+    layers[layer][idx] = selectedTile;
+  }
+  drawMap();
+}
+
+function floodFill(layer, sx, sy, targetTile, fillTile) {
+  if (targetTile === fillTile) return;
+  const stack = [[sx, sy]];
+  const visited = new Set();
+  while (stack.length) {
+    const [x, y] = stack.pop();
+    const key = `${x},${y}`;
+    if (visited.has(key)) continue;
+    if (x < 0 || x >= mapW || y < 0 || y >= mapH) continue;
+    const idx = y * mapW + x;
+    if (layers[layer][idx] !== targetTile) continue;
+    visited.add(key);
+    layers[layer][idx] = fillTile;
+    stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
+  }
+}
+
+mapCanvas.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  const { tx, ty } = getTileCoord(e);
+  if (e.button === 2) { erasing = true; placeTile(tx, ty, true); }
+  else { painting = true; placeTile(tx, ty, false); }
+});
+mapCanvas.addEventListener('mousemove', (e) => {
+  const { tx, ty } = getTileCoord(e);
+  document.getElementById('infoPos').textContent = `Pos: ${tx}, ${ty}`;
+  const layer = +document.getElementById('layerSel').value;
+  const tid = (tx >= 0 && tx < mapW && ty >= 0 && ty < mapH) ? layers[layer][ty * mapW + tx] : null;
+  document.getElementById('infoTile').textContent = `Tile: ${tid || '(empty)'}`;
+  if (painting) placeTile(tx, ty, false);
+  if (erasing) placeTile(tx, ty, true);
+});
+document.addEventListener('mouseup', () => { painting = false; erasing = false; });
+mapCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+document.getElementById('layerSel').addEventListener('change', (e) => {
+  document.getElementById('infoLayer').textContent = `Layer: ${e.target.options[e.target.selectedIndex].text}`;
+});
+
+// ──────────────────────────────────────────────────
+//  TOOLS
+// ──────────────────────────────────────────────────
+
+function setTool(tool) {
+  currentTool = tool;
+  updateToolButtons();
+}
+function updateToolButtons() {
+  document.getElementById('btnDraw').classList.toggle('active', currentTool === 'draw');
+  document.getElementById('btnErase').classList.toggle('active', currentTool === 'erase');
+  document.getElementById('btnFill').classList.toggle('active', currentTool === 'fill');
+}
+
+function clearMap() {
+  const layer = +document.getElementById('layerSel').value;
+  layers[layer].fill(null);
+  drawMap();
+}
+
+// ──────────────────────────────────────────────────
+//  EXPORT / IMPORT
+// ──────────────────────────────────────────────────
+
+function exportJSON() {
+  const data = {
+    width: mapW,
+    height: mapH,
+    tileSize: TILE_SIZE,
+    layers: layers.map((l, i) => ({
+      name: ['floor', 'objects', 'overlay'][i],
+      data: l
+    })),
+    tileIds: Object.keys(TILES)
+  };
+  document.getElementById('exportCode').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('exportOverlay').classList.add('show');
+}
+
+function copyExport() {
+  const text = document.getElementById('exportCode').textContent;
+  navigator.clipboard.writeText(text);
+}
+
+// ──────────────────────────────────────────────────
+//  PROCEDURAL OFFICE GENERATOR
+// ──────────────────────────────────────────────────
+
+function updateSliderDisplay() {
+  document.getElementById('countManagers').textContent = document.getElementById('sliderManagers').value;
+  document.getElementById('countWorkers').textContent = document.getElementById('sliderWorkers').value;
+}
+
+function generateFromSliders() {
+  const m = +document.getElementById('sliderManagers').value;
+  const w = +document.getElementById('sliderWorkers').value;
+  generateOffice(m, w);
+}
+
+function generateOffice(numManagers, numWorkers) {
+  // ── LAYOUT CONSTANTS ──
+  const MGR_W = 5;      // manager office interior width
+  const MGR_H = 4;      // manager office interior height
+  const BREAK_W = 7;    // break room interior width
+  const BREAK_H = 5;    // break room interior height
+  const MEET_H = 5;     // meeting room interior height
+  const LOBBY_H = 2;    // lobby depth
+
+  // ── WORKER DESK LAYOUT CALCULATION ──
+  // Each desk row: monitor(1) + desk(1) + chair(1) = 3 height, then 1 aisle
+  // Double rows: 3 + 1 + 3 = 7 tiles for facing desks with aisle
+  // Each worker occupies 2 tile widths (desk + gap)
+  const maxPerRow = Math.max(3, Math.min(10, Math.ceil(Math.sqrt(numWorkers * 2))));
+  const deskRowSets = Math.ceil(numWorkers / maxPerRow);
+  const doubleRowSets = Math.ceil(deskRowSets / 2);
+  const workerAreaH = doubleRowSets * 6 + 2;
+
+  // ── CALCULATE MAP DIMENSIONS ──
+  const leftColInner = MGR_W;
+  const leftColW = leftColInner + 1;    // +1 for the dividing wall
+  const mgrStackH = numManagers * (MGR_H + 1); // offices + dividing walls
+  const workerAreaW = maxPerRow * 2 + 3;  // desk tiles + margins
+  const rightSideW = Math.max(workerAreaW, BREAK_W);
+  const MEET_W = Math.max(7, rightSideW - 1);
+
+  const totalW = 1 + leftColW + rightSideW + 1 + 1; // walls + columns
+  const contentH = LOBBY_H + Math.max(mgrStackH, workerAreaH) + 1;
+  const bottomRowH = Math.max(BREAK_H, MEET_H) + 1;
+  const totalH = 1 + contentH + bottomRowH + 1; // top/bottom walls
+
+  // Apply dimensions
+  mapW = Math.max(20, totalW);
+  mapH = Math.max(14, totalH);
+  document.getElementById('mapW').value = mapW;
+  document.getElementById('mapH').value = mapH;
+  layers = [
+    Array(mapW * mapH).fill(null),
+    Array(mapW * mapH).fill(null),
+    Array(mapW * mapH).fill(null)
+  ];
+
+  // ── HELPER: Set tile at position ──
+  const set = (layer, x, y, tile) => {
+    if (x >= 0 && x < mapW && y >= 0 && y < mapH) layers[layer][y * mapW + x] = tile;
+  };
+  const get = (layer, x, y) => {
+    if (x >= 0 && x < mapW && y >= 0 && y < mapH) return layers[layer][y * mapW + x];
+    return null;
+  };
+
+  // ── KEY COORDINATES ──
+  const W = mapW, H = mapH;
+  const leftWall = 0;
+  const rightWall = W - 1;
+  const topWall = 0;
+  const bottomWall = H - 1;
+  const mgrColRight = 1 + leftColW;       // x of the vertical divider wall
+  const lobbyBottom = 1 + LOBBY_H;        // y of the lobby bottom wall
+  const midAreaTop = lobbyBottom + 1;      // y where manager/worker area starts
+  const bottomDivider = H - 1 - BREAK_H - 1; // y of the bottom section top wall
+  const breakLeft = 1;
+  const breakRight = mgrColRight;
+  const meetLeft = mgrColRight + 1;
+  const meetRight = rightWall - 1;
+
+  // ── 1. FLOOR LAYER ──
+  // Default carpet for work area
+  for (let y = 1; y < H - 1; y++) {
+    for (let x = 1; x < W - 1; x++) {
+      set(0, x, y, 'floor_carpet_blue');
+    }
+  }
+  // Lobby: checker floor
+  for (let y = 1; y <= LOBBY_H; y++) {
+    for (let x = 1; x < W - 1; x++) {
+      set(0, x, y, 'floor_tile');
+    }
+  }
+  // Manager offices: wood floor
+  for (let i = 0; i < numManagers; i++) {
+    const oy = midAreaTop + i * (MGR_H + 1);
+    for (let dy = 0; dy < MGR_H; dy++) {
+      for (let dx = 0; dx < MGR_W; dx++) {
+        set(0, 1 + dx, oy + dy, 'floor_wood');
+      }
+    }
+  }
+  // Break room: tile floor
+  for (let y = bottomDivider + 1; y < H - 1; y++) {
+    for (let x = breakLeft; x < breakRight; x++) {
+      set(0, x, y, 'floor_tile');
+    }
+  }
+  // Meeting room: dark wood
+  for (let y = bottomDivider + 1; y < H - 1; y++) {
+    for (let x = meetLeft; x < W - 1; x++) {
+      set(0, x, y, 'floor_wood_dark');
+    }
+  }
+
+  // ── 2. OUTER WALLS ──
+  for (let x = 1; x < W - 1; x++) { set(1, x, 0, 'wall_top'); set(1, x, H - 1, 'wall_bottom'); }
+  for (let y = 1; y < H - 1; y++) { set(1, 0, y, 'wall_left'); set(1, W - 1, y, 'wall_right'); }
+  set(1, 0, 0, 'wall_corner_tl');
+  set(1, W - 1, 0, 'wall_corner_tr');
+  set(1, 0, H - 1, 'wall_corner_bl');
+  set(1, W - 1, H - 1, 'wall_corner_br');
+
+  // ── 3. LOBBY DIVIDER WALL ──
+  for (let x = 1; x < W - 1; x++) set(1, x, lobbyBottom, 'wall_top');
+  // Lobby entrance door (top wall center)
+  const doorX = Math.floor(W / 2);
+  set(1, doorX, 0, 'door_h');
+  // Glass door from lobby to office
+  set(1, mgrColRight + Math.floor(rightSideW / 2), lobbyBottom, 'door_glass_h');
+  // Door from lobby to manager corridor
+  set(1, Math.floor(mgrColRight / 2), lobbyBottom, 'door_h');
+
+  // ── 4. MANAGER COLUMN VERTICAL WALL ──
+  for (let y = midAreaTop; y <= bottomDivider; y++) set(1, mgrColRight, y, 'wall_v');
+
+  // ── 5. MANAGER OFFICE DIVIDERS & DOORS ──
+  for (let i = 0; i < numManagers; i++) {
+    const oy = midAreaTop + i * (MGR_H + 1);
+    // Top wall of each office (except the first one uses the lobby divider)
+    if (i > 0) {
+      const wallY = oy - 1;
+      for (let x = 1; x < mgrColRight; x++) set(1, x, wallY, 'wall_top');
+    }
+    // Door into each office from the right
+    const doorY = oy + Math.floor(MGR_H / 2);
+    set(1, mgrColRight, doorY, 'door_v');
+  }
+
+  // ── 6. BOTTOM SECTION DIVIDER ──
+  for (let x = 1; x < W - 1; x++) set(1, x, bottomDivider, 'wall_top');
+  // Vertical wall between break and meeting rooms
+  for (let y = bottomDivider; y < H - 1; y++) set(1, mgrColRight, y, 'wall_v');
+  // Doors into bottom rooms
+  set(1, Math.floor((breakLeft + breakRight) / 2), bottomDivider, 'door_h');
+  set(1, Math.floor((meetLeft + W - 1) / 2), bottomDivider, 'door_h');
+
+  // ── 7. WINDOWS (top wall) ──
+  const windowSpacing = Math.max(3, Math.floor((W - 4) / 4));
+  for (let wx = 3; wx < W - 2; wx += windowSpacing) {
+    if (get(1, wx, 0) === 'wall_top') set(1, wx, 0, 'window_h');
+  }
+
+  // ── 8. FURNISH LOBBY ──
+  set(1, 2, 1, 'plant_tall');
+  set(1, W - 3, 1, 'plant_tall');
+  if (LOBBY_H >= 2) {
+    set(1, doorX - 1, 1, 'rug_center');
+    set(1, doorX, 1, 'rug_center');
+    set(1, doorX + 1, 1, 'rug_center');
+  }
+  // Reception desk
+  const recpX = Math.max(4, doorX - 2);
+  set(1, recpX, LOBBY_H, 'desk_h');
+  set(1, recpX + 1, LOBBY_H, 'desk_h');
+  set(1, recpX, LOBBY_H - 1, 'monitor');
+  set(1, recpX + 1, LOBBY_H - 1, 'keyboard');
+
+  // ── 9. FURNISH MANAGER OFFICES ──
+  for (let i = 0; i < numManagers; i++) {
+    const oy = midAreaTop + i * (MGR_H + 1);
+    const ox = 1;
+    // L-shaped desk in corner
+    set(1, ox + 1, oy, 'desk_h');
+    set(1, ox + 2, oy, 'desk_h');
+    set(1, ox + 1, oy + 1, 'monitor');
+    set(1, ox + 2, oy + 1, 'keyboard');
+    // Chair
+    set(1, ox + 2, oy + 2, 'chair_up');
+    // Bookshelf against left wall
+    set(1, ox, oy + MGR_H - 1, 'bookshelf');
+    // Filing cabinet
+    set(1, ox, oy, 'filing_cabinet');
+    // Plant
+    set(1, ox + MGR_W - 1, oy + MGR_H - 1, 'plant_small');
+    // Picture on wall
+    if (MGR_W >= 5) set(1, ox + 3, oy, 'picture');
+    // Ceiling light
+    set(2, ox + 2, oy + 1, 'ceiling_light');
+  }
+
+  // ── 10. FURNISH WORKER AREA ──
+  const workStartX = mgrColRight + 2;  // 1 tile padding from divider wall
+  const workEndX = W - 2;              // 1 tile from right wall
+  const workStartY = midAreaTop + 1;   // 1 tile below lobby divider
+  const availW = workEndX - workStartX;
+  const desksPerRow = Math.min(maxPerRow, Math.floor(availW / 2));
+
+  let workersPlaced = 0;
+  let rowSetY = workStartY;
+
+  while (workersPlaced < numWorkers && rowSetY + 4 < bottomDivider) {
+    // Upper facing row: monitors above desks, chairs below
+    const rowTopY = rowSetY;
+    for (let d = 0; d < desksPerRow && workersPlaced < numWorkers; d++) {
+      const dx = workStartX + d * 2;
+      if (dx >= workEndX) break;
+      set(1, dx, rowTopY, 'monitor');
+      set(1, dx, rowTopY + 1, 'desk_h');
+      // Chair every other desk or every desk depending on density
+      set(1, dx, rowTopY + 2, 'chair_down');
+      workersPlaced++;
+    }
+
+    // Lower facing row (facing upper row): chairs, desks, monitors
+    if (workersPlaced < numWorkers && rowSetY + 6 < bottomDivider) {
+      const rowBotY = rowTopY + 4; // 1 tile aisle gap
+      for (let d = 0; d < desksPerRow && workersPlaced < numWorkers; d++) {
+        const dx = workStartX + d * 2;
+        if (dx >= workEndX) break;
+        set(1, dx, rowBotY, 'chair_up');
+        set(1, dx, rowBotY + 1, 'desk_h');
+        set(1, dx, rowBotY + 2, 'monitor');
+        workersPlaced++;
+      }
+      rowSetY = rowBotY + 4; // gap before next set
+    } else {
+      rowSetY += 5;
+    }
+  }
+
+  // Whiteboard in worker area
+  set(1, workStartX, midAreaTop, 'whiteboard');
+  // Printer near worker area
+  set(1, W - 2, midAreaTop, 'printer');
+  // Plants in worker area corners
+  if (bottomDivider - 1 > midAreaTop + 2) {
+    set(1, W - 2, bottomDivider - 1, 'plant_small');
+    set(1, workStartX, bottomDivider - 1, 'plant_tall');
+  }
+
+  // Ceiling lights over worker area (grid)
+  for (let ly = workStartY + 1; ly < bottomDivider - 1; ly += 4) {
+    for (let lx = workStartX + 1; lx < W - 2; lx += 4) {
+      set(2, lx, ly, 'ceiling_light');
+    }
+  }
+
+  // ── 11. FURNISH BREAK ROOM ──
+  const bry = bottomDivider + 1;
+  set(1, breakLeft + 1, bry, 'coffee_machine');
+  set(1, breakLeft + 2, bry, 'water_cooler');
+  set(1, breakLeft + 1, bry + 2, 'couch_top');
+  set(1, breakLeft + 2, bry + 2, 'couch_top');
+  if (breakRight - breakLeft > 4) {
+    set(1, breakLeft + 4, bry + 1, 'table_round');
+    set(1, breakLeft + 4, bry + 3, 'chair_down');
+    set(1, breakLeft + 3, bry + 1, 'chair_left');
+  }
+  set(1, breakRight - 2, bry, 'trash_can');
+  set(1, breakRight - 2, bry + BREAK_H - 2, 'plant_small');
+  set(2, breakLeft + 2, bry + 1, 'ceiling_light');
+
+  // ── 12. FURNISH MEETING ROOM ──
+  const mry = bottomDivider + 1;
+  const meetW = W - 1 - meetLeft;
+  // Long meeting table in center
+  const tableStartX = meetLeft + Math.max(1, Math.floor((meetW - 4) / 2));
+  const tableLen = Math.min(4, meetW - 2);
+  for (let t = 0; t < tableLen; t++) {
+    set(1, tableStartX + t, mry + Math.floor(MEET_H / 2), 'meeting_table');
+  }
+  // Chairs around table
+  for (let t = 0; t < tableLen; t++) {
+    set(1, tableStartX + t, mry + Math.floor(MEET_H / 2) - 1, 'chair_down');
+    if (mry + Math.floor(MEET_H / 2) + 1 < H - 1) {
+      set(1, tableStartX + t, mry + Math.floor(MEET_H / 2) + 1, 'chair_up');
+    }
+  }
+  // Whiteboard at top of meeting room
+  set(1, meetLeft + 1, mry, 'whiteboard');
+  // Monitor/screen
+  set(1, meetLeft + Math.floor(meetW / 2), mry, 'monitor');
+  set(2, meetLeft + Math.floor(meetW / 2), mry + 2, 'ceiling_light');
+
+  // ── 13. CORRIDOR FEATURES ──
+  // Fire extinguisher by the entrance
+  set(1, doorX + 2, 1, 'fire_extinguisher');
+  // Clock in lobby
+  set(1, W - 2, LOBBY_H, 'clock');
+
+  // ── UPDATE STATS ──
+  const statsEl = document.getElementById('genStats');
+  statsEl.innerHTML = `<span>📐 ${mapW}×${mapH}</span><span>👔 ${numManagers} mgr</span><span>👷 ${workersPlaced}/${numWorkers} placed</span><span>🪑 ${numManagers + workersPlaced} total</span>`;
+
+  drawMap();
+}
+
+// ──────────────────────────────────────────────────
+//  INIT
+// ──────────────────────────────────────────────────
+
+buildPalette();
+generateFromSliders();
+
+</script>
+</body>
+</html>
