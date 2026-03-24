@@ -942,6 +942,112 @@ a { color: var(--accent); text-decoration: none; }
   font-size: 18px;
   font-weight: 800;
 }
+.stats-crash-card {
+  border: 1px solid color-mix(in srgb, var(--red) 45%, var(--border));
+  border-radius: 12px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--red) 9%, var(--bg-card)), var(--bg-card));
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.stats-crash-title {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.45px;
+  color: color-mix(in srgb, var(--red) 72%, var(--text));
+}
+.stats-crash-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.stats-crash-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.stats-crash-item {
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-input);
+  padding: 6px 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.stats-crash-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.stats-crash-btn {
+  border: 1px solid color-mix(in srgb, var(--red) 45%, var(--border));
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 10px;
+  min-height: 34px;
+}
+.stats-crash-btn.primary {
+  background: color-mix(in srgb, var(--red) 76%, #fff);
+  border-color: transparent;
+  color: #fff;
+}
+.stats-crash-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.stats-reputation {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.stats-reputation-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.stats-reputation-score {
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--accent);
+}
+.stats-reputation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.stats-reputation-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+  background: var(--bg-input);
+}
+.stats-reputation-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-secondary);
+}
+.stats-reputation-value {
+  margin-top: 4px;
+  font-size: 16px;
+  font-weight: 800;
+}
+.stats-reputation-confidence {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
 
 @media (max-width: 1120px) {
   .stats-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -4239,6 +4345,7 @@ let activeDragTaskId = null;
 let statsFocusUserId = null;
 let statsRangeMode = 'all';
 let statsWeekdayMode = 'all';
+let deadlineCrashBusy = false;
 let clockInPromptShown = false;
 
 // models.js already declares STATUS, STATUS_ORDER, STATUS_META, PRIORITY, PRIORITY_META, etc. at global scope
@@ -5280,6 +5387,247 @@ function openStatsForMember(userId) {
   switchTab('tabStats');
 }
 
+function statsMedian(values) {
+  const nums = values.filter(v => Number.isFinite(v)).sort((a, b) => a - b);
+  if (!nums.length) return null;
+  const mid = Math.floor(nums.length / 2);
+  return nums.length % 2 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
+}
+
+function statsFormatMinutes(mins) {
+  if (!Number.isFinite(mins)) return 'n/a';
+  if (mins < 1) return '<1m';
+  if (mins < 60) return `${Math.round(mins)}m`;
+  const h = mins / 60;
+  if (h < 24) return `${h.toFixed(1)}h`;
+  return `${(h / 24).toFixed(1)}d`;
+}
+
+function statsClampScore(value) {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function taskDeadlineEndMs(task) {
+  if (!task?.deadline) return null;
+  const d = new Date(task.deadline);
+  if (!Number.isFinite(d.getTime())) return null;
+  d.setHours(23, 59, 59, 999);
+  return d.getTime();
+}
+
+function taskOverdueDays(task, todayStart) {
+  const deadlineMs = taskDeadlineEndMs(task);
+  if (!Number.isFinite(deadlineMs) || task.status === 'done') return 0;
+  if (deadlineMs >= todayStart) return 0;
+  return Math.max(1, Math.floor((todayStart - deadlineMs) / 86400000) + 1);
+}
+
+function buildDeadlineCrashPlan(taskList, todayStart) {
+  const now = Date.now();
+  const openTasks = (taskList || []).filter(t => !t.archived && t.status !== 'done');
+  const overdueTasks = openTasks.filter(t => taskOverdueDays(t, todayStart) > 0);
+  const stalledTasks = openTasks.filter(t => {
+    const lastMs = new Date(t.lastActivityAt || t.updatedAt || t.createdAt || 0).getTime();
+    return Number.isFinite(lastMs) && (now - lastMs) > (48 * 3600000);
+  });
+
+  const byId = new Map();
+  for (const t of [...overdueTasks, ...stalledTasks]) {
+    const overdueDays = taskOverdueDays(t, todayStart);
+    const pri = String(t.priority || 'medium');
+    const priScore = pri === 'urgent' ? 4 : pri === 'high' ? 3 : pri === 'medium' ? 2 : 1;
+    const stallHours = Math.floor(Math.max(0, (now - new Date(t.lastActivityAt || t.updatedAt || t.createdAt || 0).getTime()) / 3600000));
+    const severity = (overdueDays * 10) + priScore + Math.min(10, Math.floor(stallHours / 12));
+    const existing = byId.get(t.id);
+    if (!existing || existing.severity < severity) {
+      byId.set(t.id, { task: t, severity, overdueDays, stallHours });
+    }
+  }
+
+  const candidates = [...byId.values()].sort((a, b) => b.severity - a.severity);
+  return {
+    overdueCount: overdueTasks.length,
+    stalledCount: stalledTasks.length,
+    candidateCount: candidates.length,
+    candidates
+  };
+}
+
+async function applyDeadlineCrashPlan() {
+  if (deadlineCrashBusy || !currentFlow) return;
+
+  const identity = getStatsViewerIdentity();
+  if (!identity.isSelf) {
+    toast(I18n.t('crash.onlySelf') || 'Switch back to your statistics to apply crash plan.');
+    return;
+  }
+
+  const viewerTasks = getAllFlowTasksForStats().filter(t => t.createdBy === identity.viewerId || taskAssigneeIds(t).includes(identity.viewerId));
+  const crashPlan = buildDeadlineCrashPlan(viewerTasks, startOfToday());
+  if (!crashPlan.candidateCount) {
+    toast(I18n.t('crash.none') || 'No crash actions needed right now.');
+    return;
+  }
+
+  const ok = confirm((I18n.t('crash.confirm') || 'Apply crash plan to {count} tasks?').replace('{count}', String(crashPlan.candidateCount)));
+  if (!ok) return;
+
+  deadlineCrashBusy = true;
+  renderStatsTab();
+
+  let changed = 0;
+  const maxApply = 20;
+  const batch = crashPlan.candidates.slice(0, maxApply);
+
+  for (const entry of batch) {
+    const task = entry.task;
+    const payload = {};
+    const overdueDays = entry.overdueDays || 0;
+
+    if ((task.priority || 'medium') !== 'high' && (task.priority || 'medium') !== 'urgent') {
+      payload.priority = overdueDays >= 7 ? 'urgent' : 'high';
+    }
+    if (task.status === 'todo' || task.status === 'on-hold') {
+      payload.status = 'in-progress';
+    }
+    if (!Object.keys(payload).length) continue;
+
+    try {
+      const updated = await API.updateTask(currentFlow.id, task.id, payload);
+      const idx = tasks.findIndex(t => t.id === updated.id);
+      if (idx >= 0) tasks[idx] = updated;
+      else tasks.push(updated);
+      changed += 1;
+    } catch {}
+  }
+
+  deadlineCrashBusy = false;
+  renderTasks();
+  renderStatsTab();
+  toast((I18n.t('crash.applied') || 'Crash plan applied to {count} tasks.').replace('{count}', String(changed)));
+}
+
+function computeReputationMetrics(taskList, viewerId, inScope, inPeriodOnly) {
+  const tasksInContext = (taskList || []).filter(t => t.createdBy === viewerId || taskAssigneeIds(t).includes(viewerId));
+
+  const responseSamples = [];
+  for (const task of tasksInContext) {
+    if (!taskAssigneeIds(task).includes(viewerId)) continue;
+    if (task.createdBy === viewerId) continue;
+    const createdMs = new Date(task.createdAt || 0).getTime();
+    if (!inScope(createdMs)) continue;
+
+    const events = [];
+    for (const note of task.notes || []) {
+      const by = note.authorId || note.by;
+      const ms = new Date(note.createdAt || 0).getTime();
+      if (by === viewerId && Number.isFinite(ms) && ms >= createdMs) events.push(ms);
+    }
+    for (const log of task.statusLog || []) {
+      const ms = new Date(log.at || 0).getTime();
+      if (log.by === viewerId && Number.isFinite(ms) && ms >= createdMs) events.push(ms);
+    }
+    for (const log of task.progressLog || []) {
+      const ms = new Date(log.at || 0).getTime();
+      if (log.by === viewerId && Number.isFinite(ms) && ms >= createdMs) events.push(ms);
+    }
+
+    const firstMs = events.length ? Math.min(...events) : null;
+    if (Number.isFinite(firstMs)) {
+      responseSamples.push((firstMs - createdMs) / 60000);
+    }
+  }
+
+  const responseMedian = statsMedian(responseSamples);
+  let responseScore = null;
+  if (Number.isFinite(responseMedian)) {
+    responseScore = responseMedian <= 10 ? 100
+      : responseMedian <= 60 ? 90
+      : responseMedian <= 240 ? 75
+      : responseMedian <= 1440 ? 55
+      : responseMedian <= 4320 ? 35
+      : 15;
+  }
+
+  const deadlineDone = tasksInContext.filter(t => {
+    if (!taskAssigneeIds(t).includes(viewerId)) return false;
+    if (t.status !== 'done') return false;
+    const completedMs = new Date(t.completedAt || t.updatedAt || 0).getTime();
+    return inPeriodOnly(completedMs) && Number.isFinite(taskDeadlineEndMs(t));
+  });
+  const deadlineOnTime = deadlineDone.filter(t => {
+    const completedMs = new Date(t.completedAt || t.updatedAt || 0).getTime();
+    const dueEnd = taskDeadlineEndMs(t);
+    return Number.isFinite(completedMs) && Number.isFinite(dueEnd) && completedMs <= dueEnd;
+  }).length;
+  const deadlineScore = deadlineDone.length ? statsClampScore((deadlineOnTime / deadlineDone.length) * 100) : null;
+
+  const reviewHours = [];
+  for (const task of tasksInContext) {
+    const logs = [...(task.statusLog || [])].filter(l => l && l.at).sort((a, b) => new Date(a.at) - new Date(b.at));
+    for (const decision of logs) {
+      if (decision.by !== viewerId) continue;
+      if (decision.from !== 'in-review') continue;
+      if (decision.to !== 'done' && decision.to !== 'todo') continue;
+      const decisionMs = new Date(decision.at).getTime();
+      if (!inPeriodOnly(decisionMs)) continue;
+      const prior = [...logs].reverse().find(l => l.to === 'in-review' && new Date(l.at).getTime() <= decisionMs);
+      if (!prior) continue;
+      const priorMs = new Date(prior.at).getTime();
+      if (!Number.isFinite(priorMs) || !Number.isFinite(decisionMs) || decisionMs < priorMs) continue;
+      reviewHours.push((decisionMs - priorMs) / 3600000);
+    }
+  }
+  const reviewMedian = statsMedian(reviewHours);
+  let reviewScore = null;
+  if (Number.isFinite(reviewMedian)) {
+    reviewScore = reviewMedian <= 2 ? 100
+      : reviewMedian <= 8 ? 85
+      : reviewMedian <= 24 ? 70
+      : reviewMedian <= 72 ? 45
+      : 20;
+  }
+
+  const completedByViewer = tasksInContext.filter(t => {
+    const doneLog = (t.statusLog || []).find(l => l.to === 'done' && l.by === viewerId);
+    if (!doneLog) return false;
+    const doneMs = new Date(doneLog.at || 0).getTime();
+    return inPeriodOnly(doneMs);
+  });
+  const reopenedCount = completedByViewer.filter(t => (t.statusLog || []).some(l => l.from === 'done' && l.to !== 'done')).length;
+  const qualityScore = completedByViewer.length
+    ? statsClampScore((1 - (reopenedCount / completedByViewer.length)) * 100)
+    : null;
+
+  const weighted = [
+    { score: responseScore, weight: 0.35 },
+    { score: deadlineScore, weight: 0.30 },
+    { score: reviewScore, weight: 0.20 },
+    { score: qualityScore, weight: 0.15 }
+  ].filter(entry => Number.isFinite(entry.score));
+
+  const weightTotal = weighted.reduce((sum, entry) => sum + entry.weight, 0);
+  const reputationScore = weightTotal
+    ? statsClampScore(weighted.reduce((sum, entry) => sum + (entry.score * entry.weight), 0) / weightTotal)
+    : 0;
+
+  const confidenceSamples = responseSamples.length + deadlineDone.length + reviewHours.length + completedByViewer.length;
+  const confidence = statsClampScore(Math.min(100, (confidenceSamples / 24) * 100));
+
+  return {
+    score: reputationScore,
+    confidence,
+    responseMedian,
+    responseSamples: responseSamples.length,
+    deadlineScore,
+    deadlineDone: deadlineDone.length,
+    reviewMedian,
+    reviewSamples: reviewHours.length,
+    qualityScore,
+    qualitySamples: completedByViewer.length
+  };
+}
+
 function renderStatsTab() {
   const container = document.getElementById('statsWrap');
   if (!container) return;
@@ -5465,6 +5813,9 @@ function renderStatsTab() {
     : subtitleText;
 
   const modeLabel = statsRangeOptions().find(option => option.value === statsRangeMode)?.label || '';
+  const crashPlan = buildDeadlineCrashPlan(active, todayStart);
+  const crashPreview = crashPlan.candidates.slice(0, 4);
+  const reputation = computeReputationMetrics(all, viewerId, inScope, inPeriodOnly);
 
   container.innerHTML = `
     <div class="stats-epic">
@@ -5488,6 +5839,23 @@ function renderStatsTab() {
               <div class="k-value">${open}</div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="stats-crash-card">
+        <div class="stats-crash-title">${icon('alert-triangle', 12)} ${esc(I18n.t('crash.title') || 'Deadline Crash')}</div>
+        <div class="stats-crash-meta">${esc((I18n.t('crash.summary') || '{overdue} overdue · {stalled} stalled').replace('{overdue}', String(crashPlan.overdueCount)).replace('{stalled}', String(crashPlan.stalledCount)))}</div>
+        <div class="stats-crash-list">
+          ${crashPreview.length ? crashPreview.map(entry => `
+            <div class="stats-crash-item">
+              <span>${esc(entry.task.title || '')}</span>
+              <span>${entry.overdueDays > 0 ? `${entry.overdueDays}d` : `${Math.floor((entry.stallHours || 0) / 24)}d`} </span>
+            </div>
+          `).join('') : `<div class="stats-crash-item"><span>${esc(I18n.t('crash.none') || 'No crash actions needed right now.')}</span><span>OK</span></div>`}
+        </div>
+        <div class="stats-crash-actions">
+          <button class="stats-crash-btn" onclick="renderStatsTab()">${esc(I18n.t('common.refresh') || 'Refresh')}</button>
+          <button class="stats-crash-btn primary" onclick="applyDeadlineCrashPlan()" ${!identity.isSelf || !crashPlan.candidateCount || deadlineCrashBusy ? 'disabled' : ''}>${esc(deadlineCrashBusy ? (I18n.t('common.loading') || 'Running...') : (I18n.t('crash.apply') || 'Apply Crash Plan'))}</button>
         </div>
       </section>
 
@@ -5604,6 +5972,32 @@ function renderStatsTab() {
               <div class="tile-value">${createdInScope}</div>
             </div>
           </div>
+        </article>
+
+        <article class="stats-reputation">
+          <div class="stats-reputation-head">
+            <div class="stats-panel-title" data-i18n="stats.reputation.title">Reputation score</div>
+            <div class="stats-reputation-score">${reputation.score}</div>
+          </div>
+          <div class="stats-reputation-grid">
+            <div class="stats-reputation-item">
+              <div class="stats-reputation-label" data-i18n="stats.reputation.responseSpeed">Response speed</div>
+              <div class="stats-reputation-value">${statsFormatMinutes(reputation.responseMedian)}</div>
+            </div>
+            <div class="stats-reputation-item">
+              <div class="stats-reputation-label" data-i18n="stats.reputation.deadlineReliability">Deadline reliability</div>
+              <div class="stats-reputation-value">${Number.isFinite(reputation.deadlineScore) ? `${reputation.deadlineScore}%` : 'n/a'}</div>
+            </div>
+            <div class="stats-reputation-item">
+              <div class="stats-reputation-label" data-i18n="stats.reputation.reviewTurnaround">Review turnaround</div>
+              <div class="stats-reputation-value">${Number.isFinite(reputation.reviewMedian) ? statsFormatMinutes(reputation.reviewMedian * 60) : 'n/a'}</div>
+            </div>
+            <div class="stats-reputation-item">
+              <div class="stats-reputation-label" data-i18n="stats.reputation.qualityStability">Quality stability</div>
+              <div class="stats-reputation-value">${Number.isFinite(reputation.qualityScore) ? `${reputation.qualityScore}%` : 'n/a'}</div>
+            </div>
+          </div>
+          <div class="stats-reputation-confidence">${esc((I18n.t('stats.reputation.confidence') || 'Confidence {value}%').replace('{value}', String(reputation.confidence)))}</div>
         </article>
       </section>
     </div>
