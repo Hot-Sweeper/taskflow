@@ -1049,9 +1049,255 @@ a { color: var(--accent); text-decoration: none; }
   color: var(--text-secondary);
 }
 
+.office-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px 18px;
+}
+.office-toolbar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.office-chip {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  padding: 8px 10px;
+  backdrop-filter: var(--blur) var(--saturate);
+  -webkit-backdrop-filter: var(--blur) var(--saturate);
+}
+.office-chip-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-secondary);
+}
+.office-chip-value {
+  margin-top: 3px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+}
+.office-world {
+  position: relative;
+  min-height: 460px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    radial-gradient(80% 120% at 50% -12%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 60%),
+    linear-gradient(160deg, color-mix(in srgb, var(--bg-secondary) 86%, #0b111f), color-mix(in srgb, var(--bg) 86%, #070b14));
+}
+.office-texture {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.022) 0 10px, rgba(255,255,255,0) 10px 20px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,0.016) 0 12px, rgba(255,255,255,0) 12px 24px);
+}
+.office-zone {
+  position: absolute;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 12px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+.office-zone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0 8px, rgba(0,0,0,0.02) 8px 16px);
+  opacity: 0.55;
+}
+.office-zone-label {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  z-index: 1;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.42px;
+  color: var(--text-secondary);
+}
+.office-zone.manager { left: 6%; top: 8%; width: 22%; height: 24%; background: color-mix(in srgb, var(--amber) 15%, transparent); }
+.office-zone.desks { left: 30%; top: 8%; width: 40%; height: 58%; background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.office-zone.review { left: 72%; top: 8%; width: 22%; height: 22%; background: color-mix(in srgb, var(--blue) 15%, transparent); }
+.office-zone.research { left: 72%; top: 34%; width: 22%; height: 22%; background: color-mix(in srgb, var(--purple) 15%, transparent); }
+.office-zone.break { left: 6%; top: 68%; width: 34%; height: 24%; background: color-mix(in srgb, var(--green) 14%, transparent); }
+.office-zone.remote { left: 44%; top: 70%; width: 24%; height: 20%; background: color-mix(in srgb, var(--cyan) 12%, transparent); }
+.office-zone.field { left: 72%; top: 60%; width: 22%; height: 32%; background: color-mix(in srgb, var(--red) 12%, transparent); }
+.office-desks {
+  position: absolute;
+  left: 31%;
+  top: 12%;
+  width: 38%;
+  height: 50%;
+  z-index: 2;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  justify-content: stretch;
+}
+.office-desk {
+  position: relative;
+  min-height: 28px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-secondary) 84%, #172231), color-mix(in srgb, var(--bg) 92%, #0d1420));
+}
+.office-desk::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  top: 8px;
+  height: 3px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.1);
+}
+.office-actors {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+.office-actor {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  transition: left 1.9s linear, top 1.9s linear;
+  pointer-events: none;
+  text-align: center;
+}
+.office-actor-bob {
+  animation: officeBob 1.05s ease-in-out infinite;
+}
+.office-actor.state-break .office-actor-bob { animation-duration: 1.65s; }
+.office-actor.state-offline .office-actor-bob,
+.office-actor.state-remote .office-actor-bob { animation-duration: 2.1s; }
+.office-actor-head {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--job-color, var(--accent)) 76%, #fff);
+  overflow: hidden;
+  background: var(--bg-secondary);
+  margin: 0 auto;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.28);
+}
+.office-actor-head img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.office-actor-body {
+  width: 12px;
+  height: 14px;
+  border-radius: 6px;
+  margin: 2px auto 0;
+  background: color-mix(in srgb, var(--job-color, var(--accent)) 68%, #1f2937);
+}
+.office-actor-legs {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 1px;
+}
+.office-actor-legs span {
+  width: 3px;
+  height: 7px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--job-color, var(--accent)) 50%, #0b1020);
+  animation: officeStride 0.34s ease-in-out infinite alternate;
+}
+.office-actor-legs span:last-child { animation-delay: 0.16s; }
+.office-actor-name {
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text);
+  max-width: 86px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.office-actor-job {
+  margin-top: 1px;
+  font-size: 9px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.35px;
+}
+.office-legend {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+  padding: 10px;
+}
+.office-legend-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-secondary);
+}
+.office-legend-grid {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.office-legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-input);
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.office-legend-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.office-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 99px;
+  background: var(--dot, var(--accent));
+}
+.office-legend-name {
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.office-legend-count {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+@keyframes officeStride {
+  from { transform: translateY(-1px); }
+  to { transform: translateY(1px); }
+}
+@keyframes officeBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
 @media (max-width: 1120px) {
   .stats-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stats-panels { grid-template-columns: 1fr; }
+  .office-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 900px) {
@@ -1092,8 +1338,20 @@ a { color: var(--accent); text-decoration: none; }
 }
 .nav-item .nav-badge.visible { display: flex; }
 
+.office-nav-item,
+.more-office-item {
+  display: none;
+}
+.office-nav-item.office-visible,
+.more-office-item.office-visible {
+  display: flex;
+}
+
 @media (max-width: 768px) {
   #tabStats {
+    display: none !important;
+  }
+  #tabOffice {
     display: none !important;
   }
 
@@ -3772,6 +4030,9 @@ a { color: var(--accent); text-decoration: none; }
       <button class="sidebar-nav-item" data-tab="tabStats" onclick="switchTab('tabStats')">
         <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> <span data-i18n="nav.stats">Statistics</span>
       </button>
+      <button class="sidebar-nav-item office-nav-item" data-tab="tabOffice" onclick="switchTab('tabOffice')">
+        <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V5a1 1 0 011-1h12a1 1 0 011 1v16"/><line x1="9" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="10" y2="16"/><line x1="14" y1="16" x2="15" y2="16"/></svg></span> <span data-i18n="nav.office">Office</span>
+      </button>
       <button class="sidebar-nav-item" data-tab="tabPeople" onclick="switchTab('tabPeople')">
         <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span> <span data-i18n="nav.team">Team</span>
         <span class="sidebar-badge" id="chatBadgeSidebar">0</span>
@@ -3942,6 +4203,13 @@ a { color: var(--accent); text-decoration: none; }
       </div>
     </div>
     <div class="stats-wrap" id="statsWrap"></div>
+  </div>
+
+  <div class="tab-content" id="tabOffice">
+    <div class="tab-header">
+      <h3 data-i18n="nav.office">Office</h3>
+    </div>
+    <div id="officeWrap" class="office-shell"></div>
   </div>
 
   <div class="tab-content" id="tabPeople">
@@ -4122,6 +4390,10 @@ a { color: var(--accent); text-decoration: none; }
           <span class="more-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31l-6 10.37A2 2 0 005.73 22h12.54A2 2 0 0020 19.68L14 9.31V2"/><line x1="8.5" y1="2" x2="15.5" y2="2"/><line x1="7" y1="16" x2="17" y2="16"/></svg></span>
           <span class="more-label" data-i18n="settings.experimentalThemes">Experimental Themes</span>
           <div class="more-toggle" id="experimentalToggle"></div>
+        </div>
+        <div class="more-item more-office-item" id="moreOfficeItem" onclick="switchTab('tabOffice')">
+          <span class="more-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V5a1 1 0 011-1h12a1 1 0 011 1v16"/><line x1="9" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="10" y2="16"/><line x1="14" y1="16" x2="15" y2="16"/></svg></span>
+          <span class="more-label" data-i18n="nav.office">Office</span>
         </div>
         <div class="more-item" onclick="cycleLang()">
           <span class="more-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2z"/></svg></span>
@@ -4347,6 +4619,9 @@ let statsRangeMode = 'all';
 let statsWeekdayMode = 'all';
 let deadlineCrashBusy = false;
 let clockInPromptShown = false;
+let officeSimTimer = null;
+let officeSimTick = 0;
+let officeRenderBusy = false;
 
 // models.js already declares STATUS, STATUS_ORDER, STATUS_META, PRIORITY, PRIORITY_META, etc. at global scope
 
@@ -4562,6 +4837,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 window.addEventListener('auth:expired', () => {
+  currentFlow = null;
+  syncOfficeSimulationState();
   currentUser = null;
   showScreen('authScreen');
 });
@@ -4576,7 +4853,7 @@ function showScreen(id) {
 
 // ═══ DEEP LINKING (hash-based) ═══
 // Hash format: #flow/{flowId}[/{tab}][/task/{taskId}]
-const TAB_MAP = { tasks: 'tabTasks', archive: 'tabArchive', stats: 'tabStats', people: 'tabPeople', time: 'tabTime', chat: 'tabChat', more: 'tabMore' };
+const TAB_MAP = { tasks: 'tabTasks', archive: 'tabArchive', stats: 'tabStats', office: 'tabOffice', people: 'tabPeople', time: 'tabTime', chat: 'tabChat', more: 'tabMore' };
 const TAB_REVERSE = Object.fromEntries(Object.entries(TAB_MAP).map(([k,v]) => [v, k]));
 
 function updateHash() {
@@ -4663,8 +4940,9 @@ async function doLogout() {
   try { await API.logout(); } catch {}
   API.setToken(null);
   WS.disconnect();
-  currentUser = null;
   currentFlow = null;
+  syncOfficeSimulationState();
+  currentUser = null;
   showScreen('authScreen');
 }
 
@@ -4914,6 +5192,8 @@ async function enterFlow(flow, restoreTab, restoreTaskId) {
   currentFlow = flow;
   showScreen('mainApp');
 
+  updateOfficeTabVisibility();
+
   // Mobile header
   document.getElementById('headerFlowIcon').innerHTML = icon(flow.icon || 'building', 22);
   document.getElementById('headerFlowName').textContent = flow.name;
@@ -4987,6 +5267,7 @@ function goToFlowPicker() {
   if (flowSettings && flowSettings.classList.contains('active')) { closeFlowSettings(); return; }
   stopNotificationsPolling();
   setUnloggedTickerActive(false);
+  syncOfficeSimulationState();
   currentFlow = null;
   currentTaskId = null;
   closeDetail();
@@ -4998,7 +5279,10 @@ function goToFlowPicker() {
 // TAB NAVIGATION
 // ═══════════════════════════════════════════════════════════════
 function switchTab(tabId) {
-  if (isMobile() && tabId === 'tabStats') {
+  if ((tabId === 'tabOffice') && !isExperimentalEnabled()) {
+    tabId = 'tabTasks';
+  }
+  if (isMobile() && (tabId === 'tabStats' || tabId === 'tabOffice')) {
     tabId = 'tabTasks';
   }
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -5046,6 +5330,12 @@ function switchTab(tabId) {
     });
   }
 
+  if (tabId === 'tabOffice') {
+    renderOfficeTab(true);
+  }
+
+  syncOfficeSimulationState();
+
   // Update URL hash
   updateHash();
 }
@@ -5061,6 +5351,7 @@ function renderTasks() {
   if (document.getElementById('tabStats')?.classList.contains('active')) {
     renderStatsTab();
   }
+  maybeRenderOfficeTab();
 }
 
 function getFilteredTasks() {
@@ -8381,6 +8672,7 @@ async function uploadTaskFiles() {
 // PEOPLE TAB
 // ═══════════════════════════════════════════════════════════════
 let presenceData = []; // cached presence for flow members
+let presenceDataAt = 0;
 
 function getPresenceUi(presence) {
   const p = presence || {};
@@ -8444,6 +8736,7 @@ async function renderPeople() {
   // Fetch presence
   try {
     presenceData = await API.getPresence(currentFlow.id);
+    presenceDataAt = Date.now();
   } catch { presenceData = []; }
 
   const list = document.getElementById('peopleList');
@@ -8477,6 +8770,8 @@ async function renderPeople() {
     `;
     list.appendChild(card);
   }
+
+  maybeRenderOfficeTab();
 }
 
 function formatDuration(minutes) {
@@ -8567,6 +8862,343 @@ function openChatWithMember(userId) {
     userRole: member?.role || ''
   };
   openChatView(conv);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// OFFICE TAB (EXPERIMENTAL)
+// ═══════════════════════════════════════════════════════════════
+const OFFICE_JOB_SYSTEM = {
+  manager: { labelKey: 'office.job.manager', color: '#f59e0b' },
+  reviewer: { labelKey: 'office.job.reviewer', color: '#38bdf8' },
+  researcher: { labelKey: 'office.job.researcher', color: '#c084fc' },
+  developer: { labelKey: 'office.job.developer', color: '#34d399' },
+  operator: { labelKey: 'office.job.operator', color: '#fb7185' },
+  member: { labelKey: 'office.job.member', color: '#94a3b8' }
+};
+
+function officeHashInt(input) {
+  const str = String(input || '');
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i += 1) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function officeRand(seed) {
+  const n = Math.sin(seed * 12.9898) * 43758.5453;
+  return n - Math.floor(n);
+}
+
+function officeHeadUrl(member) {
+  const src = String(member?.avatarUrl || '');
+  if (src.includes('dicebear.com')) return src;
+  const seed = encodeURIComponent(member?.userName || member?.userId || 'member');
+  return `https://api.dicebear.com/9.x/adventurer/svg?seed=${seed}`;
+}
+
+function officeRoleToJob(role, isOwner) {
+  if (isOwner) return 'manager';
+  const txt = String(role || '').toLowerCase();
+  if (/(owner|manager|lead|leiter|chef|head)/.test(txt)) return 'manager';
+  if (/(review|qa|quality|code\s*review)/.test(txt)) return 'reviewer';
+  if (/(research|analyst|data|science)/.test(txt)) return 'researcher';
+  if (/(devops|ops|support|infra|operator)/.test(txt)) return 'operator';
+  if (/(developer|engineer|dev|programm)/.test(txt)) return 'developer';
+  return 'member';
+}
+
+function officePresenceState(presence) {
+  const p = presence || {};
+  if (!p.online) return 'offline';
+  if (p.status === 'break') return 'break';
+  if (p.location === 'home') return 'remote';
+  if (p.location === 'field') return 'field';
+  if (p.status === 'working') return 'working';
+  return 'online';
+}
+
+function officeStateLabel(state) {
+  if (state === 'break') return I18n.t('office.status.break');
+  if (state === 'remote') return I18n.t('office.status.remote');
+  if (state === 'field') return I18n.t('office.status.field');
+  if (state === 'working' || state === 'online') return I18n.t('office.status.working');
+  return I18n.t('office.status.offline');
+}
+
+function officeResolveZone(snapshot) {
+  if (snapshot.state === 'break') return 'break';
+  if (snapshot.state === 'remote' || snapshot.state === 'offline') return 'remote';
+  if (snapshot.state === 'field') return 'field';
+  if (snapshot.job === 'manager') return 'manager';
+  if (snapshot.job === 'reviewer') return 'review';
+  if (snapshot.job === 'researcher') return 'research';
+  return 'desks';
+}
+
+function officeZoneRects() {
+  return {
+    manager: { x: 6, y: 8, w: 22, h: 24 },
+    desks: { x: 30, y: 8, w: 40, h: 58 },
+    review: { x: 72, y: 8, w: 22, h: 22 },
+    research: { x: 72, y: 34, w: 22, h: 22 },
+    break: { x: 6, y: 68, w: 34, h: 24 },
+    remote: { x: 44, y: 70, w: 24, h: 20 },
+    field: { x: 72, y: 60, w: 22, h: 32 }
+  };
+}
+
+function officeBuildSnapshots() {
+  const byPresence = new Map((presenceData || []).map(p => [p.userId, p]));
+  return (members || []).map((member) => {
+    const presence = byPresence.get(member.userId) || {};
+    const job = officeRoleToJob(member.role, !!member.isOwner);
+    const state = officePresenceState(presence);
+    return {
+      userId: member.userId,
+      userName: member.userName || 'Unknown',
+      role: member.role || I18n.t('team.member'),
+      isOwner: !!member.isOwner,
+      avatarHeadUrl: officeHeadUrl(member),
+      job,
+      jobLabel: I18n.t(OFFICE_JOB_SYSTEM[job].labelKey),
+      state,
+      stateLabel: officeStateLabel(state),
+      zone: officeResolveZone({ job, state }),
+      workDuration: presence.workDuration || 0
+    };
+  });
+}
+
+function officeDeskMeta(deskCount) {
+  const cols = Math.max(3, Math.min(7, Math.ceil(Math.sqrt(deskCount * 1.4))));
+  const rows = Math.max(1, Math.ceil(deskCount / cols));
+  return { cols, rows };
+}
+
+function officeBuildDeskHtml(deskCount) {
+  const { cols } = officeDeskMeta(deskCount);
+  const desks = Array.from({ length: deskCount }, (_, i) => `<div class="office-desk" data-desk="${i + 1}"></div>`).join('');
+  return `<div class="office-desks" style="grid-template-columns:repeat(${cols}, minmax(0, 1fr))">${desks}</div>`;
+}
+
+function officeBuildDeskAnchors(deskCount) {
+  const rect = officeZoneRects().desks;
+  const { cols, rows } = officeDeskMeta(deskCount);
+  const anchors = [];
+  for (let i = 0; i < deskCount; i += 1) {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+    const x = rect.x + ((col + 0.5) / cols) * rect.w;
+    const y = rect.y + ((row + 0.5) / rows) * rect.h;
+    anchors.push({ x, y });
+  }
+  return anchors;
+}
+
+function officeComputeStats(snapshots) {
+  const stats = { working: 0, break: 0, offline: 0, remote: 0 };
+  for (const s of snapshots) {
+    if (s.state === 'break') stats.break += 1;
+    else if (s.state === 'remote' || s.state === 'field') stats.remote += 1;
+    else if (s.state === 'offline') stats.offline += 1;
+    else stats.working += 1;
+  }
+  return stats;
+}
+
+function officeBuildWorldHtml(deskCount, snapshots) {
+  const stats = officeComputeStats(snapshots);
+  return `
+    <div class="office-toolbar">
+      <div class="office-chip"><div class="office-chip-label" data-i18n="office.working">Working</div><div class="office-chip-value" id="officeCountWorking">${stats.working}</div></div>
+      <div class="office-chip"><div class="office-chip-label" data-i18n="office.break">Break</div><div class="office-chip-value" id="officeCountBreak">${stats.break}</div></div>
+      <div class="office-chip"><div class="office-chip-label" data-i18n="office.offline">Offline</div><div class="office-chip-value" id="officeCountOffline">${stats.offline}</div></div>
+      <div class="office-chip"><div class="office-chip-label" data-i18n="office.remote">Remote/Field</div><div class="office-chip-value" id="officeCountRemote">${stats.remote}</div></div>
+    </div>
+
+    <div class="office-world">
+      <div class="office-texture"></div>
+      <div class="office-zone manager"><div class="office-zone-label" data-i18n="office.map.manager">Manager Office</div></div>
+      <div class="office-zone desks"><div class="office-zone-label" data-i18n="office.map.desks">Work Desks</div></div>
+      <div class="office-zone review"><div class="office-zone-label" data-i18n="office.map.review">Review Bay</div></div>
+      <div class="office-zone research"><div class="office-zone-label" data-i18n="office.map.research">Research Lab</div></div>
+      <div class="office-zone break"><div class="office-zone-label" data-i18n="office.map.breakRoom">Break Room</div></div>
+      <div class="office-zone remote"><div class="office-zone-label" data-i18n="office.map.remote">Remote Hub</div></div>
+      <div class="office-zone field"><div class="office-zone-label" data-i18n="office.map.field">Field Ops</div></div>
+      ${officeBuildDeskHtml(deskCount)}
+      <div class="office-actors" id="officeActorLayer"></div>
+    </div>
+
+    <div class="office-legend">
+      <div class="office-legend-title" data-i18n="office.legend">Job System</div>
+      <div class="office-legend-grid" id="officeLegendGrid"></div>
+    </div>
+  `;
+}
+
+function officeRandomPointInZone(zone, userId, salt = 0) {
+  const rect = officeZoneRects()[zone] || officeZoneRects().desks;
+  const base = officeHashInt(`${userId}:${zone}:${salt}:${Math.floor(officeSimTick / 2)}`);
+  const rx = officeRand(base + 17);
+  const ry = officeRand(base + 89);
+  return {
+    x: rect.x + 5 + rx * Math.max(2, rect.w - 10),
+    y: rect.y + 6 + ry * Math.max(2, rect.h - 12)
+  };
+}
+
+function officeAssignTargets(snapshots, deskCount) {
+  const deskAnchors = officeBuildDeskAnchors(deskCount);
+  const deskUsers = snapshots.filter(s => s.zone === 'desks').sort((a, b) => String(a.userId).localeCompare(String(b.userId)));
+  const deskMap = new Map();
+  for (let i = 0; i < deskUsers.length; i += 1) {
+    deskMap.set(deskUsers[i].userId, deskAnchors[i % deskAnchors.length]);
+  }
+
+  const targets = new Map();
+  for (const s of snapshots) {
+    if (s.zone === 'desks' && deskMap.has(s.userId)) {
+      const base = deskMap.get(s.userId);
+      const jitter = officeRandomPointInZone('desks', s.userId, 5);
+      targets.set(s.userId, {
+        x: base.x + ((jitter.x - base.x) * 0.22),
+        y: base.y + ((jitter.y - base.y) * 0.22)
+      });
+      continue;
+    }
+    targets.set(s.userId, officeRandomPointInZone(s.zone, s.userId));
+  }
+  return targets;
+}
+
+function officeFindActorNode(layer, userId) {
+  return Array.from(layer.children).find(node => node.dataset.userId === userId) || null;
+}
+
+function officeRenderLegend(snapshots) {
+  const grid = document.getElementById('officeLegendGrid');
+  if (!grid) return;
+  const counts = new Map();
+  for (const s of snapshots) {
+    counts.set(s.job, (counts.get(s.job) || 0) + 1);
+  }
+  const items = Object.entries(OFFICE_JOB_SYSTEM).map(([job, meta]) => {
+    const label = I18n.t(meta.labelKey);
+    const count = counts.get(job) || 0;
+    return `
+      <div class="office-legend-item">
+        <span class="office-legend-left"><span class="office-legend-dot" style="--dot:${meta.color}"></span><span class="office-legend-name">${esc(label)}</span></span>
+        <span class="office-legend-count">${count}</span>
+      </div>
+    `;
+  }).join('');
+  grid.innerHTML = items;
+}
+
+function officeSyncActors(snapshots, deskCount) {
+  const layer = document.getElementById('officeActorLayer');
+  if (!layer) return;
+
+  const targets = officeAssignTargets(snapshots, deskCount);
+  const seen = new Set();
+
+  for (const s of snapshots) {
+    seen.add(s.userId);
+    let node = officeFindActorNode(layer, s.userId);
+    if (!node) {
+      node = document.createElement('div');
+      node.className = 'office-actor';
+      node.dataset.userId = s.userId;
+      node.innerHTML = `
+        <div class="office-actor-bob">
+          <div class="office-actor-head"><img alt="" loading="lazy"></div>
+          <div class="office-actor-body"></div>
+          <div class="office-actor-legs"><span></span><span></span></div>
+        </div>
+        <div class="office-actor-name"></div>
+        <div class="office-actor-job"></div>
+      `;
+      layer.appendChild(node);
+    }
+
+    const point = targets.get(s.userId) || { x: 50, y: 50 };
+    const meta = OFFICE_JOB_SYSTEM[s.job] || OFFICE_JOB_SYSTEM.member;
+    node.className = `office-actor state-${s.state} job-${s.job}`;
+    node.style.left = `${point.x}%`;
+    node.style.top = `${point.y}%`;
+    node.style.setProperty('--job-color', meta.color);
+
+    const img = node.querySelector('.office-actor-head img');
+    if (img && img.src !== s.avatarHeadUrl) img.src = s.avatarHeadUrl;
+    const name = node.querySelector('.office-actor-name');
+    if (name) name.textContent = s.userName;
+    const job = node.querySelector('.office-actor-job');
+    if (job) job.textContent = `${s.jobLabel} · ${s.stateLabel}`;
+  }
+
+  for (const child of Array.from(layer.children)) {
+    if (!seen.has(child.dataset.userId)) child.remove();
+  }
+
+  const stats = officeComputeStats(snapshots);
+  const working = document.getElementById('officeCountWorking');
+  const brk = document.getElementById('officeCountBreak');
+  const offline = document.getElementById('officeCountOffline');
+  const remote = document.getElementById('officeCountRemote');
+  if (working) working.textContent = String(stats.working);
+  if (brk) brk.textContent = String(stats.break);
+  if (offline) offline.textContent = String(stats.offline);
+  if (remote) remote.textContent = String(stats.remote);
+}
+
+async function renderOfficeTab(forceFresh = false) {
+  if (officeRenderBusy) return;
+  const wrap = document.getElementById('officeWrap');
+  if (!wrap) return;
+
+  if (!isExperimentalEnabled()) {
+    wrap.innerHTML = `<div class="empty-state"><span class="empty-icon">${icon('building', 30)}</span><span class="empty-text" data-i18n="office.experimentalDisabled">Enable experimental settings to open Office view.</span></div>`;
+    I18n.translateDOM();
+    syncOfficeSimulationState();
+    return;
+  }
+
+  if (!currentFlow) {
+    wrap.innerHTML = `<div class="empty-state"><span class="empty-icon">${icon('building', 30)}</span><span class="empty-text" data-i18n="office.empty">No office data yet.</span></div>`;
+    I18n.translateDOM();
+    syncOfficeSimulationState();
+    return;
+  }
+
+  officeRenderBusy = true;
+  try {
+    if (forceFresh || !presenceDataAt || (Date.now() - presenceDataAt > 12000)) {
+      try {
+        presenceData = await API.getPresence(currentFlow.id);
+        presenceDataAt = Date.now();
+      } catch {}
+    }
+
+    const snapshots = officeBuildSnapshots();
+    const deskCount = Math.max(4, Math.ceil(Math.max(1, snapshots.length) * 1.35));
+    const renderedDesks = Number(wrap.dataset.desks || '0');
+
+    if (!wrap.dataset.ready || renderedDesks !== deskCount) {
+      wrap.innerHTML = officeBuildWorldHtml(deskCount, snapshots);
+      wrap.dataset.ready = '1';
+      wrap.dataset.desks = String(deskCount);
+      I18n.translateDOM();
+    }
+
+    officeRenderLegend(snapshots);
+    officeSyncActors(snapshots, deskCount);
+  } finally {
+    officeRenderBusy = false;
+  }
+
+  syncOfficeSimulationState();
 }
 
 function copyInviteCode() {
@@ -10674,6 +11306,7 @@ function renderMore() {
   if (label) label.textContent = I18n.t(themeObj.labelKey);
 
   renderThemePicker();
+  updateOfficeTabVisibility();
 
   // Language
   document.getElementById('langValue').textContent = (I18n.lang || 'en').toUpperCase();
@@ -10725,6 +11358,48 @@ function toggleExperimentalThemes() {
   const toggle = document.getElementById('experimentalToggle');
   if (toggle) toggle.classList.toggle('on', on);
   renderThemePicker();
+  updateOfficeTabVisibility();
+  if (on && document.getElementById('tabOffice')?.classList.contains('active')) {
+    renderOfficeTab(true);
+  }
+}
+
+function updateOfficeTabVisibility() {
+  const enabled = isExperimentalEnabled();
+  document.querySelectorAll('.office-nav-item').forEach((el) => {
+    el.classList.toggle('office-visible', enabled);
+  });
+  const moreItem = document.getElementById('moreOfficeItem');
+  if (moreItem) moreItem.classList.toggle('office-visible', enabled);
+
+  if (!enabled && document.getElementById('tabOffice')?.classList.contains('active')) {
+    switchTab('tabTasks');
+    return;
+  }
+  syncOfficeSimulationState();
+}
+
+function maybeRenderOfficeTab() {
+  if (document.getElementById('tabOffice')?.classList.contains('active')) {
+    renderOfficeTab();
+  }
+}
+
+function syncOfficeSimulationState() {
+  const shouldRun = isExperimentalEnabled()
+    && !!currentFlow
+    && !!document.getElementById('tabOffice')
+    && document.getElementById('tabOffice').classList.contains('active');
+
+  if (shouldRun && !officeSimTimer) {
+    officeSimTimer = setInterval(() => {
+      officeSimTick += 1;
+      renderOfficeTab();
+    }, 2200);
+  } else if (!shouldRun && officeSimTimer) {
+    clearInterval(officeSimTimer);
+    officeSimTimer = null;
+  }
 }
 
 function renderThemePicker() {
