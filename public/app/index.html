@@ -1275,21 +1275,37 @@ a { color: var(--accent); text-decoration: none; }
 .office-actor.state-working .office-actor-arm.left { transform: rotate(8deg); }
 .office-actor.state-working .office-actor-arm.right { transform: rotate(-8deg); }
 .office-actor-name {
-  margin-top: 3px;
+  margin-top: 4px;
   font-size: 10px;
   font-weight: 700;
+  line-height: 1.15;
   color: var(--text);
-  max-width: 86px;
+  max-width: 92px;
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(6, 11, 23, 0.48);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .office-actor-job {
-  margin-top: 1px;
+  margin-top: 2px;
   font-size: 9px;
+  line-height: 1.1;
   color: var(--text-secondary);
+  display: inline-block;
+  max-width: 110px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(4, 9, 18, 0.4);
   text-transform: uppercase;
   letter-spacing: 0.35px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .office-legend {
   border: 1px solid var(--border);
@@ -9130,6 +9146,24 @@ function officeRandomPointInZone(zone, userId, salt = 0) {
   };
 }
 
+function officeBuildZoneSlots(zone, count) {
+  const rect = officeZoneRects()[zone] || officeZoneRects().desks;
+  const slots = [];
+  const cols = Math.max(1, Math.ceil(Math.sqrt(count || 1)));
+  const rows = Math.max(1, Math.ceil((count || 1) / cols));
+  const padX = 8;
+  const padTop = 14; // keep distance from zone label
+  const padBottom = 10;
+  for (let i = 0; i < count; i += 1) {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+    const x = rect.x + padX + ((col + 0.5) / cols) * Math.max(2, rect.w - (padX * 2));
+    const y = rect.y + padTop + ((row + 0.5) / rows) * Math.max(2, rect.h - padTop - padBottom);
+    slots.push({ x, y });
+  }
+  return slots;
+}
+
 function officeAssignTargets(snapshots, deskCount) {
   const deskAnchors = officeBuildDeskAnchors(deskCount);
   const deskUsers = snapshots.filter(s => s.zone === 'desks').sort((a, b) => String(a.userId).localeCompare(String(b.userId)));
@@ -9149,7 +9183,18 @@ function officeAssignTargets(snapshots, deskCount) {
       });
       continue;
     }
-    targets.set(s.userId, officeRandomPointInZone(s.zone, s.userId));
+    // Non-desk zones use deterministic slot placement to avoid label overlap.
+    const peers = snapshots
+      .filter(x => x.zone === s.zone)
+      .sort((a, b) => String(a.userId).localeCompare(String(b.userId)));
+    const slots = officeBuildZoneSlots(s.zone, peers.length || 1);
+    const idx = Math.max(0, peers.findIndex(x => x.userId === s.userId));
+    const slot = slots[idx] || officeRandomPointInZone(s.zone, s.userId, 2);
+    const jitter = officeRandomPointInZone(s.zone, s.userId, 7);
+    targets.set(s.userId, {
+      x: slot.x + ((jitter.x - slot.x) * 0.12),
+      y: slot.y + ((jitter.y - slot.y) * 0.12)
+    });
   }
   return targets;
 }
