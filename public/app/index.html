@@ -1176,13 +1176,11 @@ a { color: var(--accent); text-decoration: none; }
   text-align: center;
 }
 .office-actor-bob {
-  transition: transform 0.3s ease;
+  transition: transform 0.4s ease;
+  animation: officeIdle 2.8s ease-in-out infinite;
 }
 .office-actor.is-walking .office-actor-bob {
   animation: officeBob 0.5s ease-in-out infinite;
-}
-.office-actor:not(.is-walking) .office-actor-bob {
-  animation: officeIdle 2.8s ease-in-out infinite;
 }
 .office-actor.face-left .office-actor-bob {
   transform: scaleX(-1);
@@ -1215,7 +1213,7 @@ a { color: var(--accent); text-decoration: none; }
 .office-actor-shadow {
   width: 32px;
   height: 6px;
-  margin: -2px auto 0;
+  margin: -6px auto 0;
   border-radius: 999px;
   background: rgba(0,0,0,0.16);
 }
@@ -1236,6 +1234,13 @@ a { color: var(--accent); text-decoration: none; }
 .office-actor-body .body-pant-r { fill: #4a5568; }
 .office-actor-body .body-shoe-l,
 .office-actor-body .body-shoe-r { fill: #2d3748; }
+/* limb transitions for smooth walk↔idle blending */
+.office-actor-body .body-arm-group-l,
+.office-actor-body .body-arm-group-r,
+.office-actor-body .body-leg-group-l,
+.office-actor-body .body-leg-group-r {
+  transition: transform 0.4s ease;
+}
 /* walk: arms swing + legs stride */
 .office-actor.is-walking .body-arm-group-l {
   transform-origin: 7px 10px;
@@ -1253,11 +1258,11 @@ a { color: var(--accent); text-decoration: none; }
   transform-origin: 22px 26px;
   animation: officeStride 0.5s ease-in-out infinite alternate-reverse;
 }
-/* idle: no limb movement */
+/* idle: limbs settle to resting pose */
 .office-actor:not(.is-walking) .body-arm-group-l,
-.office-actor:not(.is-walking) .body-arm-group-r,
+.office-actor:not(.is-walking) .body-arm-group-r { transform: rotate(0deg); animation: none; }
 .office-actor:not(.is-walking) .body-leg-group-l,
-.office-actor:not(.is-walking) .body-leg-group-r { animation: none; }
+.office-actor:not(.is-walking) .body-leg-group-r { transform: rotate(0deg); animation: none; }
 /* working: arms resting */
 .office-actor.state-working .body-arm-group-l { transform-origin: 7px 10px; transform: rotate(5deg); }
 .office-actor.state-working .body-arm-group-r { transform-origin: 29px 10px; transform: rotate(-5deg); }
@@ -9262,14 +9267,18 @@ function officeSyncActors(snapshots, deskCount) {
 
     // Detect movement for walk vs idle
     const isWalking = node._prevX !== null && (Math.abs(lx - node._prevX) > 1 || Math.abs(ly - node._prevY) > 1);
-    const dir = (node._prevX !== null && lx < node._prevX) ? 'left' : 'right';
+    // Only update facing direction while actually walking
+    if (isWalking && node._prevX !== null) {
+      node._facing = (lx < node._prevX) ? 'left' : 'right';
+    }
+    if (!node._facing) node._facing = 'right'; // default face right
     node._prevX = lx;
     node._prevY = ly;
 
     // Build class list
     let cls = `office-actor state-${s.state} job-${s.job}`;
     if (isWalking) cls += ' is-walking';
-    if (dir === 'left') cls += ' face-left';
+    if (node._facing === 'left') cls += ' face-left';
     node.className = cls;
 
     node.style.transform = `translate(${tx}px, ${ty}px)`;
