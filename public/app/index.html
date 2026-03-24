@@ -1181,41 +1181,99 @@ a { color: var(--accent); text-decoration: none; }
 .office-actor.state-offline .office-actor-bob,
 .office-actor.state-remote .office-actor-bob { animation-duration: 2.1s; }
 .office-actor-head {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border-radius: 999px;
-  border: 2px solid color-mix(in srgb, var(--job-color, var(--accent)) 76%, #fff);
   overflow: hidden;
-  background: var(--bg-secondary);
   margin: 0 auto;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.28);
+  clip-path: circle(50% at 50% 50%);
+  filter: drop-shadow(0 3px 5px rgba(0,0,0,0.28));
+  background: transparent;
 }
 .office-actor-head img {
   width: 100%;
   height: 100%;
+  object-fit: cover;
+  object-position: 50% 18%;
+  transform: scale(1.95);
+  transform-origin: center 20%;
   display: block;
+  background: transparent;
 }
-.office-actor-body {
-  width: 12px;
+.office-actor-shadow {
+  width: 18px;
+  height: 5px;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.28);
+}
+.office-actor-figure {
+  position: relative;
+  width: 30px;
+  margin: 1px auto 0;
+}
+.office-actor-neck {
+  width: 6px;
+  height: 4px;
+  margin: -2px auto 0;
+  border-radius: 3px;
+  background: #f2c7a5;
+}
+.office-actor-torso {
+  width: 18px;
   height: 14px;
-  border-radius: 6px;
-  margin: 2px auto 0;
-  background: color-mix(in srgb, var(--job-color, var(--accent)) 68%, #1f2937);
+  margin: 1px auto 0;
+  border-radius: 8px 8px 6px 6px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--job-color, var(--accent)) 88%, #fff), color-mix(in srgb, var(--job-color, var(--accent)) 60%, #0b1120));
+}
+.office-actor-arms {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 28px;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 3px;
+}
+.office-actor-arm {
+  width: 4px;
+  height: 10px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--job-color, var(--accent)) 58%, #10172a);
+  transform-origin: top center;
+  animation: officeArmSwing 0.42s ease-in-out infinite alternate;
+}
+.office-actor-arm.right {
+  animation-delay: 0.18s;
+}
+.office-actor-hips {
+  width: 15px;
+  height: 4px;
+  margin: 1px auto 0;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--job-color, var(--accent)) 50%, #0c1321);
 }
 .office-actor-legs {
   display: flex;
   justify-content: center;
-  gap: 2px;
+  gap: 4px;
   margin-top: 1px;
 }
-.office-actor-legs span {
-  width: 3px;
-  height: 7px;
+.office-actor-leg {
+  width: 5px;
+  height: 11px;
   border-radius: 3px;
-  background: color-mix(in srgb, var(--job-color, var(--accent)) 50%, #0b1020);
-  animation: officeStride 0.34s ease-in-out infinite alternate;
+  background: color-mix(in srgb, var(--job-color, var(--accent)) 46%, #08101f);
+  transform-origin: top center;
+  animation: officeStride 0.36s ease-in-out infinite alternate;
 }
-.office-actor-legs span:last-child { animation-delay: 0.16s; }
+.office-actor-leg.right { animation-delay: 0.18s; }
+.office-actor.state-break .office-actor-arm {
+  animation-duration: 0.75s;
+  transform: rotate(20deg);
+}
+.office-actor.state-working .office-actor-arm.left { transform: rotate(8deg); }
+.office-actor.state-working .office-actor-arm.right { transform: rotate(-8deg); }
 .office-actor-name {
   margin-top: 3px;
   font-size: 10px;
@@ -1288,6 +1346,10 @@ a { color: var(--accent); text-decoration: none; }
 @keyframes officeStride {
   from { transform: translateY(-1px); }
   to { transform: translateY(1px); }
+}
+@keyframes officeArmSwing {
+  from { transform: rotate(-12deg); }
+  to { transform: rotate(12deg); }
 }
 @keyframes officeBob {
   0%, 100% { transform: translateY(0); }
@@ -8891,11 +8953,30 @@ function officeRand(seed) {
   return n - Math.floor(n);
 }
 
+function officeNormalizeHeadUrl(rawUrl, seedFallback) {
+  try {
+    const url = new URL(rawUrl || 'https://api.dicebear.com/9.x/adventurer/svg');
+    if (!url.hostname.includes('dicebear.com')) {
+      throw new Error('not-dicebear');
+    }
+    const q = url.searchParams;
+    if (!q.get('seed') && seedFallback) q.set('seed', seedFallback);
+    // Force transparent canvas so only the character head is visible in our mask.
+    q.set('backgroundColor', 'transparent');
+    q.set('backgroundType', 'solid');
+    q.set('radius', '0');
+    return `${url.origin}${url.pathname}?${q.toString()}`;
+  } catch {
+    const seed = encodeURIComponent(seedFallback || 'member');
+    return `https://api.dicebear.com/9.x/adventurer/svg?seed=${seed}&backgroundColor=transparent&backgroundType=solid&radius=0`;
+  }
+}
+
 function officeHeadUrl(member) {
   const src = String(member?.avatarUrl || '');
-  if (src.includes('dicebear.com')) return src;
-  const seed = encodeURIComponent(member?.userName || member?.userId || 'member');
-  return `https://api.dicebear.com/9.x/adventurer/svg?seed=${seed}`;
+  const seed = String(member?.userName || member?.userId || 'member');
+  if (src.includes('dicebear.com')) return officeNormalizeHeadUrl(src, seed);
+  return officeNormalizeHeadUrl(`https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(seed)}`, seed);
 }
 
 function officeRoleToJob(role, isOwner) {
@@ -9113,9 +9194,15 @@ function officeSyncActors(snapshots, deskCount) {
       node.dataset.userId = s.userId;
       node.innerHTML = `
         <div class="office-actor-bob">
-          <div class="office-actor-head"><img alt="" loading="lazy"></div>
-          <div class="office-actor-body"></div>
-          <div class="office-actor-legs"><span></span><span></span></div>
+          <div class="office-actor-shadow"></div>
+          <div class="office-actor-figure">
+            <div class="office-actor-head"><img alt="" loading="lazy"></div>
+            <div class="office-actor-neck"></div>
+            <div class="office-actor-torso"></div>
+            <div class="office-actor-arms"><span class="office-actor-arm left"></span><span class="office-actor-arm right"></span></div>
+            <div class="office-actor-hips"></div>
+            <div class="office-actor-legs"><span class="office-actor-leg left"></span><span class="office-actor-leg right"></span></div>
+          </div>
         </div>
         <div class="office-actor-name"></div>
         <div class="office-actor-job"></div>
