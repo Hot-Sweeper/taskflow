@@ -1083,6 +1083,7 @@ a { color: var(--accent); text-decoration: none; }
 }
 .office-world {
   position: relative;
+  width: 100%;
   min-height: 620px;
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -1091,15 +1092,18 @@ a { color: var(--accent); text-decoration: none; }
     radial-gradient(80% 120% at 50% -12%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 60%),
     linear-gradient(160deg, color-mix(in srgb, var(--bg-secondary) 86%, #0b111f), color-mix(in srgb, var(--bg) 86%, #070b14));
 }
-.office-tilemap-canvas {
+.office-tilemap-svg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
   z-index: 0;
   pointer-events: none;
+}
+.office-tilemap-svg svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 .office-world.has-tilemap .office-texture,
 .office-world.has-tilemap .office-zone,
@@ -1107,6 +1111,8 @@ a { color: var(--accent); text-decoration: none; }
   display: none;
 }
 .office-world.has-tilemap {
+  min-height: 0;
+  aspect-ratio: var(--office-map-ratio, 16 / 9);
   background: #1a1a2e;
 }
 .office-texture {
@@ -1191,7 +1197,8 @@ a { color: var(--accent); text-decoration: none; }
   left: 0; top: 0;
   will-change: transform;
   transition: transform 2s ease-in-out;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   text-align: center;
 }
 .office-actor-bob {
@@ -1282,12 +1289,184 @@ a { color: var(--accent); text-decoration: none; }
 .office-actor:not(.is-walking) .body-arm-group-r { transform: rotate(0deg); animation: none; }
 .office-actor:not(.is-walking) .body-leg-group-l,
 .office-actor:not(.is-walking) .body-leg-group-r { transform: rotate(0deg); animation: none; }
-/* working: arms resting */
-.office-actor.state-working .body-arm-group-l { transform-origin: 7px 10px; transform: rotate(5deg); }
-.office-actor.state-working .body-arm-group-r { transform-origin: 29px 10px; transform: rotate(-5deg); }
+/* working: seated typing pose — arms forward, legs bent */
+.office-actor.state-working:not(.is-walking) .body-arm-group-l {
+  transform-origin: 7px 10px;
+  animation: officeTypingL 0.6s ease-in-out infinite alternate;
+}
+.office-actor.state-working:not(.is-walking) .body-arm-group-r {
+  transform-origin: 29px 10px;
+  animation: officeTypingR 0.6s ease-in-out infinite alternate-reverse;
+}
+.office-actor.state-working:not(.is-walking) .body-leg-group-l {
+  transform-origin: 14px 26px;
+  transform: rotate(-30deg) translateY(1px);
+}
+.office-actor.state-working:not(.is-walking) .body-leg-group-r {
+  transform-origin: 22px 26px;
+  transform: rotate(-30deg) translateY(1px);
+}
+/* break: coffee sipping pose */
+.office-actor.state-break:not(.is-walking) .body-arm-group-r {
+  transform-origin: 29px 10px;
+  transform: rotate(-35deg);
+  animation: officeSip 4s ease-in-out infinite;
+}
 .office-actor.state-offline .office-actor-body { opacity: 0.5; }
+.office-actor.state-offline { filter: grayscale(0.4) opacity(0.55); cursor: default; }
 .office-actor-name { display: none; }
 .office-actor-job { display: none; }
+
+/* ═══ ACTOR TOOLTIP ═══ */
+.office-actor-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 6px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.28);
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 20;
+}
+.office-actor-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--border);
+}
+.office-actor:hover .office-actor-tooltip,
+.office-actor:focus .office-actor-tooltip {
+  opacity: 1;
+}
+.office-actor-tooltip-name {
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.office-actor-tooltip-task {
+  color: var(--accent);
+  font-size: 11px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.office-actor-tooltip-status {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+/* ═══ DESK SCENE (visible when working) ═══ */
+.office-actor-desk-scene {
+  position: relative;
+  width: 52px;
+  margin: -8px auto 0;
+  height: 20px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 0;
+}
+.office-actor.state-working:not(.is-walking) .office-actor-desk-scene { opacity: 1; }
+.office-actor-monitor {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 18px;
+  border-radius: 3px;
+  background: #1a1a2e;
+  border: 2px solid #4a4a5a;
+  box-shadow: 0 0 6px rgba(100,140,255,0.25);
+}
+.office-actor-monitor::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 1px;
+  background: linear-gradient(135deg, #2a4a7a 0%, #1a3058 50%, #2a4a7a 100%);
+  animation: officeScreenGlow 3s ease-in-out infinite;
+}
+.office-actor-monitor::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 4px;
+  background: #4a4a5a;
+  border-radius: 0 0 2px 2px;
+}
+.office-actor-desk-surface {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(180deg, #8B7355 0%, #6B5740 100%);
+  border: 1px solid rgba(0,0,0,0.15);
+  border-bottom: none;
+}
+
+/* ═══ CHAT BUBBLE ═══ */
+.office-actor-chat {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  padding: 3px 7px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px 10px 10px 2px;
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 25;
+  pointer-events: none;
+}
+.office-actor.is-chatting .office-actor-chat {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+  animation: officeChatPop 0.35s ease-out;
+}
+@keyframes officeChatPop {
+  0% { transform: translateX(-50%) scale(0); opacity: 0; }
+  70% { transform: translateX(-50%) scale(1.15); }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+/* ═══ TYPING & SIP KEYFRAMES ═══ */
+@keyframes officeTypingL {
+  from { transform: rotate(20deg); }
+  to { transform: rotate(28deg); }
+}
+@keyframes officeTypingR {
+  from { transform: rotate(-28deg); }
+  to { transform: rotate(-20deg); }
+}
+@keyframes officeSip {
+  0%, 80%, 100% { transform: rotate(-35deg); }
+  85%, 95% { transform: rotate(-50deg); }
+}
+@keyframes officeScreenGlow {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
 .office-legend {
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -9061,6 +9240,8 @@ function officeBuildSnapshots() {
     const presence = byPresence.get(member.userId) || {};
     const job = officeRoleToJob(member.role, !!member.isOwner);
     const state = officePresenceState(presence);
+    const taskId = presence.currentTask || null;
+    const task = taskId ? (tasks || []).find(t => t.id === taskId) : null;
     return {
       userId: member.userId,
       userName: member.userName || 'Unknown',
@@ -9073,7 +9254,8 @@ function officeBuildSnapshots() {
       state,
       stateLabel: officeStateLabel(state),
       zone: officeResolveZone({ job, state }),
-      workDuration: presence.workDuration || 0
+      workDuration: presence.workDuration || 0,
+      currentTaskName: task ? task.title : null
     };
   });
 }
@@ -9118,6 +9300,12 @@ function officeComputeStats(snapshots) {
 function officeBuildWorldHtml(deskCount, snapshots) {
   const stats = officeComputeStats(snapshots);
   const hasTilemap = !!_officeTilemapData;
+  const tilemapMarkup = hasTilemap && typeof OfficeTilemap !== 'undefined'
+    ? OfficeTilemap.renderSvg(_officeTilemapData)
+    : '';
+  const worldStyle = hasTilemap
+    ? ` style="--office-map-ratio:${_officeTilemapData.mapW} / ${_officeTilemapData.mapH}"`
+    : '';
   return `
     <div class="office-toolbar">
       <div class="office-chip"><div class="office-chip-label" data-i18n="office.working">Working</div><div class="office-chip-value" id="officeCountWorking">${stats.working}</div></div>
@@ -9126,8 +9314,8 @@ function officeBuildWorldHtml(deskCount, snapshots) {
       <div class="office-chip"><div class="office-chip-label" data-i18n="office.remote">Remote/Field</div><div class="office-chip-value" id="officeCountRemote">${stats.remote}</div></div>
     </div>
 
-    <div class="office-world${hasTilemap ? ' has-tilemap' : ''}">
-      ${hasTilemap ? '<canvas id="officeTilemapCanvas" class="office-tilemap-canvas"></canvas>' : ''}
+    <div class="office-world${hasTilemap ? ' has-tilemap' : ''}"${worldStyle}>
+      ${tilemapMarkup}
       <div class="office-texture"></div>
       <div class="office-zone manager"><div class="office-zone-label" data-i18n="office.map.manager">Manager Office</div></div>
       <div class="office-zone desks"><div class="office-zone-label" data-i18n="office.map.desks">Work Desks</div></div>
@@ -9235,11 +9423,72 @@ function officeRenderLegend(snapshots) {
   grid.innerHTML = items;
 }
 
+// ── Conversation simulation ──
+let officeConversations = []; // [{user1, user2, startTick}]
+
+function officeTickConversations(snapshots, targets) {
+  // Remove expired conversations (last ~6 ticks ≈ 13s)
+  officeConversations = officeConversations.filter(c =>
+    officeSimTick - c.startTick < 6
+  );
+
+  // Every ~5 ticks, maybe start a new conversation (max 2 concurrent)
+  if (officeSimTick % 5 === 0 && officeConversations.length < 2) {
+    const available = snapshots.filter(s =>
+      s.zone === 'desks' && (s.state === 'working' || s.state === 'online') &&
+      !officeConversations.some(c => c.user1 === s.userId || c.user2 === s.userId)
+    );
+    if (available.length >= 2) {
+      const i = Math.floor(officeRand(officeSimTick * 37) * available.length);
+      let j = Math.floor(officeRand(officeSimTick * 73) * (available.length - 1));
+      if (j >= i) j++;
+      officeConversations.push({
+        user1: available[i].userId,
+        user2: available[j].userId,
+        startTick: officeSimTick
+      });
+    }
+  }
+
+  // Override targets: conversing users walk toward each other's midpoint
+  for (const c of officeConversations) {
+    const t1 = targets.get(c.user1);
+    const t2 = targets.get(c.user2);
+    if (t1 && t2) {
+      const midX = (t1.x + t2.x) / 2;
+      const midY = (t1.y + t2.y) / 2;
+      targets.set(c.user1, { x: midX - 1.8, y: midY });
+      targets.set(c.user2, { x: midX + 1.8, y: midY });
+    }
+  }
+
+  return officeConversations;
+}
+
 function officeSyncActors(snapshots, deskCount) {
   const layer = document.getElementById('officeActorLayer');
   if (!layer) return;
 
   const targets = officeAssignTargets(snapshots, deskCount);
+
+  // ── Conversation system ──
+  const convos = officeTickConversations(snapshots, targets);
+  const chattingSet = new Set();
+  const chatEmoji = new Map();
+  for (const c of convos) {
+    chattingSet.add(c.user1);
+    chattingSet.add(c.user2);
+    const EMOJIS = ['💬','🤔','👍','📋','✨','🔧','📊','💡','🎯','☕'];
+    const ei = (c.chatIdx + officeHashInt(c.user1)) % EMOJIS.length;
+    const ej = (c.chatIdx + officeHashInt(c.user2) + 3) % EMOJIS.length;
+    // Alternate who "speaks" each tick
+    if (c.chatIdx % 2 === 0) {
+      chatEmoji.set(c.user1, EMOJIS[ei]);
+    } else {
+      chatEmoji.set(c.user2, EMOJIS[ej]);
+    }
+  }
+
   const seen = new Set();
 
   for (const s of snapshots) {
@@ -9250,6 +9499,12 @@ function officeSyncActors(snapshots, deskCount) {
       node.className = 'office-actor';
       node.dataset.userId = s.userId;
       node.innerHTML = `
+        <div class="office-actor-tooltip">
+          <div class="office-actor-tooltip-name"></div>
+          <div class="office-actor-tooltip-task"></div>
+          <div class="office-actor-tooltip-status"></div>
+        </div>
+        <div class="office-actor-chat"></div>
         <div class="office-actor-bob">
           <div class="office-actor-head"><img alt="" loading="lazy"></div>
           <svg class="office-actor-body" viewBox="0 0 36 44" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -9277,6 +9532,10 @@ function officeSyncActors(snapshots, deskCount) {
             <ellipse class="body-neck" cx="18" cy="4" rx="3.5" ry="4"/>
             <path class="body-shirt" d="M7,7 Q7,4 18,4 Q29,4 29,7 L30,22 Q30,27 18,27 Q6,27 6,22 Z"/>
           </svg>
+          <div class="office-actor-desk-scene">
+            <div class="office-actor-monitor"></div>
+            <div class="office-actor-desk-surface"></div>
+          </div>
           <div class="office-actor-shadow"></div>
         </div>
       `;
@@ -9293,18 +9552,19 @@ function officeSyncActors(snapshots, deskCount) {
 
     // Detect movement for walk vs idle
     const isWalking = node._prevX !== null && (Math.abs(lx - node._prevX) > 1 || Math.abs(ly - node._prevY) > 1);
-    // Only update facing direction while actually walking
     if (isWalking && node._prevX !== null) {
       node._facing = (lx < node._prevX) ? 'left' : 'right';
     }
-    if (!node._facing) node._facing = 'right'; // default face right
+    if (!node._facing) node._facing = 'right';
     node._prevX = lx;
     node._prevY = ly;
 
     // Build class list
+    const isChatting = chattingSet.has(s.userId) && chatEmoji.has(s.userId);
     let cls = `office-actor state-${s.state} job-${s.job}`;
     if (isWalking) cls += ' is-walking';
     if (node._facing === 'left') cls += ' face-left';
+    if (isChatting) cls += ' is-chatting';
     node.className = cls;
 
     node.style.transform = `translate(${tx}px, ${ty}px)`;
@@ -9314,6 +9574,30 @@ function officeSyncActors(snapshots, deskCount) {
 
     const img = node.querySelector('.office-actor-head img');
     if (img && img.src !== s.avatarHeadUrl) img.src = s.avatarHeadUrl;
+
+    // Update tooltip
+    const ttName = node.querySelector('.office-actor-tooltip-name');
+    const ttTask = node.querySelector('.office-actor-tooltip-task');
+    const ttStatus = node.querySelector('.office-actor-tooltip-status');
+    if (ttName) ttName.textContent = s.userName;
+    if (ttTask) {
+      if (s.currentTaskName) {
+        ttTask.textContent = '📋 ' + s.currentTaskName;
+        ttTask.style.display = '';
+      } else {
+        ttTask.style.display = 'none';
+      }
+    }
+    if (ttStatus) {
+      const dur = s.workDuration > 0 ? ' · ' + formatDuration(s.workDuration) : '';
+      ttStatus.textContent = s.stateLabel + dur;
+    }
+
+    // Update chat bubble
+    const chatEl = node.querySelector('.office-actor-chat');
+    if (chatEl) {
+      chatEl.textContent = chatEmoji.get(s.userId) || '';
+    }
   }
 
   for (const child of Array.from(layer.children)) {
@@ -9384,12 +9668,6 @@ async function renderOfficeTab(forceFresh = false) {
       wrap.dataset.desks = String(deskCount);
       wrap.dataset.tmkey = _officeTilemapKey;
       I18n.translateDOM();
-    }
-
-    // Render tilemap to canvas
-    const tmCanvas = document.getElementById('officeTilemapCanvas');
-    if (tmCanvas && _officeTilemapData) {
-      OfficeTilemap.render(tmCanvas, _officeTilemapData);
     }
 
     officeRenderLegend(snapshots);

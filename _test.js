@@ -1,0 +1,16 @@
+﻿const p=new Proxy({},{get:()=>p});
+global.document={createElement:()=>({getContext:()=>p})};
+global.window={};
+require('./public/shared/tilemap.js');
+const OfficeTilemap = global.window.OfficeTilemap;
+const d=OfficeTilemap.generate(2,5);
+const svg=OfficeTilemap.renderSvg(d);
+console.log('len:'+svg.length);
+console.log('has hWall rects:'+(svg.includes('fill="url(#') && svg.match(/fill="url\(#office/g)?.length > 5));
+console.log('wallT 0.15:'+svg.includes('0.15'));
+console.log('outerWT:'+svg.includes('stroke-width="0.18"'));
+console.log('doors wallY:'+svg.includes('lobbyWallY'));
+const opens=svg.split('WoodDoor').length-1;
+console.log('door count:'+opens);
+console.log('balanced svg:'+(svg.split('<svg').length===svg.split('</svg>').length));
+console.log('balanced div:'+(svg.split('<div').length===svg.split('</div>').length));
