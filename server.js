@@ -4343,21 +4343,35 @@ app.post('/api/admin/timelog', adminAuth, async (req, res) => {
 // Admin: bulk import timelog entries
 app.post('/api/admin/timelog/import', adminAuth, async (req, res) => {
   try {
-    const { entries } = req.body;
+    const { entries, targetUserId } = req.body;
     if (!Array.isArray(entries) || entries.length === 0) {
       return res.status(400).json({ error: 'entries array required' });
     }
     const users = await storage.read('users.json');
     const timelog = await storage.read('timelog.json');
+
+    // If a target user is specified, resolve them once and assign all entries to them
+    let targetUser = null;
+    if (targetUserId) {
+      targetUser = users.find(u => u.id === targetUserId);
+      if (!targetUser) return res.status(400).json({ error: 'Target user not found' });
+    }
+
     // Build a dedup set: userId+clockIn to prevent double-importing the same file
     const existing = new Set(timelog.map(t => `${t.userId}|${t.clockIn}`));
     const added = [];
     for (const e of entries) {
-      if (!e.userId || !e.date || !e.clockIn || !e.clockOut) continue;
-      const user = users.find(u => u.id === e.userId);
-      if (!user) continue;
+      if (!e.date || !e.clockIn || !e.clockOut) continue;
+      // Resolve user: targetUser takes priority, else look up by e.userId from file
+      let user = targetUser;
+      if (!user) {
+        if (!e.userId) continue;
+        user = users.find(u => u.id === e.userId);
+        if (!user) continue;
+      }
+      const userId = user.id;
       // Skip exact duplicates (same user + same clock-in time)
-      const key = `${e.userId}|${new Date(e.clockIn).toISOString()}`;
+      const key = `${userId}|${new Date(e.clockIn).toISOString()}`;
       if (existing.has(key)) continue;
       const ciDate = new Date(e.clockIn);
       const coDate = new Date(e.clockOut);
@@ -4365,7 +4379,7 @@ app.post('/api/admin/timelog/import', adminAuth, async (req, res) => {
       const totalWorked = Math.round((coDate - ciDate) / 60000);
       const entry = {
         id: crypto.randomUUID(),
-        userId: e.userId,
+        userId,
         userName: user.name,
         date: e.date,
         clockIn: ciDate.toISOString(),

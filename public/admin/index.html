@@ -383,11 +383,18 @@ tr:hover td { background: var(--bg-hover); }
   <div class="modal">
     <h3>Import Timelog Entries</h3>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">
-      Upload a JSON file with an array of entries. Each entry needs: <code>userId</code>, <code>date</code> (YYYY-MM-DD), <code>clockIn</code> (ISO), <code>clockOut</code> (ISO), and optional <code>location</code>.
+      Upload a JSON file with an array of entries. Each entry needs: <code>date</code> (YYYY-MM-DD), <code>clockIn</code> (ISO), <code>clockOut</code> (ISO), and optional <code>location</code>.
     </p>
     <div class="form-group">
       <label>JSON File</label>
       <input type="file" id="importTimeFile" accept=".json">
+    </div>
+    <div class="form-group">
+      <label>Assign all entries to user</label>
+      <select id="importTimeUser">
+        <option value="">— Use userId from file —</option>
+      </select>
+      <small style="color:var(--text-secondary)">Select a user to override the userId in the file (required if the file uses old-format IDs).</small>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('importTimeModal')">Cancel</button>
@@ -651,8 +658,20 @@ async function submitAddTime() {
   } catch (err) { toast(err.message, 'error'); }
 }
 
-function openImportTimelog() {
+async function openImportTimelog() {
   document.getElementById('importTimeFile').value = '';
+  const sel = document.getElementById('importTimeUser');
+  sel.innerHTML = '<option value="">— Use userId from file —</option>';
+  try {
+    const res = await adminFetch('/api/admin/users');
+    const users = await res.json();
+    users.sort((a, b) => a.name.localeCompare(b.name)).forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.id;
+      opt.textContent = `${u.name} (${u.role})`;
+      sel.appendChild(opt);
+    });
+  } catch (e) { /* ignore */ }
   document.getElementById('importTimeModal').classList.add('open');
 }
 
@@ -663,12 +682,14 @@ async function submitImportTimelog() {
     const text = await fileInput.files[0].text();
     const entries = JSON.parse(text);
     if (!Array.isArray(entries)) throw new Error('File must contain a JSON array');
+    const targetUserId = document.getElementById('importTimeUser').value || null;
     const res = await adminFetch('/api/admin/timelog/import', {
       method: 'POST',
-      body: JSON.stringify({ entries }),
+      body: JSON.stringify({ entries, targetUserId }),
       headers: { 'Content-Type': 'application/json' }
     });
     const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Import failed');
     closeModal('importTimeModal');
     toast(`Imported ${data.imported} entries`, 'success');
     loadTimelog();
