@@ -1,0 +1,11 @@
+[Startup] DATA_DIR = C:\Users\BlackPearl\TO DO\data
+[Startup] DATA_DIR env = (not set, using default ./data)
+[Startup] users.json: 2342 bytes
+[Startup] tasks.json: 6489 bytes
+[Startup] teams.json: 2 bytes
+[Startup] sessions.json: 986 bytes
+TaskFlow running on port 3000
+  Data:   C:\Users\BlackPearl\TO DO\data
+  App:    http://localhost:3000/app
+  Admin:  http://localhost:3000/admin
+  Sessions loaded: 8

@@ -1924,7 +1924,9 @@ a { color: var(--accent); text-decoration: none; }
 .card-tag.revision-tag { background: rgba(245,158,11,0.2); color: var(--amber); display: inline-flex; align-items: center; gap: 4px; }
 .card-tag.stale-tag { background: rgba(239,68,68,0.15); color: var(--red); display: inline-flex; align-items: center; gap: 4px; animation: stalePulse 2s ease-in-out infinite; }
 @keyframes stalePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
-.task-card.is-stale { border-left: 3px solid var(--red); }
+.card-tag.paused-tag { background: rgba(234,179,8,0.15); color: var(--amber); display: inline-flex; align-items: center; gap: 4px; }
+.task-card.is-paused { opacity: 0.6; transition: opacity 150ms; }
+.task-card.is-paused:hover { opacity: 0.85; }
 
 /* ═══ BULK SELECT ═══ */
 .bulk-select-mode .task-card,
@@ -7000,6 +7002,10 @@ function createTaskCard(task) {
     bottomHTML += `<span class="card-tag stale-tag">${icon('clock', 12)} ${I18n.t('task.stale')}</span>`;
     card.classList.add('is-stale');
   }
+  if (task.isPaused) {
+    bottomHTML += `<span class="card-tag paused-tag">${icon('pause', 12)} ${I18n.t('task.paused')}</span>`;
+    card.classList.add('is-paused');
+  }
   if (deadline) {
     bottomHTML += `<span class="card-deadline ${deadline.cls}">${deadline.text}</span>`;
   }
@@ -8132,6 +8138,7 @@ function renderDetail(task) {
       </span>
       <span class="meta-chip" title="${esc(I18n.t('task.progress'))}">${progressValue}%</span>
       ${task.isStale ? `<span class="meta-chip" style="color:var(--red);font-weight:600;display:inline-flex;align-items:center;gap:3px" title="${I18n.t('task.staleTooltip')}">${icon('clock', 12)} ${I18n.t('task.stale')}</span>` : ''}
+      <span class="meta-chip" style="cursor:pointer;user-select:none;${task.isPaused ? 'color:var(--amber);background:rgba(234,179,8,0.12);' : ''}" onclick="toggleTaskPause()" title="${task.isPaused ? I18n.t('task.unpause') : I18n.t('task.pause')}">${icon(task.isPaused ? 'play' : 'pause', 12)} ${task.isPaused ? I18n.t('task.paused') : I18n.t('task.pause')}</span>
       <span class="meta-chip meta-people-chip" title="${esc(I18n.t('task.operators'))}">
         <span class="mini-heads">
           ${operatorMembers.length
@@ -8448,6 +8455,24 @@ async function setTaskStatus(status) {
     clearTimeout(_selfSaveTimer);
     _selfSaveTimer = setTimeout(() => { _selfSaveTaskId = null; }, 2000);
     const updated = await API.updateTask(currentFlow.id, currentTaskId, { status });
+    const localTask = tasks.find(t => t.id === currentTaskId);
+    if (localTask) Object.assign(localTask, updated);
+    renderDetail(updated);
+    renderTasks();
+  } catch (err) {
+    toast(err.message);
+  }
+}
+
+async function toggleTaskPause() {
+  if (!currentTaskId || !currentFlow) return;
+  const task = tasks.find(t => t.id === currentTaskId);
+  if (!task) return;
+  try {
+    _selfSaveTaskId = currentTaskId;
+    clearTimeout(_selfSaveTimer);
+    _selfSaveTimer = setTimeout(() => { _selfSaveTaskId = null; }, 2000);
+    const updated = await API.updateTask(currentFlow.id, currentTaskId, { isPaused: !task.isPaused });
     const localTask = tasks.find(t => t.id === currentTaskId);
     if (localTask) Object.assign(localTask, updated);
     renderDetail(updated);

@@ -2073,7 +2073,7 @@ async function autoArchiveCompletedTasksForFlow(flowId) {
 
   await storage.write('tasks.json', tasks);
   for (const task of archivedNow) {
-    await broadcastToFlow(flowId, { type: 'task:updated', payload: task });
+    await broadcastToFlow(flowId, { type: 'task:updated', payload: withStale(task) });
   }
   return { changed: true, archivedNow };
 }
@@ -2111,6 +2111,11 @@ function enrichTasksWithStale(tasks, thresholds) {
     const { isStale, staleSince } = computeStaleStatus(t, thresholds);
     return { ...t, isStale, staleSince };
   });
+}
+
+function withStale(task) {
+  const { isStale, staleSince } = computeStaleStatus(task, DEFAULT_STALE_THRESHOLDS);
+  return { ...task, isStale, staleSince };
 }
 
 // Get tasks for a flow
@@ -2261,7 +2266,7 @@ app.put('/api/flows/:flowId/tasks/:id', authMiddleware, flowMemberMiddleware, as
     const oldStatus = tasks[idx].status;
     const oldAssignees = getTaskAssigneeIds(tasks[idx]);
     const allowed = ['title', 'description', 'priority', 'status',
-      'category', 'assignedTo', 'deadline', 'subFlowId', 'recurrenceRule', 'orderIndex'];
+      'category', 'assignedTo', 'deadline', 'subFlowId', 'recurrenceRule', 'orderIndex', 'isPaused'];
 
     if (req.body.orderIndex !== undefined && req.body.orderIndex !== null) {
       const parsedOrder = Number(req.body.orderIndex);
@@ -2377,7 +2382,7 @@ app.put('/api/flows/:flowId/tasks/:id', authMiddleware, flowMemberMiddleware, as
     }
 
     await storage.write('tasks.json', tasks);
-    await broadcastToFlow(req.params.flowId, { type: 'task:updated', payload: tasks[idx] });
+    await broadcastToFlow(req.params.flowId, { type: 'task:updated', payload: withStale(tasks[idx]) });
 
     // Notify on status change
     const updTask = tasks[idx];
@@ -2478,7 +2483,7 @@ app.post('/api/flows/:flowId/tasks/bulk', authMiddleware, flowMemberMiddleware, 
 
     // Broadcast each updated task
     for (const t of updated) {
-      broadcastToFlow(req.params.flowId, { type: 'task:updated', payload: t }).catch(() => {});
+      broadcastToFlow(req.params.flowId, { type: 'task:updated', payload: withStale(t) }).catch(() => {});
     }
 
     res.json({ updated });
@@ -2519,7 +2524,7 @@ app.post('/api/flows/:flowId/tasks/:id/unarchive', authMiddleware, flowMemberMid
     }
 
     await storage.write('tasks.json', tasks);
-    await broadcastToFlow(req.params.flowId, { type: 'task:updated', payload: tasks[idx] });
+    await broadcastToFlow(req.params.flowId, { type: 'task:updated', payload: withStale(tasks[idx]) });
     res.json(tasks[idx]);
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
@@ -2642,7 +2647,7 @@ app.post('/api/flows/:flowId/tasks/:id/files', authMiddleware, flowMemberMiddlew
     tasks[idx].updatedAt = new Date().toISOString();
 
     await storage.write('tasks.json', tasks);
-    await broadcastToFlow(req.params.flowId, { type: 'task:updated', payload: tasks[idx] });
+    await broadcastToFlow(req.params.flowId, { type: 'task:updated', payload: withStale(tasks[idx]) });
     res.json(newFiles);
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
@@ -2668,7 +2673,7 @@ app.delete('/api/flows/:flowId/tasks/:taskId/files/:storedName', authMiddleware,
     const filePath = path.join(storage.getDataDir(), 'uploads', req.params.taskId, path.basename(removed.storedName));
     fs.unlink(filePath, () => {}); // best-effort delete
 
-    await broadcastToFlow(req.params.flowId, { type: 'task:updated', payload: tasks[idx] });
+    await broadcastToFlow(req.params.flowId, { type: 'task:updated', payload: withStale(tasks[idx]) });
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
