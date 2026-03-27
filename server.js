@@ -10,7 +10,6 @@ const bcrypt = require('bcryptjs');
 const PDFDocument = require('pdfkit');
 const archiver = require('archiver');
 const storage = require('./storage');
-const nodemailer = require('nodemailer');
 
 const app = express();
 const server = http.createServer(app);
@@ -19,31 +18,6 @@ const wss = new WebSocketServer({ server });
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE_MB || '50', 10) * 1024 * 1024;
-const SMTP_HOST = process.env.SMTP_HOST || '';
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
-const SMTP_USER = process.env.SMTP_USER || '';
-const SMTP_PASS = process.env.SMTP_PASS || '';
-const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER;
-
-// Lazy-initialized nodemailer transporter
-let _transporter = null;
-function getTransporter() {
-  if (!SMTP_HOST) return null;
-  if (!_transporter) {
-    _transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: SMTP_PORT === 465,
-      auth: { user: SMTP_USER, pass: SMTP_PASS }
-    });
-  }
-  return _transporter;
-}
-async function sendEmail(to, subject, html) {
-  const transporter = getTransporter();
-  if (!transporter) throw new Error('Email not configured (SMTP_HOST missing)');
-  await transporter.sendMail({ from: SMTP_FROM, to, subject, html });
-}
 
 // Health check endpoint for Railway
 app.get('/health', (req, res) => {
@@ -1180,111 +1154,6 @@ app.get('/api/flows/:flowId/availability', authMiddleware, flowMemberMiddleware,
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Owner adds an availability block for a specific member
-app.post('/api/flows/:flowId/members/:userId/availability', authMiddleware, flowOwnerMiddleware, async (req, res) => {
-  try {
-    const { from, to, reason, type } = req.body;
-    if (!from || !to) return res.status(400).json({ error: 'From and to dates are required' });
-    if (new Date(from) > new Date(to)) return res.status(400).json({ error: 'From must be before to' });
-
-    // Verify target user is a member of this flow
-    const memberships = await storage.read('memberships.json');
-    const targetMembership = memberships.find(m => m.flowId === req.params.flowId && m.userId === req.params.userId);
-    if (!targetMembership) return res.status(403).json({ error: 'User is not a member of this flow' });
-
-    const validTypes = ['vacation', 'training', 'personal', 'other'];
-    const blockType = validTypes.includes(type) ? type : 'other';
-
-    const block = {
-      id: crypto.randomUUID(),
-      from: from.slice(0, 10),
-      to: to.slice(0, 10),
-      reason: (reason || '').slice(0, 200),
-      type: blockType,
-      createdBy: req.user.userId,
-      createdAt: new Date().toISOString()
-    };
-
-    const users = await storage.read('users.json');
-    const idx = users.findIndex(u => u.id === req.params.userId);
-    if (idx === -1) return res.status(404).json({ error: 'User not found' });
-
-    if (!users[idx].availabilityBlocks) users[idx].availabilityBlocks = [];
-    users[idx].availabilityBlocks.push(block);
-    await storage.write('users.json', users);
-
-    res.status(201).json({
-      ...block,
-      targetName: users[idx].name,
-      targetEmail: users[idx].email || null
-    });
-  } catch (err) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Owner sends booking confirmation email to a flow member
-app.post('/api/flows/:flowId/members/:userId/booking-confirmation', authMiddleware, flowOwnerMiddleware, async (req, res) => {
-  try {
-    const { block } = req.body;
-    if (!block || !block.from || !block.to) {
-      return res.status(400).json({ error: 'Block data (from, to) is required' });
-    }
-
-    // Verify target user is a member of this flow
-    const memberships = await storage.read('memberships.json');
-    const targetMembership = memberships.find(m => m.flowId === req.params.flowId && m.userId === req.params.userId);
-    if (!targetMembership) return res.status(403).json({ error: 'User is not a member of this flow' });
-
-    const users = await storage.read('users.json');
-    const targetUser = users.find(u => u.id === req.params.userId);
-    if (!targetUser) return res.status(404).json({ error: 'User not found' });
-    if (!targetUser.email) return res.status(400).json({ error: 'User has no email address stored' });
-
-    const fmt = d => new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const typeLabels = { vacation: 'Urlaub', training: 'Schulung/Training', personal: 'Persönlich', other: 'Sonstiges' };
-    const typeLabel = typeLabels[block.type] || block.type || 'Buchung';
-    const sameDay = block.from === block.to;
-    const subject = `Buchungsbestätigung: ${fmt(block.from)}${sameDay ? '' : ' – ' + fmt(block.to)}`;
-
-    const html = `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;background:#f9f9f9;border-radius:8px;">
-        <h2 style="color:#2563eb;margin-bottom:16px;">📅 Buchungsbestätigung</h2>
-        <p style="margin-bottom:8px;">Hallo <strong>${targetUser.name}</strong>,</p>
-        <p style="margin-bottom:16px;">Sie erhalten diese Bestätigung für folgende eingetragene Buchung:</p>
-        <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1);">
-          <tr style="background:#2563eb;color:#fff;">
-            <th style="padding:10px 16px;text-align:left;">Feld</th>
-            <th style="padding:10px 16px;text-align:left;">Wert</th>
-          </tr>
-          <tr>
-            <td style="padding:10px 16px;border-bottom:1px solid #e5e7eb;">Von</td>
-            <td style="padding:10px 16px;border-bottom:1px solid #e5e7eb;"><strong>${fmt(block.from)}</strong></td>
-          </tr>
-          <tr>
-            <td style="padding:10px 16px;${block.reason ? 'border-bottom:1px solid #e5e7eb;' : ''}">Bis</td>
-            <td style="padding:10px 16px;${block.reason ? 'border-bottom:1px solid #e5e7eb;' : ''}"><strong>${fmt(block.to)}</strong></td>
-          </tr>
-          <tr>
-            <td style="padding:10px 16px;${block.reason ? 'border-bottom:1px solid #e5e7eb;' : ''}">Art</td>
-            <td style="padding:10px 16px;${block.reason ? 'border-bottom:1px solid #e5e7eb;' : ''}">${typeLabel}</td>
-          </tr>
-          ${block.reason ? `<tr><td style="padding:10px 16px;">Notiz</td><td style="padding:10px 16px;">${block.reason.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td></tr>` : ''}
-        </table>
-        <p style="color:#6b7280;font-size:12px;margin-top:24px;">Diese E-Mail wurde automatisch versendet.</p>
-      </div>
-    `;
-
-    await sendEmail(targetUser.email, subject, html);
-    res.json({ success: true, sentTo: targetUser.email });
-  } catch (err) {
-    if (err.message && err.message.includes('SMTP')) {
-      return res.status(503).json({ error: err.message });
-    }
-    res.status(500).json({ error: 'Failed to send email' });
   }
 });
 
@@ -4321,7 +4190,7 @@ app.post('/api/admin/login', (req, res) => {
 app.get('/api/admin/users', adminAuth, async (req, res) => {
   try {
     const users = await storage.read('users.json');
-    res.json(users.map(u => ({ id: u.id, name: u.name, email: u.email || null, createdAt: u.createdAt })));
+    res.json(users.map(u => ({ id: u.id, name: u.name, createdAt: u.createdAt })));
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -4329,7 +4198,7 @@ app.get('/api/admin/users', adminAuth, async (req, res) => {
 
 app.post('/api/admin/users', adminAuth, async (req, res) => {
   try {
-    const { name, password, email } = req.body;
+    const { name, password } = req.body;
     if (!name || !password) {
       return res.status(400).json({ error: 'Name and password are required' });
     }
@@ -4342,12 +4211,11 @@ app.post('/api/admin/users', adminAuth, async (req, res) => {
       id: crypto.randomUUID(),
       name,
       password: hashedPassword,
-      email: email || null,
       createdAt: new Date().toISOString()
     };
     users.push(user);
     await storage.write('users.json', users);
-    res.status(201).json({ id: user.id, name: user.name, email: user.email || null, createdAt: user.createdAt });
+    res.status(201).json({ id: user.id, name: user.name, createdAt: user.createdAt });
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -4363,10 +4231,9 @@ app.put('/api/admin/users/:id', adminAuth, async (req, res) => {
     if (req.body.password) {
       users[idx].password = await bcrypt.hash(req.body.password, 10);
     }
-    if (req.body.email !== undefined) users[idx].email = req.body.email || null;
 
     await storage.write('users.json', users);
-    res.json({ id: users[idx].id, name: users[idx].name, email: users[idx].email || null });
+    res.json({ id: users[idx].id, name: users[idx].name });
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }

@@ -943,6 +943,11 @@ a { color: var(--accent); text-decoration: none; }
   font-size: 18px;
   font-weight: 800;
 }
+.stats-performance-tile .tile-sub {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
 .stats-hours-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -6209,6 +6214,38 @@ function computeReputationMetrics(taskList, viewerId, inScope, inPeriodOnly) {
   };
 }
 
+function computeProgressAggregate(taskList, viewerId, inScope) {
+  let positive = 0;
+  let negative = 0;
+  let net = 0;
+  let changeCount = 0;
+
+  for (const task of taskList || []) {
+    for (const log of task.progressLog || []) {
+      if (viewerId && log.by !== viewerId) continue;
+      const atMs = new Date(log.at || 0).getTime();
+      if (!inScope(atMs)) continue;
+
+      const from = Number(log.from);
+      const to = Number(log.to);
+      if (!Number.isFinite(from) || !Number.isFinite(to)) continue;
+
+      const delta = to - from;
+      if (delta > 0) positive += delta;
+      if (delta < 0) negative += Math.abs(delta);
+      net += delta;
+      changeCount += 1;
+    }
+  }
+
+  const totalMovement = positive + negative;
+  const efficiency = totalMovement > 0
+    ? Math.round((positive / totalMovement) * 100)
+    : null;
+
+  return { positive, negative, net, totalMovement, efficiency, changeCount };
+}
+
 function renderStatsTab() {
   const container = document.getElementById('statsWrap');
   if (!container) return;
@@ -6397,6 +6434,10 @@ function renderStatsTab() {
   const crashPlan = buildDeadlineCrashPlan(active, todayStart);
   const crashPreview = crashPlan.candidates.slice(0, 4);
   const reputation = computeReputationMetrics(all, viewerId, inScope, inPeriodOnly);
+  const progressTotals = computeProgressAggregate(all, viewerId, inScope);
+  const netProgressText = `${progressTotals.net > 0 ? '+' : ''}${progressTotals.net}%`;
+  const regressText = `${progressTotals.negative}%`;
+  const efficiencyText = Number.isFinite(progressTotals.efficiency) ? `${progressTotals.efficiency}%` : '—';
 
   // ── Work Hours metrics (own sessions only) ──
   const myTimeSessions = identity.isSelf ? allTimeSessions : [];
@@ -6568,6 +6609,19 @@ function renderStatsTab() {
             <div class="stats-performance-tile">
               <div class="tile-label" data-i18n="stats.createdInScope">Created in period</div>
               <div class="tile-value">${createdInScope}</div>
+            </div>
+            <div class="stats-performance-tile">
+              <div class="tile-label" data-i18n="stats.netProgressTotal">Total net progress</div>
+              <div class="tile-value">${netProgressText}</div>
+            </div>
+            <div class="stats-performance-tile">
+              <div class="tile-label" data-i18n="stats.regressTotal">Total regress</div>
+              <div class="tile-value">${regressText}</div>
+            </div>
+            <div class="stats-performance-tile">
+              <div class="tile-label" data-i18n="stats.progressEfficiency">Progress efficiency</div>
+              <div class="tile-value">${efficiencyText}</div>
+              <div class="tile-sub">${progressTotals.totalMovement > 0 ? `+${progressTotals.positive}% / -${progressTotals.negative}%` : '—'}</div>
             </div>
           </div>
         </article>
@@ -11562,23 +11616,11 @@ async function openBlackoutModal() {
     personal: I18n.t('blackout.personal'),
     other: I18n.t('blackout.other')
   };
-  const myMem = members.find(m => m.userId === currentUser?.id);
-  const isOwner = !!myMem?.isOwner;
-
-  // Build member dropdown for owners (excluding themselves)
-  const otherMembers = isOwner ? members.filter(m => m.userId !== currentUser?.id) : [];
-  const memberDropdown = isOwner && otherMembers.length > 0 ? `
-    <label>${I18n.t('blackout.forMember') || 'Für wen?'}</label>
-    <select id="blackoutForUser">
-      <option value="me">${I18n.t('blackout.forMyself') || 'Für mich selbst'}</option>
-      ${otherMembers.map(m => `<option value="${m.userId}">${esc(m.userName)}</option>`).join('')}
-    </select>` : '';
 
   let html = `<div class="blackout-modal-overlay" onclick="if(event.target===this)closeBlackoutModal()">
     <div class="blackout-modal">
       <h3 style="display:flex;align-items:center;gap:6px">${icon('calendar', 18)} ${I18n.t('blackout.manage')}</h3>
       <div class="blackout-form">
-        ${memberDropdown}
         <label>${I18n.t('blackout.from')}</label>
         <input type="date" id="blackoutFrom">
         <label>${I18n.t('blackout.to')}</label>
@@ -11624,80 +11666,16 @@ async function addBlackoutBlock() {
   const to = document.getElementById('blackoutTo')?.value;
   const type = document.getElementById('blackoutType')?.value;
   const reason = document.getElementById('blackoutReason')?.value;
-  const forUserId = document.getElementById('blackoutForUser')?.value || 'me';
   if (!from || !to) return toast(I18n.t('blackout.errorDates'));
   if (new Date(from) > new Date(to)) return toast(I18n.t('blackout.errorRange'));
   try {
-    let block, targetEmail = null, targetName = null;
-    if (forUserId !== 'me' && currentFlow) {
-      // Owner adds block for a member
-      const result = await API.post(
-        `/api/flows/${currentFlow.id}/members/${forUserId}/availability`,
-        { from, to, type, reason }
-      );
-      block = result;
-      targetEmail = result.targetEmail;
-      targetName = result.targetName;
-    } else {
-      block = await API.post('/api/users/me/availability', { from, to, type, reason });
-    }
+    await API.post('/api/users/me/availability', { from, to, type, reason });
     closeBlackoutModal();
     await fetchAvailability();
     renderTimeCalendar();
     toast(I18n.t('blackout.added'));
-    // Offer email confirmation if the target member has an email stored
-    if (targetEmail && forUserId !== 'me' && currentFlow) {
-      openBookingConfirmModal(block, forUserId, targetName, targetEmail);
-    }
   } catch (err) {
     toast(err.message || 'Error');
-  }
-}
-
-function openBookingConfirmModal(block, targetUserId, targetName, targetEmail) {
-  const typeLabels = {
-    vacation: I18n.t('blackout.vacation') || 'Urlaub',
-    training: I18n.t('blackout.training') || 'Schulung',
-    personal: I18n.t('blackout.personal') || 'Persönlich',
-    other: I18n.t('blackout.other') || 'Sonstiges'
-  };
-  const fmt = d => new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  const typeLabel = typeLabels[block.type] || block.type || '';
-  const dateStr = block.from === block.to ? fmt(block.from) : `${fmt(block.from)} – ${fmt(block.to)}`;
-
-  const html = `<div class="blackout-modal-overlay" id="bookingConfirmOverlay" onclick="if(event.target===this)closeBookingConfirmModal()">
-    <div class="blackout-modal" style="max-width:400px;">
-      <h3 style="display:flex;align-items:center;gap:6px">✉️ Bestätigung senden?</h3>
-      <div style="background:var(--bg-secondary,#f3f4f6);border-radius:8px;padding:12px;margin:12px 0;font-size:13px;">
-        <div><strong>${esc(targetName)}</strong> · <span style="color:var(--text-secondary)">${esc(targetEmail)}</span></div>
-        <div style="margin-top:6px;">📅 ${esc(dateStr)} · ${esc(typeLabel)}</div>
-        ${block.reason ? `<div style="margin-top:4px;color:var(--text-secondary)">${esc(block.reason)}</div>` : ''}
-      </div>
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Eine Buchungsbestätigung per E-Mail senden?</p>
-      <div style="display:flex;gap:8px;justify-content:flex-end;">
-        <button class="blackout-add-btn" style="background:var(--text-secondary,#6b7280);" onclick="closeBookingConfirmModal()">Überspringen</button>
-        <button class="blackout-add-btn" onclick="sendBookingConfirmationEmail('${encodeURIComponent(JSON.stringify(block))}','${targetUserId}')" id="sendConfirmBtn">✉️ Jetzt senden</button>
-      </div>
-    </div>
-  </div>`;
-  document.body.insertAdjacentHTML('beforeend', html);
-}
-
-function closeBookingConfirmModal() {
-  document.getElementById('bookingConfirmOverlay')?.remove();
-}
-
-async function sendBookingConfirmationEmail(blockEncoded, targetUserId) {
-  const btn = document.getElementById('sendConfirmBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sende...'; }
-  try {
-    const block = JSON.parse(decodeURIComponent(blockEncoded));
-    await API.post(`/api/flows/${currentFlow.id}/members/${targetUserId}/booking-confirmation`, { block });
-    closeBookingConfirmModal();
-    toast('✉️ Bestätigung gesendet');
-  } catch (err) {
-    if (btn) { btn.disabled = false; btn.textContent = '✉️ Jetzt senden'; }
-    toast(err.message || 'Fehler beim Senden');
   }
 }
 
