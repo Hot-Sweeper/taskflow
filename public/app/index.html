@@ -943,6 +943,33 @@ a { color: var(--accent); text-decoration: none; }
   font-size: 18px;
   font-weight: 800;
 }
+.stats-hours-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.stats-hours-tile {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-input);
+  padding: 10px;
+}
+.stats-hours-tile .tile-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.45px;
+}
+.stats-hours-tile .tile-value {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 800;
+}
+.stats-hours-tile .tile-sub {
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
 .stats-crash-card {
   border: 1px solid color-mix(in srgb, var(--red) 45%, var(--border));
   border-radius: 12px;
@@ -4854,6 +4881,7 @@ let calMode = 'month'; // 'year' | 'month' | 'week' | 'day'
 let calWeekStart = null; // Date object for current week start (Monday)
 let calDayDate = null; // Date object for current day view
 let flowTimeSessions = []; // flow-wide time sessions for shared calendar
+let allTimeSessions = []; // all-time sessions cache for stats
 let inviteAvatarConfig = null; // DiceBear config to attach to invite link
 let activeDragTaskId = null;
 let statsFocusUserId = null;
@@ -5488,6 +5516,9 @@ async function enterFlow(flow, restoreTab, restoreTaskId) {
   renderMore();
   renderArchiveTab();
   renderStatsTab();
+  loadAllTimeSessionsForStats().then(() => {
+    if (document.getElementById('tabStats')?.classList.contains('active')) renderStatsTab();
+  });
 
   // Deep link: open task from URL hash
   const deepTaskId = restoreTaskId || null;
@@ -5568,6 +5599,9 @@ function switchTab(tabId) {
   if (tabId === 'tabStats') {
     renderStatsTab();
     loadArchivedTasks().then(() => {
+      if (document.getElementById('tabStats')?.classList.contains('active')) renderStatsTab();
+    });
+    loadAllTimeSessionsForStats().then(() => {
       if (document.getElementById('tabStats')?.classList.contains('active')) renderStatsTab();
     });
   }
@@ -5855,6 +5889,13 @@ function getStatsViewerIdentity() {
     name: member?.userName || currentUser?.name || '',
     avatarUrl: member?.avatarUrl || currentUser?.avatarUrl || ''
   };
+}
+
+async function loadAllTimeSessionsForStats() {
+  if (!currentUser) return;
+  try {
+    allTimeSessions = await API.getTimeSessions();
+  } catch { allTimeSessions = []; }
 }
 
 function renderStatsToolbar(viewerName, isSelf) {
@@ -6350,6 +6391,22 @@ function renderStatsTab() {
   const crashPreview = crashPlan.candidates.slice(0, 4);
   const reputation = computeReputationMetrics(all, viewerId, inScope, inPeriodOnly);
 
+  // ── Work Hours metrics (own sessions only) ──
+  const myTimeSessions = identity.isSelf ? allTimeSessions : [];
+  const todayDateStr = new Date().toISOString().slice(0, 10);
+  const nowDate = new Date();
+  const weekStartStr = new Date(weekStart).toISOString().slice(0, 10);
+  const monthPfx = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, '0')}`;
+  const _swm = (s) => sessionWorkedMinutes(s);
+  const totalMinAll = myTimeSessions.reduce((sum, s) => sum + _swm(s), 0);
+  const todayMin = myTimeSessions.filter(s => s.date === todayDateStr).reduce((sum, s) => sum + _swm(s), 0);
+  const weekMin  = myTimeSessions.filter(s => s.date >= weekStartStr && s.date <= todayDateStr).reduce((sum, s) => sum + _swm(s), 0);
+  const monthMin = myTimeSessions.filter(s => s.date && s.date.startsWith(monthPfx)).reduce((sum, s) => sum + _swm(s), 0);
+  const activeDays = new Set(myTimeSessions.filter(s => s.date && _swm(s) > 1).map(s => s.date)).size;
+  const avgDayMin  = activeDays > 0 ? Math.round(totalMinAll / activeDays) : 0;
+  const fmtH = (m) => m < 60 ? `${m}m` : `${Math.floor(m/60)}h${m%60 > 0 ? ` ${m%60}m` : ''}`;
+  const hasTimeData = myTimeSessions.length > 0;
+
   container.innerHTML = `
     <div class="stats-epic">
       <section class="stats-hero">
@@ -6375,22 +6432,23 @@ function renderStatsTab() {
         </div>
       </section>
 
+      ${crashPlan.candidateCount > 0 ? `
       <section class="stats-crash-card">
         <div class="stats-crash-title">${icon('alert-triangle', 12)} ${esc(I18n.t('crash.title') || 'Deadline Crash')}</div>
         <div class="stats-crash-meta">${esc((I18n.t('crash.summary') || '{overdue} overdue · {stalled} stalled').replace('{overdue}', String(crashPlan.overdueCount)).replace('{stalled}', String(crashPlan.stalledCount)))}</div>
         <div class="stats-crash-list">
-          ${crashPreview.length ? crashPreview.map(entry => `
+          ${crashPreview.map(entry => `
             <div class="stats-crash-item">
               <span>${esc(entry.task.title || '')}</span>
-              <span>${entry.overdueDays > 0 ? `${entry.overdueDays}d` : `${Math.floor((entry.stallHours || 0) / 24)}d`} </span>
+              <span>${entry.overdueDays > 0 ? `${entry.overdueDays}d overdue` : `stalled ${Math.floor((entry.stallHours || 0) / 24)}d`}</span>
             </div>
-          `).join('') : `<div class="stats-crash-item"><span>${esc(I18n.t('crash.none') || 'No crash actions needed right now.')}</span><span>OK</span></div>`}
+          `).join('')}
         </div>
         <div class="stats-crash-actions">
           <button class="stats-crash-btn" onclick="renderStatsTab()">${esc(I18n.t('common.refresh') || 'Refresh')}</button>
-          <button class="stats-crash-btn primary" onclick="applyDeadlineCrashPlan()" ${!identity.isSelf || !crashPlan.candidateCount || deadlineCrashBusy ? 'disabled' : ''}>${esc(deadlineCrashBusy ? (I18n.t('common.loading') || 'Running...') : (I18n.t('crash.apply') || 'Apply Crash Plan'))}</button>
+          <button class="stats-crash-btn primary" onclick="applyDeadlineCrashPlan()" ${!identity.isSelf || deadlineCrashBusy ? 'disabled' : ''}>${esc(deadlineCrashBusy ? (I18n.t('common.loading') || 'Running...') : (I18n.t('crash.apply') || 'Apply Crash Plan'))}</button>
         </div>
-      </section>
+      </section>` : ''}
 
       <section class="stats-kpi-grid">
         <article class="stats-kpi-card">
@@ -6506,6 +6564,41 @@ function renderStatsTab() {
             </div>
           </div>
         </article>
+
+        ${hasTimeData ? `
+        <article class="stats-panel">
+          <div class="stats-panel-head">
+            <div class="stats-panel-title">${icon('clock', 13)} Work Hours</div>
+            <span class="stats-panel-chip">${fmtH(totalMinAll)} total</span>
+          </div>
+          <div class="stats-hours-grid">
+            <div class="stats-hours-tile">
+              <div class="tile-label">Today</div>
+              <div class="tile-value">${todayMin > 0 ? fmtH(todayMin) : '—'}</div>
+            </div>
+            <div class="stats-hours-tile">
+              <div class="tile-label">This Week</div>
+              <div class="tile-value">${fmtH(weekMin)}</div>
+            </div>
+            <div class="stats-hours-tile">
+              <div class="tile-label">This Month</div>
+              <div class="tile-value">${fmtH(monthMin)}</div>
+            </div>
+            <div class="stats-hours-tile">
+              <div class="tile-label">All Time</div>
+              <div class="tile-value">${fmtH(totalMinAll)}</div>
+              <div class="tile-sub">${myTimeSessions.length} sessions</div>
+            </div>
+            <div class="stats-hours-tile">
+              <div class="tile-label">Days Worked</div>
+              <div class="tile-value">${activeDays}</div>
+            </div>
+            <div class="stats-hours-tile">
+              <div class="tile-label">Avg / Day</div>
+              <div class="tile-value">${avgDayMin > 0 ? fmtH(avgDayMin) : '—'}</div>
+            </div>
+          </div>
+        </article>` : ''}
 
         <article class="stats-reputation">
           <div class="stats-reputation-head">
