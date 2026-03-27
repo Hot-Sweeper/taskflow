@@ -4349,11 +4349,16 @@ app.post('/api/admin/timelog/import', adminAuth, async (req, res) => {
     }
     const users = await storage.read('users.json');
     const timelog = await storage.read('timelog.json');
+    // Build a dedup set: userId+clockIn to prevent double-importing the same file
+    const existing = new Set(timelog.map(t => `${t.userId}|${t.clockIn}`));
     const added = [];
     for (const e of entries) {
       if (!e.userId || !e.date || !e.clockIn || !e.clockOut) continue;
       const user = users.find(u => u.id === e.userId);
       if (!user) continue;
+      // Skip exact duplicates (same user + same clock-in time)
+      const key = `${e.userId}|${new Date(e.clockIn).toISOString()}`;
+      if (existing.has(key)) continue;
       const ciDate = new Date(e.clockIn);
       const coDate = new Date(e.clockOut);
       if (isNaN(ciDate.getTime()) || isNaN(coDate.getTime()) || coDate <= ciDate) continue;
@@ -4361,7 +4366,7 @@ app.post('/api/admin/timelog/import', adminAuth, async (req, res) => {
       const entry = {
         id: crypto.randomUUID(),
         userId: e.userId,
-        userName: user.username,
+        userName: user.name,
         date: e.date,
         clockIn: ciDate.toISOString(),
         clockOut: coDate.toISOString(),
@@ -4375,6 +4380,7 @@ app.post('/api/admin/timelog/import', adminAuth, async (req, res) => {
       };
       timelog.push(entry);
       added.push(entry);
+      existing.add(key); // prevent same-file duplicates within a single import batch
     }
     await storage.write('timelog.json', timelog);
     res.json({ imported: added.length, entries: added });
