@@ -5054,6 +5054,11 @@ function priorityIconName(priority) {
   return PRIORITY_ICON_MAP[priority] || 'target';
 }
 
+function daysSince(dateStr) {
+  if (!dateStr) return 0;
+  return Math.max(0, Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000));
+}
+
 function renderStatusIcon(status, className) {
   const meta = STATUS_META[status] || {};
   const color = meta.color || '#999';
@@ -6999,11 +7004,15 @@ function createTaskCard(task) {
     bottomHTML += `<span class="card-tag revision-tag">${icon('refresh-cw', 12)} ${I18n.t('task.revision')}</span>`;
   }
   if (task.isStale) {
-    bottomHTML += `<span class="card-tag stale-tag">${icon('clock', 12)} ${I18n.t('task.stale')}</span>`;
+    const staleDays = daysSince(task.staleSince);
+    const staleDurText = staleDays > 0 ? ` · ${staleDays}d` : '';
+    bottomHTML += `<span class="card-tag stale-tag">${icon('clock', 12)} ${I18n.t('task.stale')}${staleDurText}</span>`;
     card.classList.add('is-stale');
   }
   if (task.isPaused) {
-    bottomHTML += `<span class="card-tag paused-tag">${icon('pause', 12)} ${I18n.t('task.paused')}</span>`;
+    const pauseDays = daysSince(task.pausedAt);
+    const pauseDurText = pauseDays > 0 ? ` · ${pauseDays}d` : '';
+    bottomHTML += `<span class="card-tag paused-tag">${icon('pause', 12)} ${I18n.t('task.paused')}${pauseDurText}</span>`;
     card.classList.add('is-paused');
   }
   if (deadline) {
@@ -8137,8 +8146,8 @@ function renderDetail(task) {
         <span>${esc(I18n.t(statusMeta?.label || ''))}</span>
       </span>
       <span class="meta-chip" title="${esc(I18n.t('task.progress'))}">${progressValue}%</span>
-      ${task.isStale ? `<span class="meta-chip" style="color:var(--red);font-weight:600;display:inline-flex;align-items:center;gap:3px" title="${I18n.t('task.staleTooltip')}">${icon('clock', 12)} ${I18n.t('task.stale')}</span>` : ''}
-      <span class="meta-chip" style="cursor:pointer;user-select:none;${task.isPaused ? 'color:var(--amber);background:rgba(234,179,8,0.12);' : ''}" onclick="toggleTaskPause()" title="${task.isPaused ? I18n.t('task.unpause') : I18n.t('task.pause')}">${icon(task.isPaused ? 'play' : 'pause', 12)} ${task.isPaused ? I18n.t('task.paused') : I18n.t('task.pause')}</span>
+      ${task.isStale ? `<span class="meta-chip" style="color:var(--red);font-weight:600;display:inline-flex;align-items:center;gap:3px" title="${I18n.t('task.staleTooltip')}">${icon('clock', 12)} ${I18n.t('task.stale')}${daysSince(task.staleSince) > 0 ? ` · ${daysSince(task.staleSince)}d` : ''}</span>` : ''}
+      <span class="meta-chip" style="cursor:pointer;user-select:none;${task.isPaused ? 'color:var(--amber);background:rgba(234,179,8,0.12);' : ''}" onclick="toggleTaskPause()" title="${task.isPaused ? I18n.t('task.unpause') : I18n.t('task.pause')}">${icon(task.isPaused ? 'play' : 'pause', 12)} ${task.isPaused ? `${I18n.t('task.paused')}${daysSince(task.pausedAt) > 0 ? ` · ${daysSince(task.pausedAt)}d` : ''}` : I18n.t('task.pause')}</span>
       <span class="meta-chip meta-people-chip" title="${esc(I18n.t('task.operators'))}">
         <span class="mini-heads">
           ${operatorMembers.length

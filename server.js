@@ -2264,6 +2264,7 @@ app.put('/api/flows/:flowId/tasks/:id', authMiddleware, flowMemberMiddleware, as
 
     const task = tasks[idx];
     const oldStatus = tasks[idx].status;
+    const oldIsPaused = tasks[idx].isPaused;
     const oldAssignees = getTaskAssigneeIds(tasks[idx]);
     const allowed = ['title', 'description', 'priority', 'status',
       'category', 'assignedTo', 'deadline', 'subFlowId', 'recurrenceRule', 'orderIndex', 'isPaused'];
@@ -2294,6 +2295,14 @@ app.put('/api/flows/:flowId/tasks/:id', authMiddleware, flowMemberMiddleware, as
     }
     // Single timestamp for all log entries in this request
     const _now = new Date().toISOString();
+    // Track pausedAt timestamp
+    if (req.body.isPaused !== undefined) {
+      if (tasks[idx].isPaused && !oldIsPaused) {
+        tasks[idx].pausedAt = _now;
+      } else if (!tasks[idx].isPaused) {
+        tasks[idx].pausedAt = null;
+      }
+    }
     // Log status transitions
     if (req.body.status !== undefined && req.body.status !== oldStatus) {
       if (!Array.isArray(tasks[idx].statusLog)) tasks[idx].statusLog = [];
