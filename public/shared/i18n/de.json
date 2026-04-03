@@ -240,6 +240,7 @@
   "time.stat.payout": "Erwartete Auszahlung",
   "time.stat.surcharge": "{amount} € Zuschläge (Nacht)",
   "time.stat.overallOvertime": "Gesamt Überstunden",
+  "time.stat.excludeCurrent": "Ohne akt. Monat",
   "time.stat.value": "Wert",
   "time.config.title": "Zeiterfassung Einstellungen",
   "time.config.hourlyWage": "Stundenlohn (€)",

@@ -240,6 +240,7 @@
   "time.stat.payout": "Expected Payout",
   "time.stat.surcharge": "{amount} € Night Surcharge",
   "time.stat.overallOvertime": "Total Overtime",
+  "time.stat.excludeCurrent": "Exclude current month",
   "time.stat.value": "Value",
   "time.config.title": "Time Tracking Settings",
   "time.config.hourlyWage": "Hourly Wage (€)",

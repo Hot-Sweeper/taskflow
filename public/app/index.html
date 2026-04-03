@@ -4555,12 +4555,19 @@ a { color: var(--accent); text-decoration: none; }
             <div id="statSurcharge" style="font-size:12px;color:var(--amber);margin-top:4px">+ 0,00 € Zuschläge (Nacht)</div>
           </div>
           <!-- Overtime Accumulation / Überstunden Collector -->
-          <div style="background:var(--bg-input);padding:12px;border-radius:var(--radius-xs);border:1px solid var(--border)">
+          <div id="statOverallOvertimeCard" style="display:none;background:var(--bg-input);padding:12px;border-radius:var(--radius-xs);border:1px solid var(--border)">
+            <style>
+              #excludeCurrentMonthToggle:checked ~ .custom-toggle-track { background: var(--accent) !important; border-color: var(--accent) !important; }
+              #excludeCurrentMonthToggle:checked ~ .custom-toggle-track .custom-toggle-thumb { transform: translateX(12px); background: #fff !important; }
+            </style>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px">
               <div style="font-size:12px;color:var(--text-secondary)" data-i18n="time.stat.overallOvertime">Gesamt Überstunden</div>
-              <label style="font-size:11px; color:var(--text-secondary); display:flex; align-items:center; gap:4px; cursor:pointer;" title="Laufenden Monat ausschließen">
-                <input type="checkbox" id="excludeCurrentMonthToggle" onchange="computeTimeStats()" style="width:12px;height:12px;cursor:pointer;"> 
+              <label style="font-size:11px; color:var(--text-secondary); display:flex; align-items:center; gap:6px; cursor:pointer;" title="Laufenden Monat ausschließen">
                 <span data-i18n="time.stat.excludeCurrent">Ohne akt. Monat</span>
+                <input type="checkbox" id="excludeCurrentMonthToggle" onchange="computeTimeStats()" style="opacity:0; width:0; height:0; position:absolute;">
+                <div class="custom-toggle-track" style="position:relative; width:28px; height:16px; background:var(--bg-page); border-radius:8px; border:1px solid var(--border); transition: background 0.2s, border-color 0.2s;">
+                  <div class="custom-toggle-thumb" style="width:12px; height:12px; background:var(--text-secondary); border-radius:50%; position:absolute; top:1px; left:1px; transition:transform 0.2s, background 0.2s;"></div>
+                </div>
               </label>
             </div>
             <div id="statOverallOvertime" style="font-size:18px;font-weight:700;color:var(--text)">0h</div>
@@ -10744,9 +10751,12 @@ function buildCalAvatarsHTML(dateStr) {
 function buildCalCommons() {
   const todayStr = new Date().toISOString().slice(0, 10);
   const minutesByDay = {};
+  const sessionsByDay = {};
   for (const s of timeSessions) {
     if (!s?.date) continue;
     minutesByDay[s.date] = (minutesByDay[s.date] || 0) + sessionWorkedMinutes(s);
+    if (!sessionsByDay[s.date]) sessionsByDay[s.date] = [];
+    sessionsByDay[s.date].push(s);
   }
   const calTasks = getCalFilteredTasks();
   const deadlinesByDay = {};
@@ -10759,11 +10769,11 @@ function buildCalCommons() {
     if (dStr < todayStr) overdueOnToday.push(t);
   }
   const priorityColors = { urgent: 'var(--red)', high: '#ef4444', medium: 'var(--amber)', low: '#22c55e' };
-  return { todayStr, minutesByDay, deadlinesByDay, overdueOnToday, priorityColors };
+  return { todayStr, minutesByDay, sessionsByDay, deadlinesByDay, overdueOnToday, priorityColors };
 }
 
 function buildDayCellHTML(date, day, commons) {
-  const { todayStr, minutesByDay, deadlinesByDay, overdueOnToday, priorityColors } = commons;
+  const { todayStr, minutesByDay, sessionsByDay, deadlinesByDay, overdueOnToday, priorityColors } = commons;
   const mins = minutesByDay[date] || 0;
   const dayDeadlines = deadlinesByDay[date] || [];
   const isToday = date === todayStr;
@@ -10790,6 +10800,26 @@ function buildDayCellHTML(date, day, commons) {
     deadlineHTML += '</div>';
   }
 
+  let stundenplanHTML = '';
+  const daySessions = sessionsByDay[date] || [];
+  if (daySessions.length > 0) {
+    stundenplanHTML = `<div class="timeline-stundenplan" style="position:relative; width:100%; height:12px; background:var(--bg-page); border-radius:4px; margin-top:auto; overflow:hidden">`;
+    for (const s of daySessions) {
+      if (!s.clockIn) continue;
+      const tIn = new Date(s.clockIn);
+      const startMs = tIn.getHours() * 3600000 + tIn.getMinutes() * 60000 + tIn.getSeconds() * 1000;
+      const startPct = (startMs / 86400000) * 100;
+      
+      const tOut = s.clockOut ? new Date(s.clockOut) : new Date();
+      let durationMs = tOut.getTime() - tIn.getTime();
+      let widthPct = (durationMs / 86400000) * 100;
+      if (startPct + widthPct > 100) widthPct = 100 - startPct;
+      
+      stundenplanHTML += `<div style="position:absolute; left:${startPct}%; width:${widthPct}%; height:100%; background:var(--accent); min-width:2px; border-radius:2px; opacity:0.8"></div>`;
+    }
+    stundenplanHTML += `</div>`;
+  }
+
   let overdueHTML = '';
   if (isToday && overdueOnToday.length > 0) {
     overdueHTML = `<div class="time-cal-overdue-marker" onclick="event.stopPropagation();showOverdueTasks()" title="${I18n.t('calendar.overdue')}">${icon('alert-triangle', 10)} ${overdueOnToday.length}</div>`;
@@ -10797,12 +10827,13 @@ function buildDayCellHTML(date, day, commons) {
 
   const avatarsHTML = buildCalAvatarsHTML(date);
 
-  return `<div class="time-cal-day ${extraClasses}" onclick="openDayDetail('${date}')" style="cursor:pointer">
+  return `<div class="time-cal-day ${extraClasses}" onclick="openDayDetail('${date}')" style="cursor:pointer; display:flex; flex-direction:column;">
     <div class="time-cal-date">${day}</div>
     ${mins > 0 ? `<div class="time-cal-pill">${icon('clock', 10)} ${Math.floor(mins / 60)}h ${mins % 60}m</div>` : '<div class="time-cal-work">-</div>'}
     ${deadlineHTML}
     ${overdueHTML}
     ${avatarsHTML}
+    ${stundenplanHTML}
   </div>`;
 }
 
@@ -10958,6 +10989,40 @@ function renderCalendarDay(grid) {
       html += `<div style="font-size:11px;color:var(--text-secondary);padding:4px 8px">+${dayActivity.length - maxShow} more</div>`;
     }
     html += '</div>';
+  }
+
+  // 24h Timeline Visualization (Stundenplan)
+  const daySessions = commons.sessionsByDay[dateStr] || [];
+  if (daySessions.length > 0) {
+    html += `<div class="cal-day-view-section">
+      <div class="cal-day-view-section-title">${icon('clock', 14)} 24h Timeline</div>
+      <div class="timeline-stundenplan" style="position:relative; width:100%; height:24px; background:var(--bg-page); border-radius:6px; margin-top:8px; overflow:hidden;">`;
+    
+    // Add simple hour markers
+    for(let i=0; i<=24; i+=6) {
+      if(i>0 && i<24) {
+        html += `<div style="position:absolute; left:${(i/24)*100}%; top:0; bottom:0; border-left:1px dashed var(--border-color); opacity:0.5; z-index:1;"></div>`;
+      }
+    }
+
+    for (const s of daySessions) {
+      if (!s.clockIn) continue;
+      const tIn = new Date(s.clockIn);
+      const startMs = tIn.getHours() * 3600000 + tIn.getMinutes() * 60000 + tIn.getSeconds() * 1000;
+      const startPct = (startMs / 86400000) * 100;
+      
+      const tOut = s.clockOut ? new Date(s.clockOut) : new Date();
+      let durationMs = tOut.getTime() - tIn.getTime();
+      let widthPct = (durationMs / 86400000) * 100;
+      if (startPct + widthPct > 100) widthPct = 100 - startPct;
+      
+      html += `<div style="position:absolute; left:${startPct}%; width:${widthPct}%; height:100%; background:var(--accent); min-width:2px; border-radius:3px; opacity:0.8; z-index:2"></div>`;
+    }
+    html += `</div>
+      <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-secondary); margin-top:4px;">
+        <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
+      </div>
+    </div>`;
   }
 
   html += '</div>';
@@ -11831,6 +11896,11 @@ function computeTimeStats() {
   const nightSurcharge = nightHours * wage * 0.25; // Example: 25% night drift surcharge
 
   // --- Calculate Overall Overtime (Total over all months) ---
+  const overallCard = document.getElementById('statOverallOvertimeCard');
+  if (overallCard) {
+    overallCard.style.display = isExperimentalEnabled() ? 'block' : 'none';
+  }
+
   let overallOvertimeHours = 0;
   
   // Merge allTimeSessions and timeSessions to ensure latest data is included
