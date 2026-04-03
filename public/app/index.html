@@ -12137,6 +12137,8 @@ async function submitTimeConfig() {
   const wage = parseFloat(document.getElementById('timeConfigWageInput').value) || 0;
   const hours = parseInt(document.getElementById('timeConfigHoursInput').value, 10) || 0;
   const n = parseInt(document.getElementById('timeConfigNightInput').value, 10) || 0;
+  const s = parseInt(document.getElementById('timeConfigSundayInput').value, 10) || 0;
+  const h = parseInt(document.getElementById('timeConfigHolidayInput').value, 10) || 0;
   const ns = document.getElementById('timeConfigNightStart').value || '22:00';
   const ne = document.getElementById('timeConfigNightEnd').value || '06:00';
   
@@ -12149,9 +12151,7 @@ async function submitTimeConfig() {
       surchargeHoliday: h,
       surchargeNightStart: ns,
       surchargeNightEnd: ne
-   
-  try {
-    timeConfig = await API.saveTimeConfig({ hourlyWage: wage, targetHours: hours, surchargeNight: n, surchargeSunday: s, surchargeHoliday: h });
+    });
     closeTimeConfigModal();
     computeTimeStats();
     toast(I18n.t('common.saved') || 'Saved');
