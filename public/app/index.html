@@ -4556,7 +4556,7 @@ a { color: var(--accent); text-decoration: none; }
             <div id="statSurcharge" style="font-size:12px;color:var(--amber);margin-top:4px">+ 0,00 € Zuschläge (Nacht)</div>
           </div>
           <!-- Overtime Accumulation / Überstunden Collector -->
-          <div id="statOverallOvertimeCard" style="display:none;background:var(--bg-input);padding:12px;border-radius:var(--radius-xs);border:1px solid var(--border)">
+          <div id="statOverallOvertimeCard" style="background:var(--bg-input);padding:12px;border-radius:var(--radius-xs);border:1px solid var(--border)">
             <style>
               #excludeCurrentMonthToggle:checked ~ .custom-toggle-track { background: var(--accent) !important; border-color: var(--accent) !important; }
               #excludeCurrentMonthToggle:checked ~ .custom-toggle-track .custom-toggle-thumb { transform: translateX(12px); background: #fff !important; }
@@ -4872,6 +4872,13 @@ a { color: var(--accent); text-decoration: none; }
       <div class="input-group" style="margin-bottom: 24px">
         <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block;">Feiertagszuschlag (%)</label>
         <input id="timeConfigHolidayInput" type="number" step="1" min="0" placeholder="z.B. 100" style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; background: var(--bg-input); color: var(--text);">
+      </div>
+      <div class="input-group" style="margin-bottom: 24px">
+        <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block;">Nachtzuschlag Zeitraum (von - bis)</label>
+        <div style="display:flex;gap:8px;">
+          <input id="timeConfigNightStart" type="time" style="width: 50%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; background: var(--bg-input); color: var(--text);">
+          <input id="timeConfigNightEnd" type="time" style="width: 50%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; background: var(--bg-input); color: var(--text);">
+        </div>
       </div>
       <button class="btn-primary" onclick="submitTimeConfig()" data-i18n="common.save">Speichern</button>
       <button style="padding:8px;font-size:13px;color:var(--text-secondary);text-align:center;width:100%;margin-top:8px" onclick="closeTimeConfigModal()" data-i18n="common.cancel">Abbrechen</button>
@@ -11940,6 +11947,14 @@ function computeTimeStats() {
   const pctSunday = timeConfig.surchargeSunday !== undefined ? timeConfig.surchargeSunday : 50;
   const pctHoliday = timeConfig.surchargeHoliday !== undefined ? timeConfig.surchargeHoliday : 100;
 
+  const nightStartStr = timeConfig.surchargeNightStart || '22:00';
+  const nightEndStr = timeConfig.surchargeNightEnd || '06:00';
+  const [nightStartHour, nightStartMin] = nightStartStr.split(':').map(n => Number(n) || 0);
+  const [nightEndHour, nightEndMin] = nightEndStr.split(':').map(n => Number(n) || 0);
+  const nightStartMins = nightStartHour * 60 + nightStartMin;
+  const nightEndMins = nightEndHour * 60 + nightEndMin;
+  const crossesMidnight = nightStartMins > nightEndMins;
+
   for (const s of timeSessions) {
     if (!s.clockIn) continue;
     const sWorkedMs = sessionWorkedMinutes(s) * 60000;
@@ -11953,7 +11968,7 @@ function computeTimeStats() {
     if (isSunday) sundayMs += sWorkedMs;
     if (hasHoliday) holidayMs += sWorkedMs;
 
-    // Estimate night shift (between 20:00 and 06:00)
+    // Estimate night shift
     let startT = clockInDate.getTime();
     let endT = s.clockOut ? new Date(s.clockOut).getTime() : Date.now();
     
@@ -11961,8 +11976,13 @@ function computeTimeStats() {
       let minStart = Math.floor(startT / 60000) * 60000;
       let minEnd = Math.floor(endT / 60000) * 60000;
       for (let t = minStart; t < minEnd; t += 60000) {
-        const h = new Date(t).getHours();
-        if (h >= 20 || h < 6) {
+        const d = new Date(t);
+        const mins = d.getHours() * 60 + d.getMinutes();
+        const isNight = crossesMidnight 
+          ? (mins >= nightStartMins || mins < nightEndMins)
+          : (mins >= nightStartMins && mins < nightEndMins);
+        
+        if (isNight) {
           nightShiftMs += 60000;
         }
       }
@@ -11983,12 +12003,12 @@ function computeTimeStats() {
 
   const totalSurchargeEur = nightSurchargeEur + sundaySurchargeEur + holidaySurchargeEur;
 
-  // --- Calculate Overall Overtime (Total over all months) ---
-  const overallCard = document.getElementById('statOverallOvertimeCard');
-  if (overallCard) {
-    overallCard.style.display = isExperimentalEnabled() ? 'block' : 'none';
+  const timeStatsContainer = document.getElementById('timeStatsContainer');
+  if (timeStatsContainer) {
+    timeStatsContainer.style.display = isExperimentalEnabled() ? 'block' : 'none';
   }
 
+  // --- Calculate Overall Overtime (Total over all months) ---
   let overallOvertimeHours = 0;
   
   // Merge allTimeSessions and timeSessions to ensure latest data is included
@@ -12104,6 +12124,8 @@ function openTimeConfigModal() {
   document.getElementById('timeConfigNightInput').value = timeConfig.surchargeNight || '';
   document.getElementById('timeConfigSundayInput').value = timeConfig.surchargeSunday || '';
   document.getElementById('timeConfigHolidayInput').value = timeConfig.surchargeHoliday || '';
+  document.getElementById('timeConfigNightStart').value = timeConfig.surchargeNightStart || '22:00';
+  document.getElementById('timeConfigNightEnd').value = timeConfig.surchargeNightEnd || '06:00';
   document.getElementById('timeConfigModalOverlay').classList.add('active');
 }
 
@@ -12115,9 +12137,19 @@ async function submitTimeConfig() {
   const wage = parseFloat(document.getElementById('timeConfigWageInput').value) || 0;
   const hours = parseInt(document.getElementById('timeConfigHoursInput').value, 10) || 0;
   const n = parseInt(document.getElementById('timeConfigNightInput').value, 10) || 0;
-  const s = parseInt(document.getElementById('timeConfigSundayInput').value, 10) || 0;
-  const h = parseInt(document.getElementById('timeConfigHolidayInput').value, 10) || 0;
+  const ns = document.getElementById('timeConfigNightStart').value || '22:00';
+  const ne = document.getElementById('timeConfigNightEnd').value || '06:00';
   
+  try {
+    timeConfig = await API.saveTimeConfig({ 
+      hourlyWage: wage, 
+      targetHours: hours, 
+      surchargeNight: n, 
+      surchargeSunday: s, 
+      surchargeHoliday: h,
+      surchargeNightStart: ns,
+      surchargeNightEnd: ne
+   
   try {
     timeConfig = await API.saveTimeConfig({ hourlyWage: wage, targetHours: hours, surchargeNight: n, surchargeSunday: s, surchargeHoliday: h });
     closeTimeConfigModal();

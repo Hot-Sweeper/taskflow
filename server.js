@@ -1003,7 +1003,7 @@ app.get('/api/users/me/time-config', authMiddleware, async (req, res) => {
 
 app.put('/api/users/me/time-config', authMiddleware, async (req, res) => {
   try {
-    const { hourlyWage, targetHours, surchargeNight, surchargeSunday, surchargeHoliday } = req.body;
+    const { hourlyWage, targetHours, surchargeNight, surchargeSunday, surchargeHoliday, surchargeNightStart, surchargeNightEnd } = req.body;
     const users = await storage.read('users.json');
     const userIndex = users.findIndex(u => u.id === req.user.userId);
     if (userIndex === -1) return res.status(404).json({ error: 'User not found' });
@@ -1013,7 +1013,9 @@ app.put('/api/users/me/time-config', authMiddleware, async (req, res) => {
       targetHours: Number(targetHours) || 0,
       surchargeNight: Number(surchargeNight) || 0,
       surchargeSunday: Number(surchargeSunday) || 0,
-      surchargeHoliday: Number(surchargeHoliday) || 0
+      surchargeHoliday: Number(surchargeHoliday) || 0,
+      surchargeNightStart: typeof surchargeNightStart === 'string' ? surchargeNightStart : '22:00',
+      surchargeNightEnd: typeof surchargeNightEnd === 'string' ? surchargeNightEnd : '06:00'
     };
     await storage.write('users.json', users);
     res.json(users[userIndex].timeConfig);
