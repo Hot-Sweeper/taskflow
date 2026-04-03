@@ -4857,9 +4857,21 @@ a { color: var(--accent); text-decoration: none; }
         <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block;" data-i18n="time.config.hourlyWage">Stundenlohn (€)</label>
         <input id="timeConfigWageInput" type="number" step="0.01" min="0" placeholder="z.B. 15.50" style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; background: var(--bg-input); color: var(--text);">
       </div>
-      <div class="input-group" style="margin-bottom: 24px">
+      <div class="input-group" style="margin-bottom: 16px">
         <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block;" data-i18n="time.config.targetHours">Soll-Stunden pro Monat</label>
         <input id="timeConfigHoursInput" type="number" step="1" min="0" placeholder="z.B. 160" style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; background: var(--bg-input); color: var(--text);">
+      </div>
+      <div class="input-group" style="margin-bottom: 16px">
+        <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block;">Nachtzuschlag (%)</label>
+        <input id="timeConfigNightInput" type="number" step="1" min="0" placeholder="z.B. 25" style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; background: var(--bg-input); color: var(--text);">
+      </div>
+      <div class="input-group" style="margin-bottom: 16px">
+        <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block;">Sonntagszuschlag (%)</label>
+        <input id="timeConfigSundayInput" type="number" step="1" min="0" placeholder="z.B. 50" style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; background: var(--bg-input); color: var(--text);">
+      </div>
+      <div class="input-group" style="margin-bottom: 24px">
+        <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block;">Feiertagszuschlag (%)</label>
+        <input id="timeConfigHolidayInput" type="number" step="1" min="0" placeholder="z.B. 100" style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; background: var(--bg-input); color: var(--text);">
       </div>
       <button class="btn-primary" onclick="submitTimeConfig()" data-i18n="common.save">Speichern</button>
       <button style="padding:8px;font-size:13px;color:var(--text-secondary);text-align:center;width:100%;margin-top:8px" onclick="closeTimeConfigModal()" data-i18n="common.cancel">Abbrechen</button>
@@ -10684,6 +10696,51 @@ function renderTimeControls() {
   document.getElementById('locFieldBtn')?.classList.toggle('active', activeLoc === 'field');
 }
 
+function getGermanHoliday(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+
+  if (month === 1 && day === 1) return 'Neujahr';
+  if (month === 5 && day === 1) return 'Tag der Arbeit';
+  if (month === 10 && day === 3) return 'Tag der Deutschen Einheit';
+  if (month === 12 && day === 25) return '1. Weihnachtstag';
+  if (month === 12 && day === 26) return '2. Weihnachtstag';
+
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d_ = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d_ - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const n = h + l - 7 * m + 114;
+  const easterMonth = Math.floor(n / 31);
+  const easterDay = (n % 31) + 1;
+  
+  const dateAtNoon = new Date(year, month - 1, day, 12, 0, 0);
+  const easterAtNoon = new Date(year, easterMonth - 1, easterDay, 12, 0, 0);
+  const diffDays = Math.round((dateAtNoon.getTime() - easterAtNoon.getTime()) / 86400000);
+
+  if (diffDays === -2) return 'Karfreitag';
+  if (diffDays === 0) return 'Ostersonntag';
+  if (diffDays === 1) return 'Ostermontag';
+  if (diffDays === 39) return 'Christi Himmelfahrt';
+  if (diffDays === 49) return 'Pfingstsonntag';
+  if (diffDays === 50) return 'Pfingstmontag';
+  
+  return null;
+}
+
 function renderTimeCalendar() {
   const grid = document.getElementById('timeCalendarGrid');
   if (!grid) return;
@@ -10784,9 +10841,14 @@ function buildDayCellHTML(date, day, commons) {
   const hasDeadlines = dayDeadlines.length > 0;
   const hasOverdue = isToday && overdueOnToday.length > 0;
   const blackout = isBlackoutDay(date);
+  
+  const holidayName = getGermanHoliday(date);
+  const isSunday = new Date(date).getDay() === 0;
+
   const extraClasses = [
     isToday ? 'today' : '', hasDeadlines ? 'has-deadlines' : '',
-    hasOverdue ? 'has-overdue' : '', blackout ? 'is-blackout' : ''
+    hasOverdue ? 'has-overdue' : '', blackout ? 'is-blackout' : '',
+    isSunday ? 'is-sunday' : '', holidayName ? 'is-holiday' : ''
   ].filter(Boolean).join(' ');
 
   let deadlineHTML = '';
@@ -10831,8 +10893,12 @@ function buildDayCellHTML(date, day, commons) {
 
   const avatarsHTML = buildCalAvatarsHTML(date);
 
-  return `<div class="time-cal-day ${extraClasses}" onclick="openDayDetail('${date}')" style="cursor:pointer; display:flex; flex-direction:column;">
-    <div class="time-cal-date">${day}</div>
+  let tintStyle = isSunday ? 'background: rgba(239, 68, 68, 0.05);' : '';
+  if (holidayName) tintStyle += ' border: 1px solid rgba(239, 68, 68, 0.2);';
+
+  return `<div class="time-cal-day ${extraClasses}" onclick="openDayDetail('${date}')" style="cursor:pointer; display:flex; flex-direction:column; ${tintStyle}">
+    <div class="time-cal-date" style="${holidayName || isSunday ? 'color: var(--red); font-weight: 600;' : ''}">${day}</div>
+    ${holidayName ? `<div style="font-size:8px; background:rgba(239,68,68,0.15); color:var(--red); padding:2px 4px; border-radius:4px; margin-bottom:4px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${esc(holidayName)}">${esc(holidayName)}</div>` : ''}
     ${mins > 0 ? `<div class="time-cal-pill">${icon('clock', 10)} ${Math.floor(mins / 60)}h ${mins % 60}m</div>` : '<div class="time-cal-work">-</div>'}
     ${deadlineHTML}
     ${overdueHTML}
@@ -11864,19 +11930,33 @@ function renderTimeSessionRows() {
 function computeTimeStats() {
   let totalWorkedMs = 0;
   let nightShiftMs = 0;
+  let sundayMs = 0;
+  let holidayMs = 0;
+
+  const target = timeConfig.targetHours || 0;
+  const wage = timeConfig.hourlyWage || 0;
+
+  const pctNight = timeConfig.surchargeNight !== undefined ? timeConfig.surchargeNight : 25;
+  const pctSunday = timeConfig.surchargeSunday !== undefined ? timeConfig.surchargeSunday : 50;
+  const pctHoliday = timeConfig.surchargeHoliday !== undefined ? timeConfig.surchargeHoliday : 100;
 
   for (const s of timeSessions) {
     if (!s.clockIn) continue;
-    const sWorked = sessionWorkedMinutes(s) * 60000;
-    totalWorkedMs += sWorked;
+    const sWorkedMs = sessionWorkedMinutes(s) * 60000;
+    totalWorkedMs += sWorkedMs;
     
+    // Check Sunday and Holiday
+    const clockInDate = new Date(s.clockIn);
+    const isSunday = clockInDate.getDay() === 0;
+    const hasHoliday = getGermanHoliday(s.date) !== null;
+
+    if (isSunday) sundayMs += sWorkedMs;
+    if (hasHoliday) holidayMs += sWorkedMs;
+
     // Estimate night shift (between 20:00 and 06:00)
-    // A simplified continuous calculation for overlapping periods
-    let startT = new Date(s.clockIn).getTime();
+    let startT = clockInDate.getTime();
     let endT = s.clockOut ? new Date(s.clockOut).getTime() : Date.now();
     
-    // Simple slice approach minute by minute to sum night hours
-    // (This is computationally fast enough for a month's sessions in frontend)
     if (endT > startT) {
       let minStart = Math.floor(startT / 60000) * 60000;
       let minEnd = Math.floor(endT / 60000) * 60000;
@@ -11891,13 +11971,17 @@ function computeTimeStats() {
 
   const workedHours = (totalWorkedMs / 3600000);
   const nightHours = (nightShiftMs / 3600000);
-  
-  const target = timeConfig.targetHours || 0;
-  const wage = timeConfig.hourlyWage || 0;
+  const sundayHours = (sundayMs / 3600000);
+  const holidayHours = (holidayMs / 3600000);
   
   const overtime = Math.max(0, workedHours - target);
   const payout = workedHours * wage;
-  const nightSurcharge = nightHours * wage * 0.25; // Example: 25% night drift surcharge
+  
+  const nightSurchargeEur = nightHours * wage * (pctNight / 100);
+  const sundaySurchargeEur = sundayHours * wage * (pctSunday / 100);
+  const holidaySurchargeEur = holidayHours * wage * (pctHoliday / 100);
+
+  const totalSurchargeEur = nightSurchargeEur + sundaySurchargeEur + holidaySurchargeEur;
 
   // --- Calculate Overall Overtime (Total over all months) ---
   const overallCard = document.getElementById('statOverallOvertimeCard');
@@ -11990,8 +12074,10 @@ function computeTimeStats() {
   
   const surchargeEl = document.getElementById('statSurcharge');
   if (surchargeEl) {
-    const surchargeText = (I18n.t('time.stat.surcharge') || 'Zuschläge').replace('{amount}', nightSurcharge.toFixed(2));
-    surchargeEl.textContent = `+ ${surchargeText}`;
+    const surchargeText = `+ ${totalSurchargeEur.toFixed(2)} € Zuschläge`;
+    const tooltipText = `Nacht: ${nightSurchargeEur.toFixed(2)}€, Sonntag: ${sundaySurchargeEur.toFixed(2)}€, Feiertag: ${holidaySurchargeEur.toFixed(2)}€`;
+    surchargeEl.textContent = surchargeText;
+    surchargeEl.title = tooltipText;
   }
 
   const overallOvertimeEl = document.getElementById('statOverallOvertime');
@@ -12015,6 +12101,9 @@ function computeTimeStats() {
 function openTimeConfigModal() {
   document.getElementById('timeConfigWageInput').value = timeConfig.hourlyWage || '';
   document.getElementById('timeConfigHoursInput').value = timeConfig.targetHours || '';
+  document.getElementById('timeConfigNightInput').value = timeConfig.surchargeNight || '';
+  document.getElementById('timeConfigSundayInput').value = timeConfig.surchargeSunday || '';
+  document.getElementById('timeConfigHolidayInput').value = timeConfig.surchargeHoliday || '';
   document.getElementById('timeConfigModalOverlay').classList.add('active');
 }
 
@@ -12025,9 +12114,12 @@ function closeTimeConfigModal() {
 async function submitTimeConfig() {
   const wage = parseFloat(document.getElementById('timeConfigWageInput').value) || 0;
   const hours = parseInt(document.getElementById('timeConfigHoursInput').value, 10) || 0;
+  const n = parseInt(document.getElementById('timeConfigNightInput').value, 10) || 0;
+  const s = parseInt(document.getElementById('timeConfigSundayInput').value, 10) || 0;
+  const h = parseInt(document.getElementById('timeConfigHolidayInput').value, 10) || 0;
   
   try {
-    timeConfig = await API.saveTimeConfig({ hourlyWage: wage, targetHours: hours });
+    timeConfig = await API.saveTimeConfig({ hourlyWage: wage, targetHours: hours, surchargeNight: n, surchargeSunday: s, surchargeHoliday: h });
     closeTimeConfigModal();
     computeTimeStats();
     toast(I18n.t('common.saved') || 'Saved');

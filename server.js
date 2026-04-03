@@ -1003,14 +1003,17 @@ app.get('/api/users/me/time-config', authMiddleware, async (req, res) => {
 
 app.put('/api/users/me/time-config', authMiddleware, async (req, res) => {
   try {
-    const { hourlyWage, targetHours } = req.body;
+    const { hourlyWage, targetHours, surchargeNight, surchargeSunday, surchargeHoliday } = req.body;
     const users = await storage.read('users.json');
     const userIndex = users.findIndex(u => u.id === req.user.userId);
     if (userIndex === -1) return res.status(404).json({ error: 'User not found' });
     
     users[userIndex].timeConfig = {
       hourlyWage: Number(hourlyWage) || 0,
-      targetHours: Number(targetHours) || 0
+      targetHours: Number(targetHours) || 0,
+      surchargeNight: Number(surchargeNight) || 0,
+      surchargeSunday: Number(surchargeSunday) || 0,
+      surchargeHoliday: Number(surchargeHoliday) || 0
     };
     await storage.write('users.json', users);
     res.json(users[userIndex].timeConfig);
