@@ -239,6 +239,8 @@
   "time.stat.overtime": "Overtime",
   "time.stat.payout": "Expected Payout",
   "time.stat.surcharge": "{amount} € Night Surcharge",
+  "time.stat.overallOvertime": "Total Overtime",
+  "time.stat.value": "Value",
   "time.config.title": "Time Tracking Settings",
   "time.config.hourlyWage": "Hourly Wage (€)",
   "time.config.targetHours": "Target Hours per Month",

@@ -4554,6 +4554,12 @@ a { color: var(--accent); text-decoration: none; }
             <div id="statPayout" style="font-size:18px;font-weight:700;color:var(--green)">0,00 €</div>
             <div id="statSurcharge" style="font-size:12px;color:var(--amber);margin-top:4px">+ 0,00 € Zuschläge (Nacht)</div>
           </div>
+          <!-- Overtime Accumulation / Überstunden Collector -->
+          <div style="background:var(--bg-input);padding:12px;border-radius:var(--radius-xs);border:1px solid var(--border)">
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px" data-i18n="time.stat.overallOvertime">Gesamt Überstunden</div>
+            <div id="statOverallOvertime" style="font-size:18px;font-weight:700;color:var(--text)">0h</div>
+            <div id="statOverallOvertimeValue" style="font-size:12px;color:var(--text-secondary);margin-top:4px">Wert: 0,00 €</div>
+          </div>
         </div>
       </div>
 
@@ -11818,6 +11824,55 @@ function computeTimeStats() {
   const payout = workedHours * wage;
   const nightSurcharge = nightHours * wage * 0.25; // Example: 25% night drift surcharge
 
+  // --- Calculate Overall Overtime (Total over all months) ---
+  let overallOvertimeHours = 0;
+  
+  // Merge allTimeSessions and timeSessions to ensure latest data is included
+  const mergedSessionsObj = {};
+  if (Array.isArray(allTimeSessions)) {
+    for (const s of allTimeSessions) {
+      if (s.id) mergedSessionsObj[s.id] = s;
+    }
+  }
+  if (Array.isArray(timeSessions)) {
+    for (const s of timeSessions) {
+      if (s.id) mergedSessionsObj[s.id] = s;
+    }
+  }
+  
+  const mergedSessions = Object.values(mergedSessionsObj);
+  
+  if (mergedSessions.length > 0 && target > 0) {
+    const hoursByMonth = {};
+    for (const s of mergedSessions) {
+      if (!s.clockIn) continue;
+      // Find month key: YYYY-MM
+      let mKey = '';
+      if (s.date) {
+        mKey = s.date.substring(0, 7);
+      } else {
+        const d = new Date(s.clockIn);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        mKey = `${yyyy}-${mm}`;
+      }
+      
+      const sWorkedH = sessionWorkedMinutes(s) / 60;
+      hoursByMonth[mKey] = (hoursByMonth[mKey] || 0) + sWorkedH;
+    }
+    
+    let totalOverallWorked = 0;
+    let monthCount = 0;
+    for (const key in hoursByMonth) {
+      totalOverallWorked += hoursByMonth[key];
+      monthCount++;
+    }
+    
+    overallOvertimeHours = totalOverallWorked - (monthCount * target);
+  }
+  const overallOvertimeValue = (overallOvertimeHours > 0 ? overallOvertimeHours : 0) * wage;
+  // --- End Overall Overtime ---
+
   document.getElementById('statHours').textContent = `${target} / ${workedHours.toFixed(1)}h`;
   
   const progress = target > 0 ? Math.min(100, (workedHours / target) * 100) : 0;
@@ -11842,6 +11897,23 @@ function computeTimeStats() {
   if (surchargeEl) {
     const surchargeText = (I18n.t('time.stat.surcharge') || 'Zuschläge').replace('{amount}', nightSurcharge.toFixed(2));
     surchargeEl.textContent = `+ ${surchargeText}`;
+  }
+
+  const overallOvertimeEl = document.getElementById('statOverallOvertime');
+  if (overallOvertimeEl) {
+    const prefix = overallOvertimeHours > 0 ? '+' : (overallOvertimeHours < 0 ? '' : '');
+    overallOvertimeEl.textContent = `${prefix}${overallOvertimeHours.toFixed(1)}h`;
+    if (overallOvertimeHours > 0) overallOvertimeEl.style.color = 'var(--amber)';
+    else if (overallOvertimeHours < 0) overallOvertimeEl.style.color = 'var(--red)';
+    else overallOvertimeEl.style.color = 'var(--text)';
+  }
+  
+  const overallOvertimeValueEl = document.getElementById('statOverallOvertimeValue');
+  if (overallOvertimeValueEl) {
+    const sign = overallOvertimeValue > 0 ? '+' : '';
+    const valText = (I18n.t('time.stat.value') || 'Wert');
+    overallOvertimeValueEl.textContent = `${valText}: ${sign}${overallOvertimeValue.toFixed(2)} €`;
+    overallOvertimeValueEl.style.color = overallOvertimeValue > 0 ? 'var(--green)' : 'var(--text-secondary)';
   }
 }
 
