@@ -42,11 +42,15 @@ const API = {
   del(url) { return this.request('DELETE', url); },
   upload(url, formData) { return this.request('POST', url, formData, true); },
 
-  // ── Auth ──
+  // ── Authentication & Profile ──
   signup(name, password) { return this.post('/api/auth/signup', { name, password }); },
   login(name, password) { return this.post('/api/auth/login', { name, password }); },
   logout() { return this.post('/api/auth/logout'); },
   me() { return this.get('/api/auth/me'); },
+  
+  // ── User Configs ──
+  getTimeConfig() { return this.get('/api/users/me/time-config'); },
+  saveTimeConfig(config) { return this.put('/api/users/me/time-config', config); },
 
   // ── API Keys ──
   getApiKeys() { return this.get('/api/auth/api-keys'); },

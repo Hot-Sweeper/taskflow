@@ -4509,11 +4509,15 @@ a { color: var(--accent); text-decoration: none; }
     <div class="time-tab">
       <div class="time-card">
         <div class="time-main-row">
-          <div>
+          <div style="flex:1">
             <div class="time-main-clock" id="timeMainClock">00:00:00</div>
             <div class="time-main-status" id="timeMainStatus" data-i18n="time.status.offline">Offline</div>
           </div>
           <div class="time-main-actions">
+            <!-- Settings button for target hours and wage -->
+            <button class="time-main-btn ghost" id="timeConfigBtn" onclick="openTimeConfigModal()" title="Settings" aria-label="Settings" style="padding:0 12px">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
             <button class="time-main-btn warn" id="timePauseBtn" onclick="toggleTimerPause()" data-i18n="time.pause">Pause</button>
             <button class="time-main-btn primary" id="timeClockBtn" onclick="toggleTimeClock()" data-i18n="time.clockin">Clock In</button>
           </div>
@@ -4526,6 +4530,30 @@ a { color: var(--accent); text-decoration: none; }
           <button class="time-loc-btn" id="locOfficeBtn" onclick="setTimeLocation('office')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V5a1 1 0 011-1h12a1 1 0 011 1v16"/><line x1="9" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="10" y2="16"/><line x1="14" y1="16" x2="15" y2="16"/></svg><span data-i18n="time.office">Office</span></button>
           <button class="time-loc-btn" id="locHomeBtn" onclick="setTimeLocation('home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span data-i18n="time.home">Home Office</span></button>
           <button class="time-loc-btn" id="locFieldBtn" onclick="setTimeLocation('field')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg><span data-i18n="time.field">On The Go</span></button>
+        </div>
+      </div>
+
+      <!-- Time Statistics Section -->
+      <div class="time-card" id="timeStatsContainer">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:12px" data-i18n="time.statistics">Statistics</h4>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px">
+          <!-- Hours Target vs Actual -->
+          <div style="background:var(--bg-input);padding:12px;border-radius:var(--radius-xs);border:1px solid var(--border)">
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px" data-i18n="time.stat.hours">Soll / Ist Stunden</div>
+            <div id="statHours" style="font-size:18px;font-weight:700;color:var(--text)">0 / 0h</div>
+            <div id="statHoursProgressWrap" style="height:4px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden"><div id="statHoursProgress" style="height:100%;width:0%;background:var(--accent)"></div></div>
+          </div>
+          <!-- Overtime -->
+          <div style="background:var(--bg-input);padding:12px;border-radius:var(--radius-xs);border:1px solid var(--border)">
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px" data-i18n="time.stat.overtime">Überstunden</div>
+            <div id="statOvertime" style="font-size:18px;font-weight:700;color:var(--text)">0h</div>
+          </div>
+          <!-- Payout & Surcharges -->
+          <div style="background:var(--bg-input);padding:12px;border-radius:var(--radius-xs);border:1px solid var(--border)">
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px" data-i18n="time.stat.payout">Erwartete Auszahlung</div>
+            <div id="statPayout" style="font-size:18px;font-weight:700;color:var(--green)">0,00 €</div>
+            <div id="statSurcharge" style="font-size:12px;color:var(--amber);margin-top:4px">+ 0,00 € Zuschläge (Nacht)</div>
+          </div>
         </div>
       </div>
 
@@ -4797,6 +4825,25 @@ a { color: var(--accent); text-decoration: none; }
   </div>
 </div>
 
+<!-- Time Settings Modal -->
+<div class="modal-overlay" id="timeConfigModalOverlay">
+  <div class="modal" style="max-width: 400px; padding: 24px">
+    <h3 style="margin-bottom:16px" data-i18n="time.config.title">Zeiterfassung Einstellungen</h3>
+    <div class="modal-form">
+      <div class="input-group" style="margin-bottom: 16px">
+        <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block;" data-i18n="time.config.hourlyWage">Stundenlohn (€)</label>
+        <input id="timeConfigWageInput" type="number" step="0.01" min="0" placeholder="z.B. 15.50" style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; background: var(--bg-input); color: var(--text);">
+      </div>
+      <div class="input-group" style="margin-bottom: 24px">
+        <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block;" data-i18n="time.config.targetHours">Soll-Stunden pro Monat</label>
+        <input id="timeConfigHoursInput" type="number" step="1" min="0" placeholder="z.B. 160" style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; background: var(--bg-input); color: var(--text);">
+      </div>
+      <button class="btn-primary" onclick="submitTimeConfig()" data-i18n="common.save">Speichern</button>
+      <button style="padding:8px;font-size:13px;color:var(--text-secondary);text-align:center;width:100%;margin-top:8px" onclick="closeTimeConfigModal()" data-i18n="common.cancel">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
 <!-- Detail overlay + panel -->
 <div class="detail-overlay" id="detailOverlay" onclick="closeDetail()"></div>
 <div class="detail-panel" id="detailPanel">
@@ -4883,6 +4930,7 @@ let timeSessions = [];
 let timeMonth = new Date().getMonth();
 let timeYear = new Date().getFullYear();
 let timeRenderToken = 0;
+let timeConfig = { hourlyWage: 0, targetHours: 0 };
 let preferredTimeLocation = 'office';
 let calMode = 'month'; // 'year' | 'month' | 'week' | 'day'
 let calWeekStart = null; // Date object for current week start (Monday)
@@ -5107,6 +5155,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (API.token) {
     try {
       currentUser = await API.me();
+      try {
+        timeConfig = await API.getTimeConfig();
+      } catch (err) {
+        timeConfig = { hourlyWage: 0, targetHours: 0 };
+      }
       await loadFlowPicker();
       // Deep link: restore flow/tab/task from URL hash
       await restoreFromHash();
@@ -5205,6 +5258,11 @@ document.getElementById('authForm').onsubmit = async (e) => {
       : await API.signup(name, pass);
     API.setToken(res.token);
     currentUser = res.user;
+    try {
+      timeConfig = await API.getTimeConfig();
+    } catch (e) {
+      timeConfig = { hourlyWage: 0, targetHours: 0 };
+    }
     if (authMode === 'signup') {
       window.location.href = '/avatar/?from=app&setup=1';
       return;
@@ -11694,6 +11752,8 @@ async function deleteBlackoutBlock(blockId) {
 function renderTimeSessionRows() {
   const tbody = document.getElementById('timeSessionRows');
   if (!tbody) return;
+  
+  computeTimeStats(); // Compute and display statistics
 
   if (!timeSessions.length) {
     tbody.innerHTML = `<tr><td colspan="7" class="time-empty">${I18n.t('time.emptySessions')}</td></tr>`;
@@ -11718,6 +11778,95 @@ function renderTimeSessionRows() {
       </tr>`;
     });
   tbody.innerHTML = rows.join('');
+}
+
+function computeTimeStats() {
+  let totalWorkedMs = 0;
+  let nightShiftMs = 0;
+
+  for (const s of timeSessions) {
+    if (!s.clockIn) continue;
+    const sWorked = sessionWorkedMinutes(s) * 60000;
+    totalWorkedMs += sWorked;
+    
+    // Estimate night shift (between 20:00 and 06:00)
+    // A simplified continuous calculation for overlapping periods
+    let startT = new Date(s.clockIn).getTime();
+    let endT = s.clockOut ? new Date(s.clockOut).getTime() : Date.now();
+    
+    // Simple slice approach minute by minute to sum night hours
+    // (This is computationally fast enough for a month's sessions in frontend)
+    if (endT > startT) {
+      let minStart = Math.floor(startT / 60000) * 60000;
+      let minEnd = Math.floor(endT / 60000) * 60000;
+      for (let t = minStart; t < minEnd; t += 60000) {
+        const h = new Date(t).getHours();
+        if (h >= 20 || h < 6) {
+          nightShiftMs += 60000;
+        }
+      }
+    }
+  }
+
+  const workedHours = (totalWorkedMs / 3600000);
+  const nightHours = (nightShiftMs / 3600000);
+  
+  const target = timeConfig.targetHours || 0;
+  const wage = timeConfig.hourlyWage || 0;
+  
+  const overtime = Math.max(0, workedHours - target);
+  const payout = workedHours * wage;
+  const nightSurcharge = nightHours * wage * 0.25; // Example: 25% night drift surcharge
+
+  document.getElementById('statHours').textContent = `${target} / ${workedHours.toFixed(1)}h`;
+  
+  const progress = target > 0 ? Math.min(100, (workedHours / target) * 100) : 0;
+  const progressEl = document.getElementById('statHoursProgress');
+  if (progressEl) {
+    progressEl.style.width = `${progress}%`;
+    progressEl.style.background = workedHours >= target ? 'var(--green)' : 'var(--accent)';
+  }
+
+  const overEl = document.getElementById('statOvertime');
+  if (overEl) {
+    overEl.textContent = overtime > 0 ? `+${overtime.toFixed(1)}h` : '0h';
+    overEl.style.color = overtime > 0 ? 'var(--amber)' : 'var(--text)';
+  }
+
+  const payoutEl = document.getElementById('statPayout');
+  if (payoutEl) {
+    payoutEl.textContent = `${payout.toFixed(2)} €`;
+  }
+  
+  const surchargeEl = document.getElementById('statSurcharge');
+  if (surchargeEl) {
+    const surchargeText = (I18n.t('time.stat.surcharge') || 'Zuschläge').replace('{amount}', nightSurcharge.toFixed(2));
+    surchargeEl.textContent = `+ ${surchargeText}`;
+  }
+}
+
+function openTimeConfigModal() {
+  document.getElementById('timeConfigWageInput').value = timeConfig.hourlyWage || '';
+  document.getElementById('timeConfigHoursInput').value = timeConfig.targetHours || '';
+  document.getElementById('timeConfigModalOverlay').classList.add('active');
+}
+
+function closeTimeConfigModal() {
+  document.getElementById('timeConfigModalOverlay').classList.remove('active');
+}
+
+async function submitTimeConfig() {
+  const wage = parseFloat(document.getElementById('timeConfigWageInput').value) || 0;
+  const hours = parseInt(document.getElementById('timeConfigHoursInput').value, 10) || 0;
+  
+  try {
+    timeConfig = await API.saveTimeConfig({ hourlyWage: wage, targetHours: hours });
+    closeTimeConfigModal();
+    computeTimeStats();
+    toast(I18n.t('common.saved') || 'Saved');
+  } catch (err) {
+    toast(err.message);
+  }
 }
 
 async function setTimeLocation(location) {

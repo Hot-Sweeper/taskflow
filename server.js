@@ -990,6 +990,35 @@ app.get('/api/avatars/:filename', authMiddleware, (req, res) => {
   res.sendFile(filePath);
 });
 
+app.get('/api/users/me/time-config', authMiddleware, async (req, res) => {
+  try {
+    const users = await storage.read('users.json');
+    const user = users.find(u => u.id === req.user.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user.timeConfig || { hourlyWage: 0, targetHours: 0 });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/users/me/time-config', authMiddleware, async (req, res) => {
+  try {
+    const { hourlyWage, targetHours } = req.body;
+    const users = await storage.read('users.json');
+    const userIndex = users.findIndex(u => u.id === req.user.userId);
+    if (userIndex === -1) return res.status(404).json({ error: 'User not found' });
+    
+    users[userIndex].timeConfig = {
+      hourlyWage: Number(hourlyWage) || 0,
+      targetHours: Number(targetHours) || 0
+    };
+    await storage.write('users.json', users);
+    res.json(users[userIndex].timeConfig);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.get('/api/users/me/avatar-config', authMiddleware, async (req, res) => {
   try {
     const users = await storage.read('users.json');
