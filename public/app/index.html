@@ -4556,7 +4556,13 @@ a { color: var(--accent); text-decoration: none; }
           </div>
           <!-- Overtime Accumulation / Überstunden Collector -->
           <div style="background:var(--bg-input);padding:12px;border-radius:var(--radius-xs);border:1px solid var(--border)">
-            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px" data-i18n="time.stat.overallOvertime">Gesamt Überstunden</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px">
+              <div style="font-size:12px;color:var(--text-secondary)" data-i18n="time.stat.overallOvertime">Gesamt Überstunden</div>
+              <label style="font-size:11px; color:var(--text-secondary); display:flex; align-items:center; gap:4px; cursor:pointer;" title="Laufenden Monat ausschließen">
+                <input type="checkbox" id="excludeCurrentMonthToggle" onchange="computeTimeStats()" style="width:12px;height:12px;cursor:pointer;"> 
+                <span data-i18n="time.stat.excludeCurrent">Ohne akt. Monat</span>
+              </label>
+            </div>
             <div id="statOverallOvertime" style="font-size:18px;font-weight:700;color:var(--text)">0h</div>
             <div id="statOverallOvertimeValue" style="font-size:12px;color:var(--text-secondary);margin-top:4px">Wert: 0,00 €</div>
           </div>
@@ -11861,9 +11867,14 @@ function computeTimeStats() {
       hoursByMonth[mKey] = (hoursByMonth[mKey] || 0) + sWorkedH;
     }
     
+    const excludeCurrentToggle = document.getElementById('excludeCurrentMonthToggle');
+    const excludeCurrent = excludeCurrentToggle ? excludeCurrentToggle.checked : false;
+    const currentMonthStr = `${timeYear}-${String(timeMonth + 1).padStart(2, '0')}`;
+
     let totalOverallWorked = 0;
     let monthCount = 0;
     for (const key in hoursByMonth) {
+      if (excludeCurrent && key === currentMonthStr) continue;
       totalOverallWorked += hoursByMonth[key];
       monthCount++;
     }
