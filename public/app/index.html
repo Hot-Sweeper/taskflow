@@ -4562,7 +4562,10 @@ a { color: var(--accent); text-decoration: none; }
               #excludeCurrentMonthToggle:checked ~ .custom-toggle-track .custom-toggle-thumb { transform: translateX(12px); background: #fff !important; }
             </style>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px">
-              <div style="font-size:12px;color:var(--text-secondary)" data-i18n="time.stat.overallOvertime">Gesamt Überstunden</div>
+              <div style="font-size:12px;color:var(--text-secondary); display:flex; align-items:center; gap:4px;" title="Formel: (Alle abgeleisteten Stunden in erfassten Monaten) - (Anzahl der erfassten Monate × Soll-Stunden pro Monat)">
+                <span data-i18n="time.stat.overallOvertime">Gesamt Überstunden</span>
+                <span style="font-size:10px; cursor:help; opacity:0.6;">ⓘ</span>
+              </div>
               <label style="font-size:11px; color:var(--text-secondary); display:flex; align-items:center; gap:6px; cursor:pointer;" title="Laufenden Monat ausschließen">
                 <span data-i18n="time.stat.excludeCurrent">Ohne akt. Monat</span>
                 <input type="checkbox" id="excludeCurrentMonthToggle" onchange="computeTimeStats()" style="opacity:0; width:0; height:0; position:absolute;">
@@ -11940,12 +11943,13 @@ function computeTimeStats() {
     
     const excludeCurrentToggle = document.getElementById('excludeCurrentMonthToggle');
     const excludeCurrent = excludeCurrentToggle ? excludeCurrentToggle.checked : false;
-    const currentMonthStr = `${timeYear}-${String(timeMonth + 1).padStart(2, '0')}`;
+    const now = new Date();
+    const activeOngoingMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
     let totalOverallWorked = 0;
     let monthCount = 0;
     for (const key in hoursByMonth) {
-      if (excludeCurrent && key === currentMonthStr) continue;
+      if (excludeCurrent && key === activeOngoingMonthStr) continue;
       totalOverallWorked += hoursByMonth[key];
       monthCount++;
     }
