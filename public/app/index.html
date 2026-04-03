@@ -4562,7 +4562,7 @@ a { color: var(--accent); text-decoration: none; }
               #excludeCurrentMonthToggle:checked ~ .custom-toggle-track .custom-toggle-thumb { transform: translateX(12px); background: #fff !important; }
             </style>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px">
-              <div style="font-size:12px;color:var(--text-secondary); display:flex; align-items:center; gap:4px;" title="Formel: (Alle abgeleisteten Stunden in erfassten Monaten) - (Anzahl der erfassten Monate × Soll-Stunden pro Monat)">
+              <div id="statOverallOvertimeFormula" style="font-size:12px;color:var(--text-secondary); display:flex; align-items:center; gap:4px;" title="Formel: (Alle abgeleisteten Stunden in erfassten Monaten) - (Anzahl der erfassten Monate × Soll-Stunden pro Monat)">
                 <span data-i18n="time.stat.overallOvertime">Gesamt Überstunden</span>
                 <span style="font-size:10px; cursor:help; opacity:0.6;">ⓘ</span>
               </div>
@@ -11945,6 +11945,15 @@ function computeTimeStats() {
     const excludeCurrent = excludeCurrentToggle ? excludeCurrentToggle.checked : false;
     const now = new Date();
     const activeOngoingMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    const formulaIcon = document.getElementById('statOverallOvertimeFormula');
+    if (formulaIcon) {
+      if (excludeCurrent) {
+        formulaIcon.title = "Formel: (Gesamte abgeleistete Stunden OHNE aktuellen Monat) - (Anzahl der abgeschlossenen Monate × Soll-Stunden pro Monat)";
+      } else {
+        formulaIcon.title = "Formel: (Alle abgeleisteten Stunden in erfassten Monaten) - (Anzahl der erfassten Monate × Soll-Stunden pro Monat)";
+      }
+    }
 
     let totalOverallWorked = 0;
     let monthCount = 0;
