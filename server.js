@@ -2117,11 +2117,11 @@ async function autoArchiveCompletedTasksForFlow(flowId) {
 // ═══════════════════════════════════════════════════════════════
 
 const DEFAULT_STALE_THRESHOLDS = {
-  'todo': 4320,
-  'in-progress': 2880,
-  'on-hold': 10080,
-  'needs-info': 1440,
-  'in-review': 2880
+  'todo': 43200,
+  'in-progress': 43200,
+  'on-hold': 43200,
+  'needs-info': 43200,
+  'in-review': 43200
 };
 
 function computeStaleStatus(task, thresholds) {
