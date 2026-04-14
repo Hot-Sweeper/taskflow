@@ -2178,9 +2178,7 @@ app.get('/api/flows/:flowId/tasks', authMiddleware, flowMemberMiddleware, async 
       filtered = filtered.filter(t => t.category === req.query.category);
     }
     // Compute stale status for each task
-    const config = await storage.readConfig();
-    const thresholds = config.staleThresholds || DEFAULT_STALE_THRESHOLDS;
-    res.json(enrichTasksWithStale(filtered, thresholds));
+    res.json(enrichTasksWithStale(filtered, DEFAULT_STALE_THRESHOLDS));
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -4617,14 +4615,12 @@ app.get('/', (req, res) => {
 
 async function checkStaleTasks() {
   try {
-    const config = await storage.readConfig();
-    const thresholds = config.staleThresholds || DEFAULT_STALE_THRESHOLDS;
     const tasks = await storage.read('tasks.json');
     const notifications = await readArraySafe('notifications.json');
 
     for (const task of tasks) {
       if (task.status === 'done') continue;
-      const { isStale } = computeStaleStatus(task, thresholds);
+      const { isStale } = computeStaleStatus(task, DEFAULT_STALE_THRESHOLDS);
       if (!isStale) continue;
 
       // Check if we already sent a stale notification for this task (unread)
