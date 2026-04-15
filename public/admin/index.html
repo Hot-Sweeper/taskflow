@@ -222,7 +222,7 @@ tr:hover td { background: var(--bg-hover); }
       </div>
       <div class="card">
         <table>
-          <thead><tr><th>Worker</th><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Location</th><th>Total</th></tr></thead>
+          <thead><tr><th>Worker</th><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Location</th><th>Total</th><th>Actions</th></tr></thead>
           <tbody id="timelogTable"></tbody>
         </table>
       </div>
@@ -379,6 +379,43 @@ tr:hover td { background: var(--bg-hover); }
 </div>
 
 <!-- IMPORT TIMELOG MODAL -->
+
+<!-- EDIT TIME MODAL -->
+<div id="editTimeModal" class="modal-overlay">
+  <div class="modal">
+    <h3>Edit Time Entry</h3>
+    <input type="hidden" id="etId">
+    <div class="form-group">
+      <label>Worker</label>
+      <input type="text" id="etWorker" disabled style="opacity:0.6">
+    </div>
+    <div class="form-group">
+      <label>Date</label>
+      <input type="date" id="etDate">
+    </div>
+    <div class="form-group">
+      <label>Clock In</label>
+      <input type="time" id="etClockIn" step="60">
+    </div>
+    <div class="form-group">
+      <label>Clock Out</label>
+      <input type="time" id="etClockOut" step="60">
+    </div>
+    <div class="form-group">
+      <label>Location</label>
+      <select id="etLocation">
+        <option value="office">Office</option>
+        <option value="home">Home Office</option>
+        <option value="field">On The Go</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('editTimeModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitEditTime()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div id="importTimeModal" class="modal-overlay">
   <div class="modal">
     <h3>Import Timelog Entries</h3>
@@ -604,9 +641,11 @@ async function deleteTeam(id) {
 
 // ═══ TIMELOG ═══
 let cachedUsers = null;
+let cachedTimelog = [];
 async function loadTimelog() {
   const res = await adminFetch('/api/admin/timelog');
   const entries = await res.json();
+  cachedTimelog = entries;
   const tbody = document.getElementById('timelogTable');
   tbody.innerHTML = entries.slice(-50).reverse().map(t => `
     <tr>
@@ -616,8 +655,60 @@ async function loadTimelog() {
       <td>${t.clockOut ? new Date(t.clockOut).toLocaleTimeString() : '—'}</td>
       <td>${t.location || '—'}</td>
       <td>${t.totalWorked ? TaskModels.formatDuration(t.totalWorked) : '—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" onclick="openEditTime('${t.id}')" title="Edit">✏️</button>
+        <button class="btn btn-secondary btn-sm" onclick="deleteTimeEntry('${t.id}')" title="Delete" style="margin-left:4px">🗑️</button>
+      </td>
     </tr>
   `).join('');
+}
+
+function openEditTime(id) {
+  const t = cachedTimelog.find(e => e.id === id);
+  if (!t) return toast('Entry not found', 'error');
+  document.getElementById('etId').value = t.id;
+  document.getElementById('etWorker').value = t.userName || '?';
+  document.getElementById('etDate').value = t.date || '';
+  if (t.clockIn) {
+    const ci = new Date(t.clockIn);
+    document.getElementById('etClockIn').value = ci.toTimeString().slice(0, 5);
+  }
+  if (t.clockOut) {
+    const co = new Date(t.clockOut);
+    document.getElementById('etClockOut').value = co.toTimeString().slice(0, 5);
+  }
+  document.getElementById('etLocation').value = t.location || 'office';
+  document.getElementById('editTimeModal').classList.add('open');
+}
+
+async function submitEditTime() {
+  const id = document.getElementById('etId').value;
+  const date = document.getElementById('etDate').value;
+  const clockInTime = document.getElementById('etClockIn').value;
+  const clockOutTime = document.getElementById('etClockOut').value;
+  const location = document.getElementById('etLocation').value;
+  if (!date || !clockInTime || !clockOutTime) return toast('All fields required', 'error');
+  const clockIn = `${date}T${clockInTime}:00`;
+  const clockOut = `${date}T${clockOutTime}:00`;
+  try {
+    await adminFetch(`/api/admin/timelog/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ date, clockIn, clockOut, location }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    closeModal('editTimeModal');
+    toast('Time entry updated', 'success');
+    loadTimelog();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+async function deleteTimeEntry(id) {
+  if (!confirm('Delete this time entry?')) return;
+  try {
+    await adminFetch(`/api/admin/timelog/${id}`, { method: 'DELETE' });
+    toast('Entry deleted', 'success');
+    loadTimelog();
+  } catch (err) { toast(err.message, 'error'); }
 }
 
 async function getUsers() {

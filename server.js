@@ -4386,6 +4386,56 @@ app.post('/api/admin/timelog', adminAuth, async (req, res) => {
   }
 });
 
+// Admin: edit time entry
+app.put('/api/admin/timelog/:id', adminAuth, async (req, res) => {
+  try {
+    const { date, clockIn, clockOut, location } = req.body;
+    if (!date || !clockIn || !clockOut) {
+      return res.status(400).json({ error: 'date, clockIn, clockOut required' });
+    }
+    const ciDate = new Date(clockIn);
+    const coDate = new Date(clockOut);
+    if (isNaN(ciDate.getTime()) || isNaN(coDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid clockIn or clockOut date' });
+    }
+    if (coDate <= ciDate) {
+      return res.status(400).json({ error: 'clockOut must be after clockIn' });
+    }
+    const validLocations = ['office', 'home', 'field'];
+    const loc = validLocations.includes(location) ? location : 'office';
+    const totalWorked = Math.round((coDate - ciDate) / 60000);
+
+    const timelog = await storage.read('timelog.json');
+    const idx = timelog.findIndex(t => t.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'Entry not found' });
+
+    timelog[idx].date = date;
+    timelog[idx].clockIn = ciDate.toISOString();
+    timelog[idx].clockOut = coDate.toISOString();
+    timelog[idx].location = loc;
+    timelog[idx].totalWorked = totalWorked;
+
+    await storage.write('timelog.json', timelog);
+    res.json(timelog[idx]);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Admin: delete time entry
+app.delete('/api/admin/timelog/:id', adminAuth, async (req, res) => {
+  try {
+    const timelog = await storage.read('timelog.json');
+    const idx = timelog.findIndex(t => t.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'Entry not found' });
+    const removed = timelog.splice(idx, 1)[0];
+    await storage.write('timelog.json', timelog);
+    res.json(removed);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Admin: bulk import timelog entries
 app.post('/api/admin/timelog/import', adminAuth, async (req, res) => {
   try {
