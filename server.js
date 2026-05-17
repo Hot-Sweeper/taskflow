@@ -5,6 +5,7 @@ const { WebSocketServer } = require('ws');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const PDFDocument = require('pdfkit');
@@ -215,8 +216,10 @@ const avatarUpload = multer({
     cb(null, true);
   }
 });
+const adminBackupTempDir = path.join(os.tmpdir(), 'taskflow-backup-imports');
+fs.mkdirSync(adminBackupTempDir, { recursive: true });
 const adminBackupUpload = multer({
-  dest: path.join(storage.getDataDir(), '_backup_imports'),
+  dest: adminBackupTempDir,
   limits: { fileSize: Math.max(MAX_FILE_SIZE, 1024 * 1024 * 1024) }
 });
 
@@ -4601,16 +4604,17 @@ app.get('/api/admin/export/all', adminAuth, async (req, res) => {
   }
 });
 
-app.post('/api/admin/import/full', adminAuth, adminBackupUpload.single('backupZip'), async (req, res) => {
-  const uploadedPath = req.file?.path;
+app.post('/api/admin/import/full', adminAuth, adminBackupUpload.any(), async (req, res) => {
+  const uploaded = req.file || (Array.isArray(req.files) ? req.files[0] : null);
+  const uploadedPath = uploaded?.path;
   const dataDir = storage.getDataDir();
   const stamp = Date.now();
-  const extractDir = path.join(dataDir, `_restore_extract_${stamp}`);
+  const extractDir = path.join(os.tmpdir(), `taskflow-restore-extract-${stamp}`);
   const rollbackDir = path.join(path.dirname(dataDir), `${path.basename(dataDir)}-pre-restore-${stamp}`);
 
   try {
-    if (!req.file) return res.status(400).json({ error: 'Backup ZIP file is required' });
-    if (!req.file.originalname.toLowerCase().endsWith('.zip')) {
+    if (!uploaded) return res.status(400).json({ error: 'Backup ZIP file is required' });
+    if (!uploaded.originalname.toLowerCase().endsWith('.zip')) {
       return res.status(400).json({ error: 'Only .zip files are supported' });
     }
 
