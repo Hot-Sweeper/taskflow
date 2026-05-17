@@ -9,6 +9,7 @@ const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const PDFDocument = require('pdfkit');
 const archiver = require('archiver');
+const { execFileSync } = require('child_process');
 const storage = require('./storage');
 
 const app = express();
@@ -214,6 +215,84 @@ const avatarUpload = multer({
     cb(null, true);
   }
 });
+const adminBackupUpload = multer({
+  dest: path.join(storage.getDataDir(), '_backup_imports'),
+  limits: { fileSize: Math.max(MAX_FILE_SIZE, 1024 * 1024 * 1024) }
+});
+
+function copyDirRecursive(srcDir, destDir) {
+  fs.mkdirSync(destDir, { recursive: true });
+  const entries = fs.readdirSync(srcDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = path.join(srcDir, entry.name);
+    const destPath = path.join(destDir, entry.name);
+    if (entry.isDirectory()) {
+      copyDirRecursive(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
+function clearDirectory(dirPath) {
+  if (!fs.existsSync(dirPath)) return;
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      fs.rmSync(fullPath, { recursive: true, force: true });
+    } else {
+      fs.unlinkSync(fullPath);
+    }
+  }
+}
+
+function extractZipToDir(zipFilePath, targetDir) {
+  fs.mkdirSync(targetDir, { recursive: true });
+  const errors = [];
+
+  if (process.platform === 'win32') {
+    try {
+      const psCmd = `Expand-Archive -LiteralPath '${zipFilePath.replace(/'/g, "''")}' -DestinationPath '${targetDir.replace(/'/g, "''")}' -Force`;
+      execFileSync('powershell', ['-NoProfile', '-Command', psCmd], { stdio: 'pipe' });
+      return;
+    } catch (err) {
+      errors.push(`PowerShell Expand-Archive failed: ${err.message}`);
+    }
+  }
+
+  try {
+    execFileSync('unzip', ['-o', zipFilePath, '-d', targetDir], { stdio: 'pipe' });
+    return;
+  } catch (err) {
+    errors.push(`unzip failed: ${err.message}`);
+  }
+
+  try {
+    execFileSync('tar', ['-xf', zipFilePath, '-C', targetDir], { stdio: 'pipe' });
+    return;
+  } catch (err) {
+    errors.push(`tar failed: ${err.message}`);
+  }
+
+  throw new Error(`Unable to extract ZIP. ${errors.join(' | ')}`);
+}
+
+function resolveExtractedDataRoot(extractDir) {
+  const required = ['users.json', 'tasks.json', 'flows.json', 'memberships.json'];
+  const hasRequired = (dir) => required.every((name) => fs.existsSync(path.join(dir, name)));
+
+  if (hasRequired(extractDir)) return extractDir;
+
+  const dirs = fs.readdirSync(extractDir, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => path.join(extractDir, d.name));
+  for (const dir of dirs) {
+    if (hasRequired(dir)) return dir;
+  }
+
+  throw new Error('Invalid backup ZIP: required files are missing');
+}
 
 // Valid DiceBear Adventurer options for avatar config validation
 const AVATAR_OPTIONS = {
@@ -4506,19 +4585,51 @@ app.get('/api/admin/export/all', adminAuth, async (req, res) => {
     const archive = archiver('zip', { zlib: { level: 9 } });
     archive.pipe(res);
     const dataDir = storage.getDataDir();
-    const files = ['users.json', 'tasks.json', 'flows.json', 'memberships.json',
-      'timelog.json', 'categories.json', 'config.json', 'messages.json'];
-    for (const f of files) {
-      const fp = path.join(dataDir, f);
-      if (fs.existsSync(fp)) archive.file(fp, { name: f });
-    }
-    const uploadsDir = path.join(dataDir, 'uploads');
-    if (fs.existsSync(uploadsDir)) {
-      archive.directory(uploadsDir, 'uploads');
-    }
+    archive.directory(dataDir, false);
     await archive.finalize();
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/admin/import/full', adminAuth, adminBackupUpload.single('backupZip'), async (req, res) => {
+  const uploadedPath = req.file?.path;
+  const dataDir = storage.getDataDir();
+  const stamp = Date.now();
+  const extractDir = path.join(dataDir, `_restore_extract_${stamp}`);
+  const rollbackDir = path.join(path.dirname(dataDir), `${path.basename(dataDir)}-pre-restore-${stamp}`);
+
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Backup ZIP file is required' });
+    if (!req.file.originalname.toLowerCase().endsWith('.zip')) {
+      return res.status(400).json({ error: 'Only .zip files are supported' });
+    }
+
+    extractZipToDir(uploadedPath, extractDir);
+    const sourceDir = resolveExtractedDataRoot(extractDir);
+
+    // Create rollback snapshot before replacing data.
+    copyDirRecursive(dataDir, rollbackDir);
+
+    clearDirectory(dataDir);
+    copyDirRecursive(sourceDir, dataDir);
+
+    // Reset in-memory sessions after restore.
+    sessions.clear();
+    adminSessions.clear();
+    await loadSessions();
+
+    res.json({ success: true, rollbackDir: rollbackDir });
+  } catch (err) {
+    console.error('Admin full import failed:', err);
+    res.status(400).json({ error: err.message || 'Full backup restore failed' });
+  } finally {
+    if (uploadedPath && fs.existsSync(uploadedPath)) {
+      fs.rmSync(uploadedPath, { force: true });
+    }
+    if (fs.existsSync(extractDir)) {
+      fs.rmSync(extractDir, { recursive: true, force: true });
+    }
   }
 });
 

@@ -276,6 +276,16 @@ tr:hover td { background: var(--bg-hover); }
           <button class="btn btn-secondary btn-sm" onclick="importData()" style="margin-top:8px;">Import</button>
         </div>
       </div>
+      <div class="card" style="margin-top:16px; border-color: var(--warning);">
+        <h3>Restore Full Backup (.zip)</h3>
+        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 8px;">
+          Upload a full backup ZIP to restore all users, flows, tasks, sessions, messages, timelog, and uploads.
+        </p>
+        <div class="form-group" style="margin-top:12px;">
+          <input type="file" id="fullBackupFile" accept=".zip">
+          <button class="btn btn-warning btn-sm" onclick="restoreFullBackup()" style="margin-top:8px;">Restore Full Backup</button>
+        </div>
+      </div>
       <div class="card" style="border-color: var(--danger); margin-top: 24px;">
         <h3 style="color: var(--danger);">⚠️ Danger Zone</h3>
         <p style="color: var(--text-secondary); font-size: 13px; margin: 8px 0 16px;">This will permanently delete ALL data: users, tasks, flows, messages, files, sessions. This action cannot be undone.</p>
@@ -868,6 +878,34 @@ async function importData() {
     });
     toast('Data imported', 'success');
   } catch (err) { toast('Invalid JSON file', 'error'); }
+}
+
+async function restoreFullBackup() {
+  const file = document.getElementById('fullBackupFile').files[0];
+  if (!file) return toast('Select a .zip backup file', 'error');
+  if (!file.name.toLowerCase().endsWith('.zip')) return toast('Only .zip files are supported', 'error');
+
+  const confirmed = await adminConfirm(
+    'Restore full backup now? This will replace ALL current data and log out active users.',
+    'Restore Full Backup'
+  );
+  if (!confirmed) return;
+
+  const formData = new FormData();
+  formData.append('backupZip', file);
+
+  try {
+    const res = await adminFetch('/api/admin/import/full', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Restore failed');
+    toast('Full backup restored successfully', 'success');
+    setTimeout(() => location.reload(), 1200);
+  } catch (err) {
+    toast(err.message || 'Restore failed', 'error');
+  }
 }
 
 async function wipeAllData() {
