@@ -9,7 +9,7 @@ const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const PDFDocument = require('pdfkit');
 const archiver = require('archiver');
-const { execFileSync } = require('child_process');
+const AdmZip = require('adm-zip');
 const storage = require('./storage');
 
 const app = express();
@@ -249,47 +249,12 @@ function clearDirectory(dirPath) {
 
 function extractZipToDir(zipFilePath, targetDir) {
   fs.mkdirSync(targetDir, { recursive: true });
-  const errors = [];
-
-  if (process.platform === 'win32') {
-    try {
-      const psCmd = `Expand-Archive -LiteralPath '${zipFilePath.replace(/'/g, "''")}' -DestinationPath '${targetDir.replace(/'/g, "''")}' -Force`;
-      execFileSync('powershell', ['-NoProfile', '-Command', psCmd], { stdio: 'pipe' });
-      return;
-    } catch (err) {
-      errors.push(`PowerShell Expand-Archive failed: ${err.message}`);
-    }
-  }
-
   try {
-    execFileSync('unzip', ['-o', zipFilePath, '-d', targetDir], { stdio: 'pipe' });
-    return;
+    const zip = new AdmZip(zipFilePath);
+    zip.extractAllTo(targetDir, true);
   } catch (err) {
-    errors.push(`unzip failed: ${err.message}`);
+    throw new Error(`Unable to extract ZIP. ${err.message}`);
   }
-
-  try {
-    execFileSync('python3', ['-m', 'zipfile', '-e', zipFilePath, targetDir], { stdio: 'pipe' });
-    return;
-  } catch (err) {
-    errors.push(`python3 zipfile failed: ${err.message}`);
-  }
-
-  try {
-    execFileSync('python', ['-m', 'zipfile', '-e', zipFilePath, targetDir], { stdio: 'pipe' });
-    return;
-  } catch (err) {
-    errors.push(`python zipfile failed: ${err.message}`);
-  }
-
-  try {
-    execFileSync('7z', ['x', '-y', `-o${targetDir}`, zipFilePath], { stdio: 'pipe' });
-    return;
-  } catch (err) {
-    errors.push(`7z failed: ${err.message}`);
-  }
-
-  throw new Error(`Unable to extract ZIP. ${errors.join(' | ')}`);
 }
 
 function resolveExtractedDataRoot(extractDir) {
