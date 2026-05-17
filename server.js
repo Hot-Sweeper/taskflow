@@ -269,10 +269,24 @@ function extractZipToDir(zipFilePath, targetDir) {
   }
 
   try {
-    execFileSync('tar', ['-xf', zipFilePath, '-C', targetDir], { stdio: 'pipe' });
+    execFileSync('python3', ['-m', 'zipfile', '-e', zipFilePath, targetDir], { stdio: 'pipe' });
     return;
   } catch (err) {
-    errors.push(`tar failed: ${err.message}`);
+    errors.push(`python3 zipfile failed: ${err.message}`);
+  }
+
+  try {
+    execFileSync('python', ['-m', 'zipfile', '-e', zipFilePath, targetDir], { stdio: 'pipe' });
+    return;
+  } catch (err) {
+    errors.push(`python zipfile failed: ${err.message}`);
+  }
+
+  try {
+    execFileSync('7z', ['x', '-y', `-o${targetDir}`, zipFilePath], { stdio: 'pipe' });
+    return;
+  } catch (err) {
+    errors.push(`7z failed: ${err.message}`);
   }
 
   throw new Error(`Unable to extract ZIP. ${errors.join(' | ')}`);
