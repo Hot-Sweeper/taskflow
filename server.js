@@ -258,19 +258,49 @@ function extractZipToDir(zipFilePath, targetDir) {
 }
 
 function resolveExtractedDataRoot(extractDir) {
-  const required = ['users.json', 'tasks.json', 'flows.json', 'memberships.json'];
-  const hasRequired = (dir) => required.every((name) => fs.existsSync(path.join(dir, name)));
+  const scoreDir = (dir) => {
+    const markers = [
+      'users.json',
+      'tasks.json',
+      'flows.json',
+      'memberships.json',
+      'teams.json',
+      'timelog.json',
+      'config.json',
+      'messages.json'
+    ];
+    let score = 0;
+    for (const name of markers) {
+      if (fs.existsSync(path.join(dir, name))) score += 1;
+    }
+    if (fs.existsSync(path.join(dir, 'uploads'))) score += 1;
+    return score;
+  };
 
-  if (hasRequired(extractDir)) return extractDir;
+  const queue = [extractDir];
+  const visited = new Set();
+  let bestDir = null;
+  let bestScore = -1;
 
-  const dirs = fs.readdirSync(extractDir, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => path.join(extractDir, d.name));
-  for (const dir of dirs) {
-    if (hasRequired(dir)) return dir;
+  while (queue.length) {
+    const dir = queue.shift();
+    if (visited.has(dir)) continue;
+    visited.add(dir);
+
+    const score = scoreDir(dir);
+    if (score > bestScore) {
+      bestScore = score;
+      bestDir = dir;
+    }
+
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) queue.push(path.join(dir, entry.name));
+    }
   }
 
-  throw new Error('Invalid backup ZIP: required files are missing');
+  if (bestDir && bestScore >= 2) return bestDir;
+  throw new Error('Invalid backup ZIP: no recognizable TaskFlow data folder found');
 }
 
 // Valid DiceBear Adventurer options for avatar config validation
